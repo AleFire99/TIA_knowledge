@@ -1,10 +1,10 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-04-28T08:08:14Z",
+  "generated_at": "2026-05-18T15:57:11Z",
   "udts": {
     "UDT_Pinch_diverter": {
-      "description": "99 - Library / Objects / Diverters / Pinch",
+      "description": "UDTs / 99 - Library / Objects / Diverters / Pinch",
       "has_out": false,
       "devices": {
         "XVA": {
@@ -18,17 +18,17 @@
       }
     },
     "UDT_DIGITAL_OUTPUT": {
-      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "description": "UDTs / 99 - Library / Objects / Diverters / Plug_type_diverter",
       "has_out": false,
       "devices": {}
     },
     "UDT_PTD_IO": {
-      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "description": "UDTs / 99 - Library / Objects / Diverters / Plug_type_diverter",
       "has_out": false,
       "devices": {}
     },
     "UDT_Filter_1_sleeve": {
-      "description": "99 - Library / Objects / Filters / 1-sleeve",
+      "description": "UDTs / 99 - Library / Objects / Filters / 1-sleeve",
       "has_out": false,
       "devices": {
         "XY": {
@@ -38,7 +38,7 @@
       }
     },
     "UDT_Filter_2_sleeves": {
-      "description": "99 - Library / Objects / Filters / 2-sleeves",
+      "description": "UDTs / 99 - Library / Objects / Filters / 2-sleeves",
       "has_out": false,
       "devices": {
         "XYA": {
@@ -52,7 +52,7 @@
       }
     },
     "UDT_Gate_Door": {
-      "description": "99 - Library / Objects / Gate",
+      "description": "UDTs / 99 - Library / Objects / Gate",
       "has_out": false,
       "devices": {
         "ZSL": {
@@ -66,12 +66,12 @@
       }
     },
     "UDT_Load_cells": {
-      "description": "99 - Library / Objects / Load cells",
+      "description": "UDTs / 99 - Library / Objects / Load cells",
       "has_out": false,
       "devices": {}
     },
     "UDT_Nolvac": {
-      "description": "99 - Library / Objects / Nolvac",
+      "description": "UDTs / 99 - Library / Objects / Nolvac",
       "has_out": false,
       "devices": {
         "XV01": {
@@ -89,7 +89,7 @@
       }
     },
     "UDT_DS_Valve": {
-      "description": "99 - Library / Objects / Valves / Butterfly / DS",
+      "description": "UDTs / 99 - Library / Objects / Valves / Butterfly / DS",
       "has_out": false,
       "devices": {
         "ZSL": {
@@ -111,7 +111,7 @@
       }
     },
     "UDT_SS_Valve": {
-      "description": "99 - Library / Objects / Valves / Butterfly / SS",
+      "description": "UDTs / 99 - Library / Objects / Valves / Butterfly / SS",
       "has_out": false,
       "devices": {
         "ZSL": {
@@ -129,7 +129,7 @@
       }
     },
     "UDT_Pinch_Valve": {
-      "description": "99 - Library / Objects / Valves / Pinch",
+      "description": "UDTs / 99 - Library / Objects / Valves / Pinch",
       "has_out": false,
       "devices": {
         "PSL": {
@@ -143,17 +143,17 @@
       }
     },
     "UDT_Solenoid_valve": {
-      "description": "99 - Library / Objects / Valves / Solenoid",
+      "description": "UDTs / 99 - Library / Objects / Valves / Solenoid",
       "has_out": true,
       "devices": {}
     },
     "UDT_PAVONE_INPUT": {
-      "description": "99 - Library / Pavone Sistemi",
+      "description": "UDTs / 99 - Library / Pavone Sistemi",
       "has_out": false,
       "devices": {}
     },
     "UDT_PAVONE_OUTPUT": {
-      "description": "99 - Library / Pavone Sistemi",
+      "description": "UDTs / 99 - Library / Pavone Sistemi",
       "has_out": false,
       "devices": {}
     }

@@ -1,17 +1,15 @@
 """
-Generate dist/library_manifest.json from sources/.
+Ingest raw/ Simatic SD exports → dist/library_manifest.json.
 
 Usage:
-    python scripts/generate_docs.py
+    uv run python scripts/ingest.py
 
 Steps:
-  1. Parse all .udt files -> UDT name, DEVICES members, has_out flag
-  2. Parse all .scl files -> FB name, VAR_IN_OUT param name + UDT type, is_sim flag
-  3. Merge LAD sim FB overrides from config.toml [[manifest.sim_overrides]]
-  4. Write dist/library_manifest.json atomically (temp -> rename)
-  5. Print summary
-
-Sections 7-8 of wiki/docs/ pages are regenerated separately (not yet implemented).
+  1. Walk raw/ recursively for .udt and .scl files (tree structure varies)
+  2. Parse UDT members, has_out flag, device descriptions
+  3. Parse FB VAR_IN_OUT param + UDT type, is_sim flag
+  4. Merge LAD sim FB overrides from config.toml [[manifest.sim_overrides]]
+  5. Write dist/library_manifest.json atomically
 """
 
 from __future__ import annotations
@@ -31,9 +29,6 @@ except ImportError:
         print("ERROR: tomllib not available. Python >= 3.11 required, or install tomli.")
         sys.exit(1)
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 import config as cfg
@@ -78,9 +73,9 @@ def parse_udt(path: Path) -> dict:
     name_m = re.search(r'^TYPE\s+"([^"]+)"', text, re.MULTILINE)
     name = name_m.group(1) if name_m else path.stem
 
-    # Derive description from parent folder relative to UDTs dir
+    # Derive description from folder path relative to raw/
     try:
-        rel_parts = path.relative_to(cfg.UDT_SOURCES).parts
+        rel_parts = path.relative_to(cfg.RAW).parts
         desc_parts = list(rel_parts[:-1])
     except ValueError:
         desc_parts = []
@@ -190,7 +185,6 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict])
         else:
             fb_section[udt_key]["ctrl"] = entry
 
-    # Merge LAD sim FBs that won't appear in SCL exports
     for override in sim_overrides:
         udt_key = override["udt"]
         if udt_key not in fb_section:
@@ -225,14 +219,12 @@ def write_manifest_atomic(manifest: dict, dest: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    udt_files = sorted(cfg.UDT_SOURCES.rglob("*.udt"))
-    scl_files = sorted(cfg.FB_SOURCES.rglob("*.scl"))
+    udt_files = sorted(cfg.RAW.rglob("*.udt"))
+    scl_files = sorted(cfg.RAW.rglob("*.scl"))
 
     if not udt_files and not scl_files:
-        print("No source files found in sources/.")
-        print(f"  UDTs dir : {cfg.UDT_SOURCES}")
-        print(f"  FBs dir  : {cfg.FB_SOURCES}")
-        print("Run scripts/export.py first.")
+        print(f"No source files found in raw/ ({cfg.RAW}).")
+        print("Run scripts/export.py first, or export manually from TIA Portal.")
         sys.exit(1)
 
     udts = [parse_udt(f) for f in udt_files]
