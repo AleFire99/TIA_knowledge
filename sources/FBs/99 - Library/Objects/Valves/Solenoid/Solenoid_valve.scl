@@ -1,0 +1,54 @@
+﻿FUNCTION_BLOCK "Solenoid_valve"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_IN_OUT 
+      XY : "UDT_Solenoid_valve";
+   END_VAR
+
+   VAR 
+      desired_open_command { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Actual desired command based on active mode
+      validated_open_command { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Desired command if not interlocked
+   END_VAR
+
+   VAR CONSTANT 
+      OPEN : Int := 3;   // Open valve state
+      CLOSED : Int := 1;   // Closed valve state
+   END_VAR
+
+
+BEGIN
+	REGION Determine desired target
+	    IF #XY.CMD.manual_mode THEN
+	        #desired_open_command := #XY.CMD.manual;
+	    ELSE
+	        #desired_open_command := #XY.CMD.auto;
+	    END_IF;
+	    // Only update validated command if not interlocked
+	    IF NOT #XY.CMD.interlocked THEN
+	        #validated_open_command := #desired_open_command;
+	    END_IF;
+	    // If interlocked, validated_open_command retains its last value
+	END_REGION
+	
+	REGION State management
+	    IF #validated_open_command THEN
+	        #XY.STATUS.state := #OPEN;    // Valve open
+	    ELSE
+	        #XY.STATUS.state := #CLOSED;    // Valve closed
+	    END_IF;
+	END_REGION
+	
+	REGION Output mapping
+	    #XY.out := FALSE;
+	    #XY.STATUS.is_closed := TRUE;
+	    #XY.STATUS.is_open := FALSE;
+	    
+	    IF #XY.STATUS.state = #OPEN THEN
+	        #XY.out := TRUE; // energize solenoid to open and hold
+	        #XY.STATUS.is_closed := FALSE;
+	        #XY.STATUS.is_open := TRUE;
+	    END_IF;
+	END_REGION
+	
+END_FUNCTION_BLOCK
+

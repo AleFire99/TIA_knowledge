@@ -1,0 +1,8 @@
+Library_export/
+site/
+__pycache__/
+*.pyc
+.env
+.venv/
+*.al20
+.claude/settings.local.json

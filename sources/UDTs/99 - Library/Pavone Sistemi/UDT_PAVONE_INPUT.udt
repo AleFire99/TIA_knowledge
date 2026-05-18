@@ -1,0 +1,35 @@
+﻿TYPE "UDT_PAVONE_INPUT"
+VERSION : 0.1
+   STRUCT
+      StatusReg : Struct
+         Reserved1 : Bool;   // Reserved bit
+         ExecuteBackup : Bool;   // Execute backup
+         VisGrossNet : Bool;   // Visualization Net = 0 / Gross = 1
+         VisPeak : Bool;   // Visualization peak
+         Reserved2 : Bool;   // Reserved bit
+         Reserved3 : Bool;   // Reserved bit
+         DeltaWeight : Bool;   // Delta weight
+         Setup : Bool;   // Setup menu enabled
+         CenterZero : Bool;   // Center of zero
+         Stable : Bool;   // Weight is stable
+         ZeroBandWidth : Bool;   // Weight is in the zero range
+         TareInserted : Bool;   // Tare value inserted
+         UnderLoad : Bool;   // Signal below lower load threshold
+         OverLoad : Bool;   // Signal above upper load threshold
+         WeightError : Bool;   // Weight error
+         NotCalibrated : Bool;   // Scale not calibrated
+      END_STRUCT;
+      InputReg : Struct
+         GrossWeight : DInt;
+         NetWeight : DInt;
+         Peak : DInt;
+         DigitalInput : Word;
+         DigitalOutput : Word;
+         Signal : Int;
+         Tare : DInt;
+         MonitorRegister : Word;
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+

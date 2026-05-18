@@ -1,0 +1,17 @@
+﻿TYPE "UDT_PTD_IO"
+VERSION : 0.1
+   STRUCT
+      IN : Struct
+         ZSL : Bool;
+         ZSH : Bool;
+         PSH : Bool;
+      END_STRUCT;
+      OUT : Struct
+         XY01A { S7_SetPoint := 'False'} : "UDT_DIGITAL_OUTPUT";
+         XY01B { S7_SetPoint := 'False'} : "UDT_DIGITAL_OUTPUT";
+         XY02 { S7_SetPoint := 'False'} : "UDT_DIGITAL_OUTPUT";
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+

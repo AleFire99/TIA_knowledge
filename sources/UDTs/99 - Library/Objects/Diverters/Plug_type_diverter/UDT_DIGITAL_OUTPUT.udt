@@ -1,0 +1,9 @@
+﻿TYPE "UDT_DIGITAL_OUTPUT"
+VERSION : 0.1
+   STRUCT
+      Manual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      Automatic { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+

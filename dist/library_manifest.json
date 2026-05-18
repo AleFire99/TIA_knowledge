@@ -1,0 +1,255 @@
+{
+  "manifest_version": "1.0.0",
+  "library_version": "unknown",
+  "generated_at": "2026-04-28T08:08:14Z",
+  "udts": {
+    "UDT_Pinch_diverter": {
+      "description": "99 - Library / Objects / Diverters / Pinch",
+      "has_out": false,
+      "devices": {
+        "XVA": {
+          "type": "UDT_Pinch_Valve",
+          "description": "DEVICE - Pinch valve for line A"
+        },
+        "XVB": {
+          "type": "UDT_Pinch_Valve",
+          "description": "DEVICE- Pinch valve for line B"
+        }
+      }
+    },
+    "UDT_DIGITAL_OUTPUT": {
+      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "has_out": false,
+      "devices": {}
+    },
+    "UDT_PTD_IO": {
+      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "has_out": false,
+      "devices": {}
+    },
+    "UDT_Filter_1_sleeve": {
+      "description": "99 - Library / Objects / Filters / 1-sleeve",
+      "has_out": false,
+      "devices": {
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid command"
+        }
+      }
+    },
+    "UDT_Filter_2_sleeves": {
+      "description": "99 - Library / Objects / Filters / 2-sleeves",
+      "has_out": false,
+      "devices": {
+        "XYA": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid command sleeve A"
+        },
+        "XYB": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid command sleeve B"
+        }
+      }
+    },
+    "UDT_Gate_Door": {
+      "description": "99 - Library / Objects / Gate",
+      "has_out": false,
+      "devices": {
+        "ZSL": {
+          "type": "Bool",
+          "description": "INPUT - Pressure received"
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Command"
+        }
+      }
+    },
+    "UDT_Load_cells": {
+      "description": "99 - Library / Objects / Load cells",
+      "has_out": false,
+      "devices": {}
+    },
+    "UDT_Nolvac": {
+      "description": "99 - Library / Objects / Nolvac",
+      "has_out": false,
+      "devices": {
+        "XV01": {
+          "type": "UDT_SS_Valve",
+          "description": "VALVE - Discharge valve"
+        },
+        "XY02": {
+          "type": "UDT_Solenoid_valve",
+          "description": "VALVE - Cleaning valve"
+        },
+        "XY03": {
+          "type": "UDT_Solenoid_valve",
+          "description": "VALVE - Venturi valve"
+        }
+      }
+    },
+    "UDT_DS_Valve": {
+      "description": "99 - Library / Objects / Valves / Butterfly / DS",
+      "has_out": false,
+      "devices": {
+        "ZSL": {
+          "type": "Bool",
+          "description": "INPUT - Limit switch closed"
+        },
+        "ZSH": {
+          "type": "Bool",
+          "description": "INPUT - Limit switch opened"
+        },
+        "XYA": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid to open"
+        },
+        "XYB": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid to close"
+        }
+      }
+    },
+    "UDT_SS_Valve": {
+      "description": "99 - Library / Objects / Valves / Butterfly / SS",
+      "has_out": false,
+      "devices": {
+        "ZSL": {
+          "type": "Bool",
+          "description": "INPUT - Limit switch closed"
+        },
+        "ZSH": {
+          "type": "Bool",
+          "description": "INPUT - Limit switch opened"
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Solenoid command"
+        }
+      }
+    },
+    "UDT_Pinch_Valve": {
+      "description": "99 - Library / Objects / Valves / Pinch",
+      "has_out": false,
+      "devices": {
+        "PSL": {
+          "type": "Bool",
+          "description": "INPUT - Pressure received (TRUE = closed)"
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": "OUTPUT - Command"
+        }
+      }
+    },
+    "UDT_Solenoid_valve": {
+      "description": "99 - Library / Objects / Valves / Solenoid",
+      "has_out": true,
+      "devices": {}
+    },
+    "UDT_PAVONE_INPUT": {
+      "description": "99 - Library / Pavone Sistemi",
+      "has_out": false,
+      "devices": {}
+    },
+    "UDT_PAVONE_OUTPUT": {
+      "description": "99 - Library / Pavone Sistemi",
+      "has_out": false,
+      "devices": {}
+    }
+  },
+  "fbs": {
+    "UDT_Pinch_diverter": {
+      "ctrl": {
+        "name": "Pinch_diverter",
+        "param": "DIV"
+      },
+      "sim": {
+        "name": "Pinch_diverter_simulator",
+        "param": "DIV"
+      }
+    },
+    "UDT_PTD_IO": {
+      "ctrl": {
+        "name": "Plug_Type_Diverter",
+        "param": "ptd_Diverter"
+      },
+      "sim": null
+    },
+    "UDT_Filter_1_sleeve": {
+      "ctrl": {
+        "name": "Filter_1_sleeve",
+        "param": "filter"
+      },
+      "sim": null
+    },
+    "UDT_Filter_2_sleeves": {
+      "ctrl": {
+        "name": "Filter_2_sleeves",
+        "param": "filter"
+      },
+      "sim": null
+    },
+    "UDT_Gate_Door": {
+      "ctrl": {
+        "name": "Gate_door",
+        "param": "gate_door"
+      },
+      "sim": {
+        "name": "Gate_door_sim",
+        "param": "gate_door"
+      }
+    },
+    "UDT_Load_cells": {
+      "ctrl": {
+        "name": "Load_cells",
+        "param": "batch"
+      },
+      "sim": null
+    },
+    "UDT_Nolvac": {
+      "ctrl": {
+        "name": "Nolvac",
+        "param": "VC"
+      },
+      "sim": null
+    },
+    "UDT_DS_Valve": {
+      "ctrl": {
+        "name": "DS_Butterfly_valve",
+        "param": "XV"
+      },
+      "sim": {
+        "name": "DS_valve_simulator",
+        "param": "XV"
+      }
+    },
+    "UDT_SS_Valve": {
+      "ctrl": {
+        "name": "SS_Butterfly_valve",
+        "param": "XV"
+      },
+      "sim": {
+        "name": "SS_valve_simulator",
+        "param": "XV"
+      }
+    },
+    "UDT_Pinch_Valve": {
+      "ctrl": {
+        "name": "Pinch_valve",
+        "param": "XV"
+      },
+      "sim": {
+        "name": "Pinch_valve_simulator",
+        "param": "XV"
+      }
+    },
+    "UDT_Solenoid_valve": {
+      "ctrl": {
+        "name": "Solenoid_valve",
+        "param": "XY"
+      },
+      "sim": null
+    }
+  }
+}

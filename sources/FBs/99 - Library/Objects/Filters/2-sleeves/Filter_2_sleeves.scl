@@ -1,0 +1,127 @@
+﻿FUNCTION_BLOCK "Filter_2_sleeves"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_IN_OUT 
+      filter : "UDT_Filter_2_sleeves";
+   END_VAR
+
+   VAR 
+      first_scan { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Indicate if first scan for initialization
+      desired_open_command { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Actual desired command based on active mode
+      validated_open_command { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Desired command if not interlocked
+      pulse_timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TON_TIME;   // Timer for pulse active
+      interval_timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TON_TIME;   // Timer between pulses
+      fb_XYA { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "Solenoid_valve";   // Solenoid valve A instance
+      fb_XYB { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "Solenoid_valve";   // Solenoid valve B instance
+   END_VAR
+
+   VAR CONSTANT 
+      IDLE : Int := 1;   // Filter in idle state
+      ACTIVE : Int := 2;   // Filter cleaning routine is active
+      PULSING : Int := 1;   // Filter pulsing air
+      WAITING : Int := 2;   // Filter waiting for next pulse
+   END_VAR
+
+
+BEGIN
+	REGION Initialization
+	  IF #first_scan THEN
+	    #first_scan := FALSE;
+	    #filter.STATUS.state := #IDLE;
+	    #filter.STATUS.active_state := #PULSING;
+	    #filter.STATUS.active_sleeve := 0;
+	  END_IF;
+	END_REGION
+	
+	REGION Internal valves mapping
+	  #fb_XYA(#filter.DEVICES.XYA);
+	  #fb_XYB(#filter.DEVICES.XYB);
+	END_REGION
+	
+	REGION Determine desired target
+	  IF #filter.CMD.manual_mode THEN
+	    #desired_open_command := #filter.CMD.manual;
+	  ELSE
+	    #desired_open_command := #filter.CMD.auto;
+	  END_IF;
+	  IF NOT #filter.CMD.interlocked THEN
+	    #validated_open_command := #desired_open_command;
+	  END_IF;
+	END_REGION
+	
+	REGION Timers
+	  #interval_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #WAITING),
+	                  PT := #filter.SETTING.interval_duration);
+	  #pulse_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #PULSING),
+	               PT := #filter.SETTING.pulse_duration);
+	END_REGION
+	
+	REGION Top FSM
+	  CASE #filter.STATUS.state OF
+	    #IDLE:
+	      IF #desired_open_command THEN
+	        #filter.STATUS.state := #ACTIVE;
+	        #filter.STATUS.active_state := #PULSING;
+	        #filter.STATUS.active_sleeve := 0;
+	      END_IF;
+	      
+	    #ACTIVE:
+	      IF NOT #desired_open_command THEN
+	        #filter.STATUS.state := #IDLE;
+	      END_IF;
+	  END_CASE;
+	END_REGION
+	
+	REGION Sub FSM
+	  IF #filter.STATUS.state = #ACTIVE THEN
+	    CASE #filter.STATUS.active_state OF
+	      #PULSING:
+	        IF #pulse_timer.Q THEN
+	          #filter.STATUS.active_state := #WAITING;
+	        END_IF;
+	        
+	      #WAITING:
+	        IF #interval_timer.Q THEN
+	          #filter.STATUS.active_sleeve := (#filter.STATUS.active_sleeve + 1) MOD 2;
+	          #filter.STATUS.active_state := #PULSING;
+	        END_IF;
+	    END_CASE;
+	  END_IF;
+	END_REGION
+	
+	REGION Output mapping
+	  #filter.DEVICES.XYA.CMD.auto := FALSE;
+	  #filter.DEVICES.XYB.CMD.auto := FALSE;
+	  #filter.STATUS.is_idle := FALSE;
+	  #filter.STATUS.is_active := FALSE;
+	  #filter.STATUS.is_pulsing := FALSE;
+	  #filter.STATUS.is_waiting := FALSE;
+	  #filter.STATUS.is_sleeve_A := FALSE;
+	  #filter.STATUS.is_sleeve_B := FALSE;
+	  
+	  CASE #filter.STATUS.state OF
+	    #IDLE:
+	      #filter.STATUS.is_idle := TRUE;
+	      
+	    #ACTIVE:
+	      #filter.STATUS.is_active := TRUE;
+	      
+	      CASE #filter.STATUS.active_state OF
+	        #PULSING:
+	          #filter.STATUS.is_pulsing := TRUE;
+	          CASE #filter.STATUS.active_sleeve OF
+	            0:
+	              #filter.DEVICES.XYA.CMD.auto := TRUE;
+	              #filter.STATUS.is_sleeve_A := TRUE;
+	            1:
+	              #filter.DEVICES.XYB.CMD.auto := TRUE;
+	              #filter.STATUS.is_sleeve_B := TRUE;
+	          END_CASE;
+	          
+	        #WAITING:
+	          #filter.STATUS.is_waiting := TRUE;
+	      END_CASE;
+	  END_CASE;
+	END_REGION
+END_FUNCTION_BLOCK
+

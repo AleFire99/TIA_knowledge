@@ -1,0 +1,85 @@
+﻿FUNCTION_BLOCK "Gate_door_sim"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      SIM_TRAVEL_TIME : Time := T#2S;
+   END_VAR
+
+   VAR_IN_OUT 
+      gate_door : "UDT_Gate_Door";
+   END_VAR
+
+   VAR 
+      first_scan { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := TRUE;
+      sim_state { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Int;
+      travel_timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TON_TIME;
+   END_VAR
+
+   VAR CONSTANT 
+      SIM_CLOSED : Int := 1;
+      SIM_OPENING : Int := 2;
+      SIM_OPEN : Int := 3;
+      SIM_CLOSING : Int := 4;
+   END_VAR
+
+
+BEGIN
+	REGION Initialization
+	    IF #first_scan THEN
+	        #first_scan := FALSE;
+	        // Align sim position with whatever state the controller woke up in
+	        IF #gate_door.STATUS.is_open THEN
+	            #sim_state := #SIM_OPEN;
+	        ELSE
+	            #sim_state := #SIM_CLOSED;
+	        END_IF;
+	    END_IF;
+	END_REGION
+	
+	REGION Travel timer
+	    // Timer is active only while the gate is in motion.
+	    // All states share one central timer; CASE below starts/stops it.
+	    #travel_timer(
+	                  IN := (#sim_state = #SIM_OPENING) OR (#sim_state = #SIM_CLOSING),
+	                  PT := #SIM_TRAVEL_TIME
+	    );
+	END_REGION
+	
+	REGION FSM logic
+	    CASE #sim_state OF
+	            
+	        #SIM_CLOSED:
+	            // Gate latched closed. XY drop (lock release) triggers opening.
+	            IF NOT #gate_door.DEVICES.XY.out THEN
+	                #sim_state := #SIM_OPENING;
+	            END_IF;
+	            
+	        #SIM_OPENING:
+	            // Gate swinging open. Advance when travel timer expires.
+	            IF #travel_timer.Q THEN
+	                #sim_state := #SIM_OPEN;
+	            END_IF;
+	            
+	        #SIM_OPEN:
+	            // Gate fully open. CMD.close triggers closing.
+	            IF #gate_door.CMD.close THEN
+	                #sim_state := #SIM_CLOSING;
+	            END_IF;
+	            
+	        #SIM_CLOSING:
+	            // Gate latches closed when travel timer expires.
+	            IF #travel_timer.Q THEN
+	                #sim_state := #SIM_CLOSED;
+	            END_IF;
+	            
+	    END_CASE;
+	END_REGION
+	
+	REGION Output mapping
+	    // ZSL reflects physical position only; TRUE = gate closed.
+	    #gate_door.DEVICES.ZSL := (#sim_state = #SIM_CLOSED);
+	END_REGION
+	
+	
+END_FUNCTION_BLOCK
+

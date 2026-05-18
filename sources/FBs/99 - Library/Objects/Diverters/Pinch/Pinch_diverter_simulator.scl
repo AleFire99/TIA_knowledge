@@ -1,0 +1,32 @@
+﻿FUNCTION_BLOCK "Pinch_diverter_simulator"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      ON_Delay : Time := T#2s;
+      OFF_Delay : Time := T#2s;
+   END_VAR
+
+   VAR_IN_OUT 
+      DIV : "UDT_Pinch_diverter";
+   END_VAR
+
+   VAR 
+      XVA { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "Pinch_valve_simulator";
+      XVB { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : "Pinch_valve_simulator";
+   END_VAR
+
+
+BEGIN
+	REGION XVA instantiation
+	  #XVA(ON_Delay := #ON_Delay,
+	       OFF_Delay := #OFF_Delay,
+	       XV := #DIV.DEVICES.XVA);
+	END_REGION
+	
+	REGION XVB instantiation
+	  #XVB(ON_Delay := #ON_Delay,
+	       OFF_Delay := #OFF_Delay,
+	       XV := #DIV.DEVICES.XVB);
+	END_REGION
+END_FUNCTION_BLOCK
+

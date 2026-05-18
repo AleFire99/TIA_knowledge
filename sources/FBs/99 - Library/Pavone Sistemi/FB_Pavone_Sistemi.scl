@@ -1,0 +1,64 @@
+﻿FUNCTION_BLOCK "FB_Pavone_Sistemi"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      Pavone_input : "UDT_PAVONE_INPUT";
+   END_VAR
+
+   VAR_OUTPUT 
+      WT : Real;   // Scale actual weight value
+      Scale_OK : Bool;
+      Scale_motion : Bool;
+      Scale_error : Bool;
+      Pavone_output : "UDT_PAVONE_OUTPUT";
+   END_VAR
+
+   VAR 
+      Autoreset_T {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'; S7_SetPoint := 'False'} : IEC_TIMER;
+      Autoreset_M { S7_SetPoint := 'True'} : Bool;
+      WatchDog_T {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'; S7_SetPoint := 'False'} : IEC_TIMER;
+   END_VAR
+
+   VAR_TEMP 
+      Temp_Real : Real;
+   END_VAR
+
+   VAR CONSTANT 
+      BadDataDetected : Real := -999.0;
+   END_VAR
+
+
+BEGIN
+	#Autoreset_T.TON(IN := NOT #Autoreset_M,
+	                PT := t#250ms,
+	                Q => #Autoreset_M);
+	
+	IF #Pavone_output.OutputReg.MonitorRegister < 1000 THEN
+	    IF #Autoreset_M THEN
+	        #Pavone_output.OutputReg.MonitorRegister := #Pavone_output.OutputReg.MonitorRegister + 1;
+	    END_IF;
+	ELSE
+	    #Pavone_output.OutputReg.MonitorRegister := 0;
+	END_IF;
+	
+	#WatchDog_T.TON(IN := #Pavone_output.OutputReg.MonitorRegister <> #Pavone_input.InputReg.MonitorRegister,
+	                        PT := t#150ms);
+	
+	IF #WatchDog_T.Q THEN
+	   #Scale_error := TRUE;
+	ELSE
+	    #Scale_error := FALSE;
+	END_IF;
+	
+	IF NOT #Scale_error THEN
+	    #Scale_OK := TRUE;
+	    #Scale_motion := NOT #Pavone_input.StatusReg.Stable;
+	    #Temp_Real := DINT_TO_REAL(IN := #Pavone_input.InputReg.NetWeight) / 100.0;
+	ELSE
+	    #Scale_OK := FALSE;
+	    #Scale_motion := FALSE;
+	    #Temp_Real := #BadDataDetected;
+	END_IF;
+	#WT := #Temp_Real;
+END_FUNCTION_BLOCK
+

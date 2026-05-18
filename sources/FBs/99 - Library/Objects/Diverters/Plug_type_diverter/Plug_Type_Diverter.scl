@@ -1,0 +1,148 @@
+﻿FUNCTION_BLOCK "Plug_Type_Diverter"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      b_Line_toggle_command : Bool;   // 0 for line A, 1 for line B
+      b_General_alarm_presence : Bool;   // Presence of alarms
+      b_Error_acknowledgment : Bool;   // Errors acknowledged
+      t_Seal_deflating_time : Time := T#500ms;   // Gasket inflating timer setting
+      t_Seal_inflating_time : Time := T#500ms;   // Gasket inflating timer setting
+   END_VAR
+
+   VAR_IN_OUT 
+      ptd_Diverter : "UDT_PTD_IO";   // Diverter object
+   END_VAR
+
+   VAR 
+      i_State_selector : Int;   // Current state selector
+      i_DivSeq : Int;
+      b_Seal_inflated : Bool;
+      b_Seal_deflated : Bool;
+      b_Start_inflating_timer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      b_Start_deflating_timer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      ton_Seal_deflating_timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      ton_Seal_inflating_timer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+   END_VAR
+
+
+BEGIN
+	CASE #i_State_selector OF
+	  0:
+	    REGION st_Line_A_selected
+	      
+	      // Sequence steps for switching from Line A -> Line B
+	      // #i_DivSeq: 0 = idle, 1 = deflating, 2 = moving valve+inflating
+	      
+	      // Idle: ensure outputs reflect Line A selected
+	      IF #i_DivSeq = 0 THEN
+	        #ptd_Diverter.OUT.XY01A.Automatic := TRUE;    // Line A selected
+	        #ptd_Diverter.OUT.XY01B.Automatic := FALSE;   // Ensure B is released
+	        #ptd_Diverter.OUT.XY02.Automatic := TRUE;     // Seal inflated
+	      END_IF;
+	      
+	      // Start change sequence when toggle command is detected
+	      IF #b_Line_toggle_command AND #i_DivSeq = 0 THEN
+	        #i_DivSeq := 1;                      // begin deflating
+	        #ptd_Diverter.OUT.XY02.Automatic := FALSE;     // deflate seal
+	        #b_Start_deflating_timer := TRUE;
+	      END_IF;
+	      
+	      #ton_Seal_deflating_timer(IN := #b_Start_deflating_timer,
+	                 PT := #t_Seal_deflating_time,
+	                 Q => #b_Seal_deflated);
+	      
+	      // Wait for seal to deflate
+	      IF #i_DivSeq = 1 AND #b_Seal_deflated THEN
+	        #b_Start_deflating_timer := FALSE;
+	        // Move diverter to line B
+	        #ptd_Diverter.OUT.XY01A.Automatic := FALSE;
+	        #ptd_Diverter.OUT.XY01B.Automatic := TRUE;
+	        #ptd_Diverter.OUT.XY02.Automatic := TRUE;    // begin inflating seal
+	        // Start inflate timer
+	        #b_Start_inflating_timer := TRUE;
+	        #i_DivSeq := 2;
+	      END_IF;
+	      
+	      #ton_Seal_inflating_timer(IN := #b_Start_inflating_timer,
+	                 PT := #t_Seal_inflating_time,
+	                 Q => #b_Seal_inflated);
+	      
+	      // Wait for seal to inflate after valve moved
+	      IF #i_DivSeq = 2 AND #b_Seal_inflated THEN
+	        #b_Start_inflating_timer := FALSE;
+	        #i_DivSeq := 0;                    // sequence finished
+	        #i_State_selector := 1;           // now Line B selected
+	      END_IF;
+	      
+	      IF #b_General_alarm_presence THEN       // Error occured
+	        #i_State_selector := 2;
+	        #i_DivSeq := 0;                       // reset sequence
+	        #b_Start_deflating_timer := FALSE;
+	        #b_Start_inflating_timer := FALSE;
+	      END_IF;
+	      
+	    END_REGION ;
+	  1:
+	    REGION st_Line_B_selected
+	      
+	      // Sequence steps for switching from Line B -> Line A (mirrored)
+	      IF #i_DivSeq = 0 THEN
+	        #ptd_Diverter.OUT.XY01A.Automatic := FALSE;
+	        #ptd_Diverter.OUT.XY01B.Automatic := TRUE;    // Line B selected
+	        #ptd_Diverter.OUT.XY02.Automatic := TRUE;     // Seal inflated
+	      END_IF;
+	      
+	      // If a toggle request is signalled to go back to A (use same input as in state 0)
+	      IF NOT #b_Line_toggle_command AND #i_DivSeq = 0 THEN
+	        #i_DivSeq := 1;                      // begin deflating
+	        #ptd_Diverter.OUT.XY02.Automatic := FALSE;     // deflate seal
+	        #b_Start_deflating_timer := TRUE;
+	      END_IF;
+	      
+	      #ton_Seal_deflating_timer(IN := #b_Start_deflating_timer,
+	                                PT := #t_Seal_deflating_time,
+	                                Q => #b_Seal_deflated);
+	      
+	      IF #i_DivSeq = 1 AND #b_Seal_deflated THEN
+	        #b_Start_deflating_timer := FALSE;
+	        // Move diverter to line A
+	        #ptd_Diverter.OUT.XY01B.Automatic := FALSE;
+	        #ptd_Diverter.OUT.XY01A.Automatic := TRUE;
+	        #ptd_Diverter.OUT.XY02.Automatic := TRUE;    // begin inflating seal
+	        // Start inflate timer
+	        #b_Start_inflating_timer := TRUE;
+	        #i_DivSeq := 2;
+	      END_IF;
+	      
+	      #ton_Seal_inflating_timer(IN := #b_Start_inflating_timer,
+	                                PT := #t_Seal_inflating_time,
+	                                Q => #b_Seal_inflated);
+	      
+	      IF #i_DivSeq = 2 AND #b_Seal_inflated THEN
+	        #b_Start_inflating_timer := FALSE;
+	        #i_DivSeq := 0;                    // sequence finished
+	        #i_State_selector := 0;           // now Line A selected
+	      END_IF;
+	      
+	      IF #b_General_alarm_presence THEN       // Error occured
+	        #i_State_selector := 2;
+	        #i_DivSeq := 0;
+	        #b_Start_deflating_timer := FALSE;
+	        #b_Start_inflating_timer := FALSE;
+	      END_IF;
+	      
+	    END_REGION ;
+	  ELSE
+	    REGION st_Error_state
+	      
+	      // In error state: ensure seal is inflated and wait for acknowledgement
+	      #ptd_Diverter.OUT.XY02.Automatic := TRUE;     // Inflate the seal for safety
+	      #i_DivSeq := 0;
+	      IF #b_Error_acknowledgment THEN
+	        #i_State_selector := 0;            // return to Line A by default after ack
+	      END_IF;
+	    END_REGION ;
+	    
+	END_CASE;
+END_FUNCTION_BLOCK
+

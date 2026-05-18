@@ -1,0 +1,37 @@
+﻿TYPE "UDT_SS_Valve"
+VERSION : 0.1
+   STRUCT
+      DEVICES { ExternalWritable := 'False'} : Struct
+         ZSL { ExternalWritable := 'False'} : Bool;   // INPUT - Limit switch closed
+         ZSH { ExternalWritable := 'False'} : Bool;   // INPUT - Limit switch opened
+         XY { ExternalWritable := 'False'; S7_SetPoint := 'False'} : "UDT_Solenoid_valve";   // OUTPUT - Solenoid command
+      END_STRUCT;
+      CMD : Struct
+         manual_mode : Bool;   // COMMAND - Active mode
+         manual : Bool;   // COMMAND - Manual command
+         auto { ExternalWritable := 'False'} : Bool;   // COMMAND - Automatic command
+         interlocked { ExternalWritable := 'False'} : Bool;   // COMMAND - 0=enabled/1=interlocked
+         maintenance_reset : Bool;   // COMMAND - Reset movement cycle counter
+         ack : Bool;   // COMMAND - Acknowledge all errors
+      END_STRUCT;
+      SETTING : Struct
+         actuator_timeout : Time := T#2s;   // SETTING - Max time to complete movement
+         maintenance_threshold : Int := 10000;   // SETTING - Max number of movements before maintenance warning
+      END_STRUCT;
+      STATUS { ExternalWritable := 'False'} : Struct
+         state { ExternalWritable := 'False'} : Int := 1;   // STATE - 0=fault, 1=normal
+         normal_state { ExternalWritable := 'False'} : Int := 1;   // STATE - 1=closed, 2=opening, 3=open, 4=closing
+         is_fault { ExternalWritable := 'False'} : Bool;   // STATUS - Valve in fault state
+         is_closed { ExternalWritable := 'False'} : Bool;   // STATUS - Valve closed
+         is_opening { ExternalWritable := 'False'} : Bool;   // STATUS - Valve opening
+         is_open { ExternalWritable := 'False'} : Bool;   // STATUS - Valve open
+         is_closing { ExternalWritable := 'False'} : Bool;   // STATUS - Valve closing
+      END_STRUCT;
+      ALARMS { ExternalWritable := 'False'} : Struct
+         error { ExternalWritable := 'False'} : Bool;   // ALARM - General error
+         warning { ExternalWritable := 'False'} : Bool;   // ALARM - Maintenance warning
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+

@@ -1,0 +1,12 @@
+﻿TYPE "UDT_PAVONE_OUTPUT"
+VERSION : 0.1
+   STRUCT
+      Command : Word;
+      OutputReg : Struct
+         DataRegister : DInt;
+         MonitorRegister : Word;
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+
