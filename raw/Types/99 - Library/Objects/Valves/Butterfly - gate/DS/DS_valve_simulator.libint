@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: DS_valve_simulator.s7dcl
+    Hash: HxFUgzpp70H3ZrxEDCioltYonEP08uVuUON4urQ4Wvo=
+LibraryMetaFileHash: CQSH4zuPviWPHpZyGgc59YYvCMn3M9K+c6lg/MPA1mY=
+LibraryVersion:
+  Guid: 933a4138-c0c0-476e-a9d7-e667a0b16aaa
+  DependsOn:
+    - TypeName: UDT_DS_Valve
+      VersionNumber: 1.3.0

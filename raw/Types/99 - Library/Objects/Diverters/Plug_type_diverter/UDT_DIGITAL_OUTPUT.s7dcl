@@ -1,0 +1,14 @@
+﻿TYPE
+    UDT_DIGITAL_OUTPUT : STRUCT
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Manual : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Automatic : Bool;
+    END_STRUCT;
+END_TYPE

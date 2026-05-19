@@ -1,11 +1,15 @@
 """
 Ingest raw/ Simatic SD exports → dist/library_manifest.json.
 
+Supports VCI export format (.s7dcl files).
+Dispatches each file to UDT or FB parser based on content.
+Reads sibling .libinfo files for descriptions when available.
+
 Usage:
     uv run python scripts/ingest.py
 
 Steps:
-  1. Walk raw/ recursively for .udt and .scl files (tree structure varies)
+  1. Walk raw/ recursively for .s7dcl files
   2. Parse UDT members, has_out flag, device descriptions
   3. Parse FB VAR_IN_OUT param + UDT type, is_sim flag
   4. Merge LAD sim FB overrides from config.toml [[manifest.sim_overrides]]
@@ -35,6 +39,10 @@ import config as cfg
 
 MANIFEST_VERSION = "1.0.0"
 
+# Matches _.TypeName or just TypeName (VCI uses _.prefix for cross-references)
+_TYPE_RE = re.compile(r'"([^"]+)"|(?:_\.)?(\w+)')
+_SIM_RE = re.compile(r"(sim(ulator)?)", re.IGNORECASE)
+
 
 def _load_sim_overrides() -> list[dict]:
     toml_path = REPO_ROOT / "config.toml"
@@ -45,23 +53,36 @@ def _load_sim_overrides() -> list[dict]:
     return data.get("manifest", {}).get("sim_overrides", [])
 
 
+def _read_libinfo_description(path: Path) -> str:
+    """Read en-US comment from sibling .libinfo file, return empty string if absent."""
+    libinfo = path.with_suffix(".libinfo")
+    if not libinfo.exists():
+        return ""
+    try:
+        text = libinfo.read_text(encoding="utf-8-sig")
+        m = re.search(r'en-US:\s*(.+)', text)
+        return m.group(1).strip() if m else ""
+    except Exception:
+        return ""
+
+
 # ---------------------------------------------------------------------------
 # UDT parsing
 # ---------------------------------------------------------------------------
 
 def _parse_member_line(line: str) -> tuple[str, str] | None:
     stripped = line.strip()
-    if not stripped or stripped.startswith("//"):
+    if not stripped or stripped.startswith("//") or stripped.startswith("{"):
         return None
     m = re.match(r'^(\w+)(?:\s*\{[^}]*\})?\s*:\s*(.+)', stripped)
     if not m:
         return None
     rhs = m.group(2).split(';')[0].split('//')[0].strip()
-    type_m = re.match(r'"([^"]+)"|(\w+)', rhs)
+    type_m = _TYPE_RE.match(rhs)
     if not type_m:
         return None
     raw_type = type_m.group(1) or type_m.group(2)
-    if raw_type.lower() == "struct":
+    if not raw_type or raw_type.lower() == "struct":
         return None
     return m.group(1), raw_type
 
@@ -70,16 +91,21 @@ def parse_udt(path: Path) -> dict:
     text = path.read_text(encoding="utf-8-sig")
     lines = text.splitlines()
 
-    name_m = re.search(r'^TYPE\s+"([^"]+)"', text, re.MULTILINE)
+    # VCI format: TYPE\n    UDT_Name : STRUCT (name unquoted, newline-separated)
+    # Old format: TYPE "UDT_Name" (name quoted, same line)
+    name_m = re.search(r'\bTYPE\b\s+"([^"]+)"', text)          # old: quoted
+    if not name_m:
+        name_m = re.search(r'\bTYPE\b\s+(\w+)\s*:', text)       # new: unquoted
     name = name_m.group(1) if name_m else path.stem
 
-    # Derive description from folder path relative to raw/
-    try:
-        rel_parts = path.relative_to(cfg.RAW).parts
-        desc_parts = list(rel_parts[:-1])
-    except ValueError:
-        desc_parts = []
-    description = " / ".join(desc_parts) if desc_parts else ""
+    # Description: en-US from .libinfo, else derive from folder path
+    description = _read_libinfo_description(path)
+    if not description:
+        try:
+            rel_parts = path.relative_to(cfg.RAW).parts
+            description = " / ".join(rel_parts[:-1])
+        except ValueError:
+            description = ""
 
     devices: dict[str, dict] = {}
     has_out = False
@@ -88,6 +114,12 @@ def parse_udt(path: Path) -> dict:
 
     for line in lines:
         stripped = line.strip()
+
+        # Skip multi-line annotation lines (lines inside { ... } blocks)
+        if stripped.startswith("{") and not stripped.endswith("}"):
+            continue  # multi-line annotation open — ignore until close
+        if stripped == "}":
+            continue  # multi-line annotation close
 
         named_struct_m = re.match(
             r'^(\w+)(?:\s*\{[^}]*\})?\s*:\s*Struct\b', stripped, re.IGNORECASE
@@ -126,11 +158,8 @@ def parse_udt(path: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# SCL / FB parsing
+# FB parsing
 # ---------------------------------------------------------------------------
-
-_SIM_RE = re.compile(r"(sim(ulator)?)", re.IGNORECASE)
-
 
 def parse_fb(path: Path) -> dict | None:
     text = path.read_text(encoding="utf-8-sig")
@@ -144,9 +173,25 @@ def parse_fb(path: Path) -> dict | None:
     if not var_io_m:
         return None
 
+    var_block = var_io_m.group(1)
+
+    # VCI format: "ParamName" : _.UDT_Type;  (param quoted, type prefixed)
+    # Old format: ParamName : "UDT_Type";    (param unquoted, type quoted)
     param_m = re.search(
-        r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*"([^"]+)"\s*;', var_io_m.group(1)
+        r'"(\w+)"\s*(?:\{[^}]*\})?\s*:\s*(?:_\.)?(\w+)\s*;',  # VCI: quoted param
+        var_block
     )
+    if not param_m:
+        param_m = re.search(
+            r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*"([^"]+)"\s*;',     # old: unquoted param
+            var_block
+        )
+    if not param_m:
+        # Fallback: unquoted param, unquoted type with optional _.prefix
+        param_m = re.search(
+            r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*(?:_\.)?(\w+)\s*;',
+            var_block
+        )
     if not param_m:
         return None
 
@@ -208,10 +253,7 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict])
 def write_manifest_atomic(manifest: dict, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     content = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
-    tmp = dest.with_suffix(".tmp")
-    tmp.write_text(content, encoding="utf-8")
-    dest.unlink(missing_ok=True)
-    tmp.rename(dest)
+    dest.write_text(content, encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -219,23 +261,40 @@ def write_manifest_atomic(manifest: dict, dest: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    udt_files = sorted(cfg.RAW.rglob("*.udt"))
-    scl_files = sorted(cfg.RAW.rglob("*.scl"))
+    s7dcl_files = sorted(cfg.RAW.rglob("*.s7dcl"))
 
-    if not udt_files and not scl_files:
+    # Also support old ExternalSource format (.scl / .udt)
+    scl_files = sorted(cfg.RAW.rglob("*.scl"))
+    udt_files = sorted(cfg.RAW.rglob("*.udt"))
+
+    if not s7dcl_files and not scl_files and not udt_files:
         print(f"No source files found in raw/ ({cfg.RAW}).")
         print("Run scripts/export.py first, or export manually from TIA Portal.")
         sys.exit(1)
 
-    udts = [parse_udt(f) for f in udt_files]
-    fbs = [fb for fb in (parse_fb(f) for f in scl_files) if fb is not None]
-    sim_overrides = _load_sim_overrides()
+    udts: list[dict] = []
+    fbs: list[dict] = []
 
+    if s7dcl_files:
+        for f in s7dcl_files:
+            text = f.read_text(encoding="utf-8-sig")
+            if "FUNCTION_BLOCK" in text:
+                fb = parse_fb(f)
+                if fb:
+                    fbs.append(fb)
+            elif "TYPE" in text:
+                udts.append(parse_udt(f))
+    else:
+        # Fallback: old ExternalSource format
+        udts = [parse_udt(f) for f in udt_files]
+        fbs = [fb for fb in (parse_fb(f) for f in scl_files) if fb is not None]
+
+    sim_overrides = _load_sim_overrides()
     manifest = build_manifest(udts, fbs, sim_overrides)
     write_manifest_atomic(manifest, cfg.MANIFEST_PATH)
 
     print(f"UDTs parsed      : {len(udts)}")
-    print(f"FBs parsed       : {len(fbs)} (of {len(scl_files)} .scl files)")
+    print(f"FBs parsed       : {len(fbs)} (of {len(s7dcl_files or scl_files)} files)")
     print(f"Sim overrides    : {len(sim_overrides)}")
     print(f"Manifest written : {cfg.MANIFEST_PATH}")
     print()

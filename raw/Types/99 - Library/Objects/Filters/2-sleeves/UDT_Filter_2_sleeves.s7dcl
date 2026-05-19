@@ -1,0 +1,87 @@
+﻿TYPE
+    UDT_Filter_2_sleeves : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_nW"
+            }
+            XYA : _.UDT_Solenoid_valve;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_eG"
+            }
+            XYB : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_tV" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_p8" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_wt"
+            }
+            auto : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Lj"
+            }
+            interlocked : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_36W" }
+            pulse_duration : Time := T#500ms;
+            { S7_MLC := "MLC_4J9" }
+            interval_duration : Time := T#3s;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3vu"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_32U"
+            }
+            active_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3wh"
+            }
+            active_sleeve : Int;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_38W"
+            }
+            is_idle : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_55t"
+            }
+            is_active : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4B8"
+            }
+            is_pulsing : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4QS"
+            }
+            is_waiting : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_ve"
+            }
+            is_sleeve_A : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_34b"
+            }
+            is_sleeve_B : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

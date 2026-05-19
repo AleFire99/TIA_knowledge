@@ -1,0 +1,13 @@
+﻿MultiLingualTexts:
+  - id: MLC_46Q
+    en-US: INPUT - Limit switch closed
+  - id: MLC_rW
+    en-US: SETTING - Max number of movements before maintenance warning
+  - id: MLC_xx
+    en-US: STATUS - Valve in fault state
+  - id: MLC_m4
+    en-US: STATUS - Valve closed
+  - id: MLC_4Es
+    en-US: STATUS - Valve opening
+  - id: MLC_4Qp
+    en-US: ALARM - General error

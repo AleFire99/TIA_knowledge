@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 828c7df1-d5d2-4b5d-9e2e-0874a7227539
+  Comment:
+    en-US: Uniformed filter states with other objects
+LibraryVersion:
+  VersionNumber: 1.1.4
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated comment

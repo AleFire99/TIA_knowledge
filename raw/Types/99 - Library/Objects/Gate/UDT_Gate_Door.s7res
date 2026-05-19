@@ -1,0 +1,17 @@
+﻿MultiLingualTexts:
+  - id: MLC_39z
+    en-US: INPUT - Pressure received
+  - id: MLC_56T
+    en-US: OUTPUT - Command
+  - id: MLC_3jF
+    en-US: COMMAND - Manual command
+  - id: MLC_4um
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_cs
+    en-US: STATE -  1=ClosedLocked, 2=ClosedUnlocked, 3=Open
+  - id: MLC_Qy
+    en-US: STATUS - Door is closed and locked
+  - id: MLC_3Nu
+    en-US: STATUS - Door is closed but unlocked
+  - id: MLC_4Vd
+    en-US: STATUS - Door is open

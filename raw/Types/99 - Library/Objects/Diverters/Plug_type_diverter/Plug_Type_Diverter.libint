@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: Plug_Type_Diverter.s7dcl
+    Hash: YMTSiEa0h/wmzJ3CU+hZEcP/r4pKUVEVGliU15SBuac=
+  - FileName: Plug_Type_Diverter.s7res
+    Hash: HIkJsvXTXi90CPdeP7x0Yf011nCcw9lcnwjLiSwSw9w=
+LibraryMetaFileHash: fqMWJGHQ9B4Ewqh9/sVpBGCmYhamJy0FKDN4zOSStw8=
+LibraryVersion:
+  Guid: adc54824-e59e-4485-b808-8a477cef938e
+  DependsOn:
+    - TypeName: UDT_PTD_IO
+      VersionNumber: 0.0.2

@@ -1,0 +1,50 @@
+﻿TYPE
+    UDT_Gate_Door : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_39z"
+            }
+            ZSL : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_56T"
+            }
+            XY : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_3jF" }
+            open : Bool;
+            close : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4um"
+            }
+            interlocked : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_cs"
+            }
+            state : Int;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Qy"
+            }
+            is_closed_locked : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Nu"
+            }
+            is_closed_unlocked : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Vd"
+            }
+            is_open : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

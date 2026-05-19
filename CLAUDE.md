@@ -83,7 +83,8 @@ After export: **remove all user blocks from the staging project** before committ
 uv run python scripts/ingest.py
 ```
 
-Walks all of `raw/` recursively for `.scl` and `.udt` files.
+Walks all of `raw/` recursively for `.s7dcl` files (Simatic SD / VCI format).
+Falls back to `.scl` / `.udt` if no `.s7dcl` found (old ExternalSource format).
 Writes `dist/library_manifest.json`.
 
 ### Step 3 — Generate docs (Claude Code)
@@ -182,20 +183,22 @@ Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 
 | UDT | Controlling FB | VAR_IN_OUT param | Sim FB |
 |-----|----------------|------------------|--------|
-| UDT_SS_Valve | SS_Butterfly_valve | XV | SS_valve_simulator |
-| UDT_DS_Valve | DS_Butterfly_valve | XV | DS_valve_simulator |
-| UDT_Pinch_Valve | Pinch_valve | XV | Pinch_valve_simulator |
-| UDT_Solenoid_valve | Solenoid_valve | XY | — |
-| UDT_Gate_Door | Gate_door | gate_door | Gate_door_sim |
-| UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator |
+| UDT_SS_Valve | — | — | SS_valve_simulator (XV) |
+| UDT_DS_Valve | — | — | DS_valve_simulator (XV) |
+| UDT_Pinch_Valve | — | — | Pinch_valve_simulator (XV) |
+| UDT_Solenoid_valve | — | — | — |
+| UDT_Gate_Door | Gate_door | gate_door | — |
+| UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator (DIV) |
 | UDT_PTD_IO | Plug_Type_Diverter | ptd_Diverter | — |
-| UDT_Filter_1_sleeve | Filter_1_sleeve | filter | — |
+| UDT_Filter_1_sleeve | — | — | — |
 | UDT_Filter_2_sleeves | Filter_2_sleeves | filter | — |
-| UDT_Load_cells | Load_cells | batch | — |
-| UDT_Nolvac | Nolvac | VC | — |
+| UDT_Load_cells | Load_cells | scale | — |
+| UDT_Nolvac | — | — | — |
+| UDT_Pipeline | Pipeline | pipeline | — |
+| UDT_Analogic_signal | — | — | — |
 
-Simulator FBs for SS/DS/Pinch valves and Pinch_diverter are LAD blocks — declared in
-`config.toml` as `[[manifest.sim_overrides]]`.
+SS/DS/Pinch valve simulators are SCL blocks exported in `raw/` — auto-detected by `ingest.py`.
+`config.toml` sim_overrides are a no-op for these (already populated).
 
 ---
 

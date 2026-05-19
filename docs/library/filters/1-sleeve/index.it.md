@@ -69,8 +69,8 @@ classDiagram
     }
     class STATUS {
         +Int state
+        +Int active_state
         +Bool is_idle
-        +Bool is_waiting
         +Bool is_active
     }
     UDT_Filter_1_sleeve *-- DEVICES
@@ -106,11 +106,11 @@ stateDiagram-v2
 
 ### Tabella stati e uscite
 
-| Stato | `XY` | Descrizione |
-|-------|------|-------------|
-| IDLE (1) | FALSE | Standby, nessuna pulizia |
-| WAITING (2) | FALSE | Tra impulsi — timer intervallo in esecuzione |
-| ACTIVE (3) | TRUE | Impulso attivo — scarica d'aria nella manica |
+| `state` | `active_state` | `XY` | Descrizione |
+|---------|---------------|------|-------------|
+| IDLE (1) | — | FALSE | Standby, nessuna pulizia |
+| ACTIVE (2) | PULSING (1) | TRUE | Impulso attivo — scarica d'aria nella manica |
+| ACTIVE (2) | WAITING (2) | FALSE | Tra impulsi — timer intervallo in esecuzione |
 
 ### Tabella transizioni di stato
 

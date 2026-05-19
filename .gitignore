@@ -1,6 +1,9 @@
 # MkDocs build output
 site/
 
+# Temp files
+*.tmp
+
 # Python
 __pycache__/
 *.pyc

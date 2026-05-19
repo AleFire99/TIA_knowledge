@@ -1,0 +1,43 @@
+﻿MultiLingualTexts:
+  - id: MLC_3p5
+    en-US: INPUT - Limit switch closed
+  - id: MLC_4Az
+    en-US: INPUT - Limit switch opened
+  - id: MLC_4t2
+    en-US: OUTPUT - Solenoid to open
+  - id: MLC_3QC
+    en-US: OUTPUT - Solenoid to close
+  - id: MLC_4Rg
+    en-US: COMMAND - Active mode
+  - id: MLC_4jX
+    en-US: COMMAND - Manual command
+  - id: MLC_PK
+    en-US: COMMAND - Automatic command
+  - id: MLC_4Vv
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_53G
+    en-US: COMMAND - Reset movement cycle counter
+  - id: MLC_4eP
+    en-US: COMMAND - Acknowledge all errors
+  - id: MLC_4hD
+    en-US: SETTING - Max time to complete movement
+  - id: MLC_Qk
+    en-US: SETTING - Max number of movements before maintenance warning
+  - id: MLC_56C
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_3RT
+    en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
+  - id: MLC_572
+    en-US: STATUS - Valve in fault state
+  - id: MLC_4xk
+    en-US: STATUS - Valve closed
+  - id: MLC_48s
+    en-US: STATUS - Valve opening
+  - id: MLC_3eN
+    en-US: STATUS - Valve open
+  - id: MLC_55Q
+    en-US: STATUS - Valve closing
+  - id: MLC_3A5
+    en-US: ALARM - General error
+  - id: MLC_aa
+    en-US: ALARM - Maintenance warning

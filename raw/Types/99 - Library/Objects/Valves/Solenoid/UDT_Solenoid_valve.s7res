@@ -1,0 +1,17 @@
+﻿MultiLingualTexts:
+  - id: MLC_3TQ
+    en-US: COMMAND - Active mode
+  - id: MLC_3FD
+    en-US: COMMAND - Manual command
+  - id: MLC_sx
+    en-US: COMMAND - Automatic command
+  - id: MLC_3Sw
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_3pD
+    en-US: STATUS - 1=closed,3=active
+  - id: MLC_4Lx
+    en-US: STATUS - Valve is open
+  - id: MLC_hT
+    en-US: STATUS - Valve is closed
+  - id: MLC_4v8
+    en-US: OUT - Solenoid valve command

@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: d6338fd8-0faa-4c75-8f38-70d5bfd0ff7e
+  Comment:
+    en-US: onverted in SCL
+LibraryVersion:
+  VersionNumber: 0.0.3
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Reduced movement time

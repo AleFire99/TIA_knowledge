@@ -1,0 +1,36 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Pipeline"
+    VAR_IN_OUT 
+        pipeline : _.UDT_Pipeline;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Initialization
+            #pipeline.STATUS.is_empty := FALSE;
+            #pipeline.STATUS.is_pressurised := FALSE;
+            #pipeline.STATUS.is_with_material := FALSE;
+            #pipeline.ALARMS.is_clogged := FALSE;
+        END_REGION
+        
+        
+        REGION Lookup table
+            IF #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.empty_thresh THEN
+                #pipeline.STATUS.is_empty := TRUE;
+            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.empty_thresh
+                    AND #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.material_thresh THEN
+                #pipeline.STATUS.is_pressurised := TRUE;
+            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.material_thresh
+                    AND #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.clogged_thresh THEN
+                #pipeline.STATUS.is_with_material := TRUE;
+            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.clogged_thresh THEN
+                #pipeline.ALARMS.is_clogged := TRUE;
+            END_IF;
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION_BLOCK

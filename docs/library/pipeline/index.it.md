@@ -2,17 +2,16 @@
 
 ## Panoramica
 
-Lo stato della pipeline è derivato continuamente dalla lettura del trasmettitore di pressione (PT). Non è necessaria una FSM: lo stato corrente è una funzione diretta del valore PT, con isteresi applicata a ciascun confine per prevenire il chattering.
+`Pipeline` deriva lo stato della pipeline dalla lettura del trasmettitore di pressione (`PT.Scaled_value`). La logica è una semplice tabella di lookup: il valore PT viene confrontato sequenzialmente con tre soglie e viene impostato il flag di stato corrispondente. Un solo flag è TRUE in qualsiasi momento.
 
-Quattro stati coprono l'intera escursione operativa: da pipeline vuota a ostruzione. Solo un flag di stato è TRUE in qualsiasi momento.
+Quattro stati coprono l'intera escursione operativa: pipeline vuota, in pressione (senza materiale), con materiale, otturata.
 
 ---
 
 ## Componenti principali
 
-- **Trasmettitore di pressione** (`pipeline_PT`) — lettura analogica della pressione nella pipeline [bar]
-- **Soglie centrali** (`P_EMPTY`, `P_MATERIAL`, `P_CLOG`) — tre valori che definiscono i confini tra i quattro stati
-- **Banda di isteresi** (`P_HYST`) — semiampiezza applicata simmetricamente a tutti i confini; un singolo parametro controlla il deadband sull'intera escursione
+- **Trasmettitore di pressione `PT`** — lettura analogica della pressione nella pipeline; espone `PT.Raw_value` (grezzo) e `PT.Scaled_value` (in unità ingegneristiche, tipicamente bar)
+- **Soglie configurabili** — tre valori che definiscono i confini tra i quattro stati
 
 ---
 
@@ -20,25 +19,29 @@ Quattro stati coprono l'intera escursione operativa: da pipeline vuota a ostruzi
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `pipeline_PT` | REAL | Lettura pressione trasmettitore [bar] — ingresso |
-| `pipeline.empty` | BOOL | Pipeline vuota — PT < `P_EMPTY − P_HYST` |
-| `pipeline.pressurised` | BOOL | Pipeline in pressione, senza materiale |
-| `pipeline.with_material` | BOOL | Materiale presente nella pipeline |
-| `pipeline.clogged` | BOOL | Pressione eccessiva — possibile ostruzione |
+| `DEVICES.PT.Scaled_value` | Real | Lettura pressione in unità ingegneristiche [bar] |
+| `DEVICES.PT.Raw_value` | Int | Valore grezzo ADC del trasmettitore |
+| `STATUS.is_empty` | Bool | TRUE se PT < `empty_thresh` |
+| `STATUS.is_pressurised` | Bool | TRUE se `empty_thresh` ≤ PT < `material_thresh` |
+| `STATUS.is_with_material` | Bool | TRUE se `material_thresh` ≤ PT < `clogged_thresh` |
+| `ALARMS.is_clogged` | Bool | TRUE se PT ≥ `clogged_thresh` |
 
 ---
 
 ## Funzionamento
 
-Ad ogni ciclo PLC, il valore PT viene confrontato con tre confini di isteresi. Ogni confine utilizza una coppia Set/Reset separata per creare la banda:
+Ad ogni ciclo PLC, il FB valuta `PT.Scaled_value` contro le tre soglie in sequenza:
 
-- **PT in salita**: la transizione allo stato superiore avviene quando PT supera `P_x + P_HYST`
-- **PT in discesa**: la transizione allo stato inferiore avviene quando PT scende sotto `P_x − P_HYST`
-- **PT all'interno della banda**: lo stato corrente si mantiene — nessuna transizione
+```
+IF PT < empty_thresh       → is_empty := TRUE
+ELSIF PT < material_thresh → is_pressurised := TRUE
+ELSIF PT < clogged_thresh  → is_with_material := TRUE
+ELSE                       → is_clogged := TRUE
+```
 
-Questa struttura impedisce che un segnale PT rumoroso vicino a un confine generi oscillazioni ripetute dello stato. L'ampiezza del deadband è `2 × P_HYST` per ogni confine.
+I flag di stato vengono azzerati all'inizio di ogni scan prima della valutazione. Non c'è isteresi e non c'è macchina a stati — lo stato corrente è una funzione diretta e istantanea del valore PT.
 
-L'assegnazione dello stato finale usa una catena di priorità: CLOGGED > WITH_MATERIAL > PRESSURISED > EMPTY. I flag `pipeline.pressurised` e `pipeline.with_material` vengono consumati dagli stadi di trasporto a monte.
+`is_clogged` è collocato nella struttura `ALARMS` invece di `STATUS` perché indica una condizione anomala che richiede intervento. Un evento di ostruzione deve tipicamente interrompere qualsiasi trasporto attivo e generare un allarme nell'orchestratore.
 
 ---
 
@@ -46,19 +49,63 @@ L'assegnazione dello stato finale usa una catena di priorità: CLOGGED > WITH_MA
 
 | ID | Condizione | Causa |
 |----|------------|-------|
-| PL-E01 | `pipeline.clogged` | PT ≥ `P_CLOG + P_HYST` — pressione eccessiva nella pipeline |
-
-Un evento `pipeline.clogged` deve attivare un allarme e interrompere qualsiasi trasporto attivo.
+| PL-A01 | `ALARMS.is_clogged` | PT ≥ `clogged_thresh` — pressione eccessiva, possibile ostruzione o valvola chiusa a monte |
 
 ---
 
 ## Parametri
 
-| Parametro | Esempio | Descrizione |
+| Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `P_HYST` | 0.1 bar | Semiampiezza banda isteresi — applicata a tutti i confini |
-| `P_EMPTY` | 0.3 bar | Soglia centrale EMPTY ↔ PRESSURISED |
-| `P_MATERIAL` | 1.5 bar | Soglia centrale PRESSURISED ↔ WITH_MATERIAL |
-| `P_CLOG` | 3.5 bar | Soglia centrale WITH_MATERIAL ↔ CLOGGED |
+| `SETTING.empty_thresh` | 0.5 | Soglia inferiore: sotto questo valore la pipeline è vuota |
+| `SETTING.material_thresh` | 1.0 | Soglia materiale: sopra indica presenza di materiale nella pipeline |
+| `SETTING.clogged_thresh` | 1.5 | Soglia ostruzione: sopra indica pressione anomala |
 
-I valori di esempio sono indicativi — calibrare con i dati di commissioning reali del sistema. Se il segnale PT richiede filtraggio (media mobile) prima del confronto con le soglie, applicarlo a monte di questo blocco.
+I valori di default sono indicativi — calibrare con i dati di commissioning reali del sistema.
+
+---
+
+## Struttura dati
+
+```mermaid
+classDiagram
+    class UDT_Pipeline
+    class DEVICES {
+        +UDT_Analogic_signal PT
+    }
+    class UDT_Analogic_signal {
+        +Int Raw_value
+        +Real Scaled_value
+    }
+    class SETTING {
+        +Real empty_thresh
+        +Real material_thresh
+        +Real clogged_thresh
+    }
+    class STATUS {
+        +Bool is_empty
+        +Bool is_pressurised
+        +Bool is_with_material
+    }
+    class ALARMS {
+        +Bool is_clogged
+    }
+    UDT_Pipeline *-- DEVICES
+    UDT_Pipeline *-- SETTING
+    UDT_Pipeline *-- STATUS
+    UDT_Pipeline *-- ALARMS
+    DEVICES *-- UDT_Analogic_signal
+```
+
+---
+
+## Logica di stato
+
+Il blocco non implementa una FSM — lo stato è determinato da una valutazione prioritaria:
+
+| Condizione PT | Flag attivo | Descrizione |
+|---------------|-------------|-------------|
+| `PT < empty_thresh` | `STATUS.is_empty` | Pipeline vuota, nessuna pressione |
+| `empty_thresh ≤ PT < material_thresh` | `STATUS.is_pressurised` | Pipeline in pressione, no materiale |
+| `material_thresh ≤ PT < clogged_thresh` | `STATUS.is_with_material` | Materiale presente nella pipeline |
+| `PT ≥ clogged_thresh` | `ALARMS.is_clogged` | Pressione anomala — possibile ostruzione |

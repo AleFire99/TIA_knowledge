@@ -1,0 +1,52 @@
+﻿MultiLingualTexts:
+  - id: MLC_fN
+    it-IT: |2-
+       ============================================================
+        UDT_DS_Batch
+        Data structure for FB_BatchController
+        Mirror pattern of UDT_DS_Valve
+       ============================================================
+  - id: MLC_gs
+    it-IT: HMI - Ackowneldge errors
+  - id: MLC_3JK
+    it-IT: HMI - Numeric input, target quantity to convey (kg)
+  - id: MLC_xz
+    it-IT: HMI - Load cells tare request
+  - id: MLC_3aM
+    it-IT: HMI - Start transporting procedure
+  - id: MLC_3uX
+    it-IT: HMI - Stop transporting procedure
+  - id: MLC_4jG
+    it-IT: INPUT - Live net weight from scale controller (kg)
+  - id: MLC_NA
+    it-IT: INPUT - Any fault from scale controller
+  - id: MLC_4xZ
+    it-IT: OUTPUT - Tare command to scale controller
+  - id: MLC_56e
+    it-IT: SETTING - Physical lower limit for loaded bag (kg)
+  - id: MLC_4BM
+    it-IT: SETTING - Physical upper limit for loaded bag (kg)
+  - id: MLC_4uy
+    it-IT: SETTING - Maximum allowed conveying time before INCOMPLETE
+  - id: MLC_3K4
+    it-IT: STATUS - Current top FSM state
+  - id: MLC_3MB
+    it-IT: STATUS - Current normal behaviour FSM state
+  - id: MLC_556
+    it-IT: STATUS - Scale in idle state
+  - id: MLC_4vV
+    it-IT: STATUS - Material is beying conveyed
+  - id: MLC_3Qz
+    it-IT: ERROR - Batch did not reach setpoint before timeout
+  - id: MLC_4KD
+    it-IT: ERROR - Scale fault, overload, underload
+  - id: MLC_3EY
+    it-IT: BATCH - Batch configured
+  - id: MLC_XT
+    it-IT: BATCH - Material conveyed this cycle (kg)
+  - id: MLC_3Ss
+    it-IT: BATCH - Captured initial weight
+  - id: MLC_4LS
+    it-IT: ALARM - Weight outside scale limits
+  - id: MLC_4BE
+    it-IT: ALARM - Negative setpoint or greater than loaded weight

@@ -1,0 +1,59 @@
+﻿TYPE
+    UDT_Nolvac : STRUCT
+        DEVICES : STRUCT
+            { S7_MLC := "MLC_3Q6" }
+            XV01 : _.UDT_SS_Valve;
+            XY02 : _.UDT_Solenoid_valve;
+            XY03 : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_3VU" }
+            manual_mode : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4d5"
+            }
+            auto : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4s3"
+            }
+            interlocked : Bool;
+            { S7_MLC := "MLC_3vH" }
+            ack : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_3JP" }
+            suction_time : Time := T#30s;
+            { S7_MLC := "MLC_43H" }
+            cleaning_time : Time := T#30S;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3P9"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Dz"
+            }
+            is_conveying : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4YF"
+            }
+            is_cleaning : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_44e";
+                S7_Visibility := "Hidden := External"
+            }
+            valve_error : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

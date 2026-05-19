@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: af45b786-fc66-4ed0-899c-c89cf376989a
+LibraryVersion:
+  VersionNumber: 0.1.9
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    it-IT: Moved start command and added stop one

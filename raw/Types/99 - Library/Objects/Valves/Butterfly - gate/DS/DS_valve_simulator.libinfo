@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 17ea8873-7c4c-4a30-a58d-2cf05c8c5882
+  Comment:
+    en-US: Converted to SCL
+LibraryVersion:
+  VersionNumber: 0.0.4
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added first scan sensor set

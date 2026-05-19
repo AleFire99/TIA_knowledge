@@ -1,0 +1,19 @@
+﻿TYPE
+    UDT_Pavone_OUT : STRUCT
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Command_register : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        data_register : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        monitor_register : Word;
+    END_STRUCT;
+END_TYPE

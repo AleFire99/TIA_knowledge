@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: d0c7af6f-4931-4b33-ad9f-0cd8f8ecc2b0
+  Comment:
+    en-US: Added same states as other valves
+LibraryVersion:
+  VersionNumber: 1.6.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: out is now a bool

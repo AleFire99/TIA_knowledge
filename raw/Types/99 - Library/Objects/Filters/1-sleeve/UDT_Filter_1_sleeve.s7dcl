@@ -1,0 +1,57 @@
+﻿TYPE
+    UDT_Filter_1_sleeve : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Kh"
+            }
+            XY : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_4QZ" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_4mL" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4SC"
+            }
+            auto : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Lv"
+            }
+            interlocked : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_38u" }
+            pulse_duration : Time := T#500ms;
+            { S7_MLC := "MLC_QZ" }
+            interval_duration : Time := T#3s;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3cH"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4kn"
+            }
+            active_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_rB"
+            }
+            is_idle : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3as"
+            }
+            is_active : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

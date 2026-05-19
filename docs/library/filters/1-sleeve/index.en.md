@@ -69,8 +69,8 @@ classDiagram
     }
     class STATUS {
         +Int state
+        +Int active_state
         +Bool is_idle
-        +Bool is_waiting
         +Bool is_active
     }
     UDT_Filter_1_sleeve *-- DEVICES
@@ -106,11 +106,11 @@ stateDiagram-v2
 
 ### State and Output Table
 
-| State | `XY` | Description |
-|-------|------|-------------|
-| IDLE (1) | FALSE | Standby, no cleaning |
-| WAITING (2) | FALSE | Between pulses — interval timer running |
-| ACTIVE (3) | TRUE | Pulse active — air blast into sleeve |
+| `state` | `active_state` | `XY` | Description |
+|---------|---------------|------|-------------|
+| IDLE (1) | — | FALSE | Standby, no cleaning |
+| ACTIVE (2) | PULSING (1) | TRUE | Pulse active — air blast into sleeve |
+| ACTIVE (2) | WAITING (2) | FALSE | Between pulses — interval timer running |
 
 ### State Transition Table
 

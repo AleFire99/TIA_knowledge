@@ -1,0 +1,13 @@
+﻿DocumentHash:
+  - FileName: Pinch_diverter.s7dcl
+    Hash: UoylWJVOsikvmbPZva4KrctuU+HwiQGLNDwxq9RUV84=
+  - FileName: Pinch_diverter.s7res
+    Hash: CGi1iDrovXpVC30KzZP62KD+Jn/9p6LcMA0nfzn6rgA=
+LibraryMetaFileHash: mfk74qae6jWa3ykBGZmo4kzlewDQbuhgPwi1Grxh4UM=
+LibraryVersion:
+  Guid: b4755e72-71eb-419a-84de-67255c5b75f8
+  DependsOn:
+    - TypeName: UDT_Pinch_diverter
+      VersionNumber: 1.4.2
+    - TypeName: Pinch_valve
+      VersionNumber: 1.5.2

@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: UDT_PTD_IO.s7dcl
+    Hash: hvctLO/GmMJMZWu/FVVPbY66dy60mS2qLUlPk+E/Vfo=
+LibraryMetaFileHash: WwvJwKoimj5UnI9y2Wb1bwlj7lu/6Gr5HhhVuVkWeMY=
+LibraryVersion:
+  Guid: be98f260-32e5-495a-b6d8-1b469428cb71
+  DependsOn:
+    - TypeName: UDT_DIGITAL_OUTPUT
+      VersionNumber: 0.0.1

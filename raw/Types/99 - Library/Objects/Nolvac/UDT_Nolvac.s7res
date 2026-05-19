@@ -1,0 +1,23 @@
+﻿MultiLingualTexts:
+  - id: MLC_3Q6
+    en-US: VALVE - Discharge valve
+  - id: MLC_3VU
+    en-US: COMMAND - Active mode
+  - id: MLC_4d5
+    en-US: COMMAND - Automatic command
+  - id: MLC_4s3
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_3vH
+    en-US: COMMAND - Acknowledge all errors and warnings
+  - id: MLC_3JP
+    en-US: SETTING - Time Nolvac is aspiring material
+  - id: MLC_43H
+    en-US: SETTING - Time Nolvac cleaning state
+  - id: MLC_3P9
+    en-US: STATE - 0=error, 1=idle, 2=suction, 3=cleaning
+  - id: MLC_4Dz
+    en-US: STATUS - Nolvac is conveying material
+  - id: MLC_4YF
+    en-US: STATUS - Nolvac is purging material
+  - id: MLC_44e
+    en-US: ALARM - Internal valve error

@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: Pinch_diverter_simulator.s7dcl
+    Hash: ZK0Zf3mhtYzeyS21GblhNFX9IGsP7yVkJifSYq677LI=
+LibraryMetaFileHash: k+eMVnf2d4ZXROMP+G6y43hTM2FOaMUnZzlIP/ZsZIo=
+LibraryVersion:
+  Guid: 843ba599-9313-40d9-a8cf-f73aa7c7e691
+  DependsOn:
+    - TypeName: UDT_Pinch_diverter
+      VersionNumber: 1.4.2
+    - TypeName: Pinch_valve_simulator
+      VersionNumber: 0.0.4

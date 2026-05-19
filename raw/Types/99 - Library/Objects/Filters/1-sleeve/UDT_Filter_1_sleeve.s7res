@@ -1,0 +1,23 @@
+﻿MultiLingualTexts:
+  - id: MLC_4Kh
+    en-US: OUTPUT - Solenoid command
+  - id: MLC_4QZ
+    en-US: COMMAND - Active mode
+  - id: MLC_4mL
+    en-US: COMMAND - Manual command
+  - id: MLC_4SC
+    en-US: COMMAND - Automatic command
+  - id: MLC_4Lv
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_38u
+    en-US: SETTING - Duration of active pulse
+  - id: MLC_QZ
+    en-US: SETTING - Duration of time between pulses
+  - id: MLC_3cH
+    en-US: STATE - 1=idle, 2=active
+  - id: MLC_4kn
+    en-US: STATE - 1=pulsing, 2 =waiting
+  - id: MLC_rB
+    en-US: STATUS - Filter is waiting for enable command
+  - id: MLC_3as
+    en-US: STATUS - Filter cleaning routine is active

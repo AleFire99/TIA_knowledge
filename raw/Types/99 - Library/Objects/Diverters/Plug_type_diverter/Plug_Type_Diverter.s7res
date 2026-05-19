@@ -1,0 +1,15 @@
+﻿MultiLingualTexts:
+  - id: MLC_vM
+    en-US: 0 for line A, 1 for line B
+  - id: MLC_3RS
+    en-US: Presence of alarms
+  - id: MLC_4y4
+    en-US: Errors acknowledged
+  - id: MLC_34n
+    en-US: Gasket inflating timer setting
+  - id: MLC_vL
+    en-US: Gasket inflating timer setting
+  - id: MLC_3Sp
+    en-US: Diverter object
+  - id: MLC_3mA
+    en-US: Current state selector

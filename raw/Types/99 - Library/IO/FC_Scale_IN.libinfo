@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: eea4ef7f-019e-4ec0-86f6-306b19d08005
+LibraryVersion:
+  VersionNumber: 0.0.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added simulation capability

@@ -1,0 +1,35 @@
+﻿MultiLingualTexts:
+  - id: MLC_nW
+    en-US: OUTPUT - Solenoid command sleeve A
+  - id: MLC_eG
+    en-US: OUTPUT - Solenoid command sleeve B
+  - id: MLC_tV
+    en-US: COMMAND - Active mode
+  - id: MLC_p8
+    en-US: COMMAND - Manual command
+  - id: MLC_wt
+    en-US: COMMAND - Automatic command
+  - id: MLC_Lj
+    en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_36W
+    en-US: SETTING - Duration of active pulse
+  - id: MLC_4J9
+    en-US: SETTING - Duration of time between pulses
+  - id: MLC_3vu
+    en-US: STATE - 1=idle, 2=active
+  - id: MLC_32U
+    en-US: STATE - 1=pulsing_1, 2 =waiting_1, 3=pulsing_2, 4=waiting_2
+  - id: MLC_3wh
+    en-US: STATE - Currently active sleeve (0=A, 1=B)
+  - id: MLC_38W
+    en-US: STATUS - Filter waiting for enable command
+  - id: MLC_55t
+    en-US: STATUS - Filter cleaning routine active
+  - id: MLC_4B8
+    en-US: STATUS - Filter currently pulsing
+  - id: MLC_4QS
+    en-US: STATUS - Filter waiting between pulses
+  - id: MLC_ve
+    en-US: STATUS - Sleeve A is being pulsed
+  - id: MLC_34b
+    en-US: STATUS - Sleeve B is being pulsed
