@@ -89,9 +89,19 @@ Writes `dist/library_manifest.json`.
 
 ### Step 3 — Generate docs (Claude Code)
 
-Open this repo in Claude Code and say:
+Open this repo in Claude Code and use one of these prompts:
 
-> "Read all files in raw/ and dist/library_manifest.json, then generate full bilingual
+**Incremental (normal workflow — only changed/new types):**
+
+> "Read `dist/ingest_delta.json`. If `needs_doc_update` is empty, say so and stop.
+> Otherwise for each name in `needs_doc_update`, find its `.s7dcl` + `.libinfo` in `raw/`,
+> read them plus `dist/library_manifest.json`, then regenerate full bilingual docs
+> (all 8 sections, Italian primary + English) for that type only.
+> If `removed` is non-empty, list those names and ask whether to delete their doc pages."
+
+**Full regeneration (first run, or after structural changes):**
+
+> "Read all files in `raw/` and `dist/library_manifest.json`, then generate full bilingual
 > documentation (all 8 sections, Italian primary + English) for each device type."
 
 Claude Code writes `docs/library/<category>/<device>/index.it.md` and `index.en.md`.
@@ -197,8 +207,7 @@ Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 | UDT_Pipeline | Pipeline | pipeline | — |
 | UDT_Analogic_signal | — | — | — |
 
-SS/DS/Pinch valve simulators are SCL blocks exported in `raw/` — auto-detected by `ingest.py`.
-`config.toml` sim_overrides are a no-op for these (already populated).
+All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are auto-detected by `ingest.py` via name regex. No manual overrides needed.
 
 ---
 

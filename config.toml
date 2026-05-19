@@ -15,25 +15,3 @@ udt_output_dir = "raw/UDTs"
 
 # Export format
 format = "ExternalSource"
-
-# Simulator FBs that are LAD (not SCL) and cannot be auto-detected from exported files.
-# generate_docs.py merges these into the manifest so sim: null is never written for them.
-[[manifest.sim_overrides]]
-udt   = "UDT_SS_Valve"
-name  = "SS_valve_simulator"
-param = "XV"
-
-[[manifest.sim_overrides]]
-udt   = "UDT_DS_Valve"
-name  = "DS_valve_simulator"
-param = "XV"
-
-[[manifest.sim_overrides]]
-udt   = "UDT_Pinch_Valve"
-name  = "Pinch_valve_simulator"
-param = "XV"
-
-[[manifest.sim_overrides]]
-udt   = "UDT_Pinch_diverter"
-name  = "Pinch_diverter_simulator"
-param = "DIV"

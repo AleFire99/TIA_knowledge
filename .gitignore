@@ -25,5 +25,8 @@ library/AleFire-Library/XRef/
 library/AleFire-Library/src/
 library/AleFire-Library/*.backup/
 
+# Ingest hash cache (local build artifact — not portable across machines)
+dist/.ingest_cache.json
+
 # Claude local settings
 .claude/settings.local.json

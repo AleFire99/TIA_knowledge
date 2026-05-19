@@ -18,6 +18,7 @@ Steps:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -64,6 +65,60 @@ def _read_libinfo_description(path: Path) -> str:
         return m.group(1).strip() if m else ""
     except Exception:
         return ""
+
+
+# ---------------------------------------------------------------------------
+# Change detection helpers
+# ---------------------------------------------------------------------------
+
+def _hash_type_files(s7dcl_path: Path) -> str:
+    """SHA256 of .s7dcl content + sibling .libinfo content (raw bytes)."""
+    h = hashlib.sha256()
+    h.update(s7dcl_path.read_bytes())
+    libinfo = s7dcl_path.with_suffix(".libinfo")
+    if libinfo.exists():
+        h.update(libinfo.read_bytes())
+    return h.hexdigest()
+
+
+def _load_cache(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("hashes", {})
+    except Exception:
+        return {}
+
+
+def _save_cache(hashes: dict[str, str], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "cache_version": "1.0.0",
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "hashes": hashes,
+    }
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _write_delta(delta: dict, path: Path, total: int) -> None:
+    """Write ingest_delta.json — Claude Code reads this before doc generation."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    needs_doc_update = delta["new"] + delta["changed"]
+    payload = {
+        "delta_version": "1.0.0",
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "total_types": total,
+        "counts": {
+            "new":     len(delta["new"]),
+            "changed": len(delta["changed"]),
+            "removed": len(delta["removed"]),
+        },
+        "needs_doc_update": needs_doc_update,
+        "new":     delta["new"],
+        "changed": delta["changed"],
+        "removed": delta["removed"],
+    }
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +327,18 @@ def main() -> None:
         print("Run scripts/export.py first, or export manually from TIA Portal.")
         sys.exit(1)
 
+    # ── Change detection ─────────────────────────────────────────────────────
+    all_s7dcl = s7dcl_files or udt_files or scl_files
+    current_hashes: dict[str, str] = {f.stem: _hash_type_files(f) for f in all_s7dcl}
+    old_hashes = _load_cache(cfg.INGEST_CACHE_PATH)
+    current_keys, old_keys = set(current_hashes), set(old_hashes)
+    delta = {
+        "new":     sorted(current_keys - old_keys),
+        "removed": sorted(old_keys - current_keys),
+        "changed": sorted(k for k in (current_keys & old_keys) if current_hashes[k] != old_hashes[k]),
+    }
+    # ─────────────────────────────────────────────────────────────────────────
+
     udts: list[dict] = []
     fbs: list[dict] = []
 
@@ -292,6 +359,8 @@ def main() -> None:
     sim_overrides = _load_sim_overrides()
     manifest = build_manifest(udts, fbs, sim_overrides)
     write_manifest_atomic(manifest, cfg.MANIFEST_PATH)
+    _write_delta(delta, cfg.INGEST_DELTA_PATH, total=len(current_hashes))
+    _save_cache(current_hashes, cfg.INGEST_CACHE_PATH)
 
     print(f"UDTs parsed      : {len(udts)}")
     print(f"FBs parsed       : {len(fbs)} (of {len(s7dcl_files or scl_files)} files)")
@@ -312,6 +381,14 @@ def main() -> None:
         print("Sim overrides applied:")
         for o in sim_overrides:
             print(f"  [sim] {o['name']}({o['param']} : {o['udt']})")
+    print()
+    print("Change detection:")
+    print(f"  New     : {delta['new'] or '(none)'}")
+    print(f"  Changed : {delta['changed'] or '(none)'}")
+    print(f"  Removed : {delta['removed'] or '(none)'}")
+    if not delta["new"] and not delta["changed"] and not delta["removed"]:
+        print("  All types unchanged — doc generation can be skipped.")
+    print(f"  Delta   : {cfg.INGEST_DELTA_PATH}")
 
 
 if __name__ == "__main__":

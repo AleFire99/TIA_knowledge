@@ -31,3 +31,7 @@ UDT_SOURCES = RAW / "UDTs"  # default subdir when using export.py
 # ─── Published artifacts ─────────────────────────────────────────────────────
 DIST_DIR      = ROOT / "dist"
 MANIFEST_PATH = DIST_DIR / "library_manifest.json"
+
+# ─── Ingest change-detection artifacts ───────────────────────────────────────
+INGEST_CACHE_PATH = DIST_DIR / ".ingest_cache.json"   # local, gitignored
+INGEST_DELTA_PATH = DIST_DIR / "ingest_delta.json"    # committed with manifest
