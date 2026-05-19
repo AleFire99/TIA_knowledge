@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: b7d55f9e-d87c-48cb-91fb-a9333a077e41
+  Comment:
+    en-US: Added same states as other valves
+LibraryVersion:
+  VersionNumber: 1.2.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added SimaticSD export capabilities

@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 2f8eb9a5-ea20-4bb8-8223-ee3aeb60e2c7
+  Comment:
+    en-US: First release
+LibraryVersion:
+  VersionNumber: 0.1.5
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added SimaticSD export capabilities

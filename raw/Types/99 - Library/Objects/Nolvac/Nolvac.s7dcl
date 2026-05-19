@@ -1,0 +1,112 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Nolvac"
+    VAR_IN_OUT 
+        VC : _.UDT_Nolvac;
+    END_VAR
+    VAR 
+        fb_XV01 : _.SS_valve;
+        fb_XY02 : _.Solenoid_valve;
+        fb_XY03 : _.Solenoid_valve;
+        suction_timer : TON_TIME;
+        cleaning_timer : TON_TIME;
+    END_VAR
+    VAR CONSTANT 
+        { S7_MLC := "MLC_Vv" }
+        ERROR : Int := 0;
+        { S7_MLC := "MLC_3dZ" }
+        IDLE : Int := 1;
+        { S7_MLC := "MLC_4PG" }
+        CONVEYING : Int := 2;
+        { S7_MLC := "MLC_e5" }
+        CLEANING : Int := 3;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Map internal valves
+            
+            #VC.DEVICES.XV01.CMD.ack := #VC.CMD.ack;
+            #VC.DEVICES.XV01.CMD.manual_mode := #VC.CMD.manual_mode;
+            #fb_XV01(#VC.DEVICES.XV01);
+            
+            #fb_XY02(#VC.DEVICES.XY02);
+            #VC.DEVICES.XY02.CMD.manual_mode := #VC.CMD.manual_mode;
+            
+            #fb_XY03(#VC.DEVICES.XY03);
+            #VC.DEVICES.XY03.CMD.manual_mode := #VC.CMD.manual_mode;
+        END_REGION
+        
+        REGION Error detection
+            // Valve internal errors (timeouts, etc.)
+            #VC.ALARMS.valve_error := #VC.DEVICES.XV01.ALARMS.error;
+        END_REGION
+        
+        REGION Timers
+            #suction_timer(IN := (#VC.STATUS.state = #CONVEYING),
+                           PT := #VC.SETTING.suction_time);
+            
+            #cleaning_timer(IN := (#VC.STATUS.state = #CLEANING),
+                            PT := #VC.SETTING.cleaning_time);
+        END_REGION
+        
+        
+        REGION FSM
+            CASE #VC.STATUS.state OF
+                #IDLE:
+                    IF #VC.ALARMS.valve_error THEN
+                        #VC.STATUS.state := #ERROR;
+                    ELSIF #VC.CMD.auto THEN
+                        #VC.STATUS.state := #CONVEYING;
+                    END_IF;
+                    
+                #CONVEYING:
+                    IF #VC.ALARMS.valve_error THEN
+                        #VC.STATUS.state := #ERROR;
+                    ELSIF NOT #VC.CMD.auto THEN
+                        #VC.STATUS.state := #IDLE;
+                    ELSIF #suction_timer.Q THEN
+                        #VC.STATUS.state := #CLEANING;
+                    END_IF;
+                    
+                #CLEANING:
+                    IF #VC.ALARMS.valve_error THEN
+                        #VC.STATUS.state := #ERROR;
+                    ELSIF NOT #VC.CMD.auto THEN
+                        #VC.STATUS.state := #IDLE;
+                    ELSIF #cleaning_timer.Q THEN
+                        #VC.STATUS.state := #CONVEYING;
+                    END_IF;
+                    
+                #ERROR:
+                    IF #VC.CMD.ack THEN
+                        #VC.STATUS.state := #IDLE;
+                        // Stay in error if neither condition is met
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Output mapping
+            #VC.DEVICES.XV01.CMD.auto := FALSE;
+            #VC.DEVICES.XY02.CMD.auto := FALSE;
+            #VC.DEVICES.XY03.CMD.auto := FALSE;
+            #VC.STATUS.is_cleaning := FALSE;
+            #VC.STATUS.is_conveying := FALSE;
+            
+            CASE #VC.STATUS.state OF
+                #CONVEYING:
+                    #VC.DEVICES.XY03.CMD.auto := TRUE;
+                    #VC.STATUS.is_conveying := TRUE;
+                    
+                #CLEANING:
+                    #VC.DEVICES.XV01.CMD.auto := TRUE;
+                    #VC.DEVICES.XY02.CMD.auto := TRUE;
+                    #VC.STATUS.is_cleaning := TRUE;
+            END_CASE;
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION_BLOCK

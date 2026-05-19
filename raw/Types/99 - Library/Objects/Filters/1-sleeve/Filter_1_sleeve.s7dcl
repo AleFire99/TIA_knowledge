@@ -1,0 +1,141 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Filter_1_sleeve"
+    VAR_IN_OUT 
+        filter : _.UDT_Filter_1_sleeve;
+    END_VAR
+    VAR 
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3CN";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3Ni";
+            S7_Visibility := "Hidden := External"
+        }
+        desired_open_command : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_427";
+            S7_Visibility := "Hidden := External"
+        }
+        validated_open_command : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3jV";
+            S7_Visibility := "Hidden := External"
+        }
+        pulse_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_4KL";
+            S7_Visibility := "Hidden := External"
+        }
+        interval_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XY : _.Solenoid_valve;
+    END_VAR
+    VAR CONSTANT 
+        { S7_MLC := "MLC_3wq" }
+        IDLE : Int := 1;
+        { S7_MLC := "MLC_4FL" }
+        ACTIVE : Int := 2;
+        { S7_MLC := "MLC_cN" }
+        PULSING : Int := 1;
+        { S7_MLC := "MLC_58N" }
+        WAITING : Int := 2;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Initialization
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                #filter.STATUS.state := #IDLE;
+                #filter.STATUS.active_state := #WAITING;
+            END_IF;
+        END_REGION
+        
+        REGION Map internal valves
+            #fb_XY(#filter.DEVICES.XY);
+        END_REGION
+        
+        REGION Determine desired target
+            IF #filter.CMD.manual_mode THEN
+                #desired_open_command := #filter.CMD.manual;
+            ELSE
+                #desired_open_command := #filter.CMD.auto;
+            END_IF;
+            IF NOT #filter.CMD.interlocked THEN
+                #validated_open_command := #desired_open_command;
+            END_IF;
+        END_REGION
+        
+        REGION Timers
+            #interval_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #WAITING),
+                            PT := #filter.SETTING.interval_duration);
+            
+            #pulse_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #PULSING),
+                         PT := #filter.SETTING.pulse_duration);
+        END_REGION
+        
+        REGION FSM logic
+            CASE #filter.STATUS.state OF
+                #IDLE:
+                    IF #desired_open_command THEN
+                        #filter.STATUS.state := #ACTIVE;
+                        #filter.STATUS.active_state := #WAITING;
+                    END_IF;
+                    
+                #ACTIVE:
+                    IF NOT #desired_open_command THEN
+                        #filter.STATUS.state := #IDLE;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Sub FSM logic
+            IF #filter.STATUS.state = #ACTIVE THEN
+                CASE #filter.STATUS.active_state OF
+                    #WAITING:
+                        IF #interval_timer.Q THEN
+                            #filter.STATUS.active_state := #PULSING;
+                        END_IF;
+                        
+                    #PULSING:
+                        IF #pulse_timer.Q THEN
+                            #filter.STATUS.active_state := #WAITING;
+                        END_IF;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #filter.DEVICES.XY.CMD.auto := FALSE;
+            #filter.STATUS.is_idle := FALSE;
+            #filter.STATUS.is_active := FALSE;
+            
+            CASE #filter.STATUS.state OF
+                #IDLE:
+                    #filter.STATUS.is_idle := TRUE;
+                    
+                #ACTIVE:
+                    #filter.STATUS.is_active := TRUE;
+                    IF #filter.STATUS.active_state = #PULSING THEN
+                        #filter.DEVICES.XY.CMD.auto := TRUE;
+                    END_IF;
+            END_CASE;
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

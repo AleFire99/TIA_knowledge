@@ -54,6 +54,15 @@ def _load_sim_overrides() -> list[dict]:
     return data.get("manifest", {}).get("sim_overrides", [])
 
 
+def _load_ctrl_overrides() -> list[dict]:
+    toml_path = REPO_ROOT / "config.toml"
+    if not toml_path.exists():
+        return []
+    with toml_path.open("rb") as f:
+        data = tomllib.load(f)
+    return data.get("manifest", {}).get("ctrl_overrides", [])
+
+
 def _read_libinfo_description(path: Path) -> str:
     """Read en-US comment from sibling .libinfo file, return empty string if absent."""
     libinfo = path.with_suffix(".libinfo")
@@ -262,7 +271,7 @@ def parse_fb(path: Path) -> dict | None:
 # Manifest assembly
 # ---------------------------------------------------------------------------
 
-def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict]) -> dict:
+def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict], ctrl_overrides: list[dict] | None = None) -> dict:
     udt_section: dict[str, dict] = {}
     for u in udts:
         udt_section[u["name"]] = {
@@ -291,6 +300,13 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict])
             fb_section[udt_key] = {"ctrl": None, "sim": None}
         if fb_section[udt_key]["sim"] is None:
             fb_section[udt_key]["sim"] = {"name": override["name"], "param": override["param"]}
+
+    for override in (ctrl_overrides or []):
+        udt_key = override["udt"]
+        if udt_key not in fb_section:
+            fb_section[udt_key] = {"ctrl": None, "sim": None}
+        if fb_section[udt_key]["ctrl"] is None:
+            fb_section[udt_key]["ctrl"] = {"name": override["name"], "param": override["param"]}
 
     return {
         "manifest_version": MANIFEST_VERSION,
@@ -356,8 +372,9 @@ def main() -> None:
         udts = [parse_udt(f) for f in udt_files]
         fbs = [fb for fb in (parse_fb(f) for f in scl_files) if fb is not None]
 
-    sim_overrides = _load_sim_overrides()
-    manifest = build_manifest(udts, fbs, sim_overrides)
+    sim_overrides  = _load_sim_overrides()
+    ctrl_overrides = _load_ctrl_overrides()
+    manifest = build_manifest(udts, fbs, sim_overrides, ctrl_overrides)
     write_manifest_atomic(manifest, cfg.MANIFEST_PATH)
     _write_delta(delta, cfg.INGEST_DELTA_PATH, total=len(current_hashes))
     _save_cache(current_hashes, cfg.INGEST_CACHE_PATH)
@@ -365,6 +382,7 @@ def main() -> None:
     print(f"UDTs parsed      : {len(udts)}")
     print(f"FBs parsed       : {len(fbs)} (of {len(s7dcl_files or scl_files)} files)")
     print(f"Sim overrides    : {len(sim_overrides)}")
+    print(f"Ctrl overrides   : {len(ctrl_overrides)}")
     print(f"Manifest written : {cfg.MANIFEST_PATH}")
     print()
     print("UDTs:")
@@ -381,6 +399,11 @@ def main() -> None:
         print("Sim overrides applied:")
         for o in sim_overrides:
             print(f"  [sim] {o['name']}({o['param']} : {o['udt']})")
+    if ctrl_overrides:
+        print()
+        print("Ctrl overrides applied:")
+        for o in ctrl_overrides:
+            print(f"  [ctrl] {o['name']}({o['param']} : {o['udt']})")
     print()
     print("Change detection:")
     print(f"  New     : {delta['new'] or '(none)'}")

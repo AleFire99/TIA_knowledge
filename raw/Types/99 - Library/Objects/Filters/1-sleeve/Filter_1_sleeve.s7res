@@ -1,0 +1,19 @@
+﻿MultiLingualTexts:
+  - id: MLC_3CN
+    en-US: Indicate if first scan for initialization
+  - id: MLC_3Ni
+    en-US: Actual desired command based on active mode
+  - id: MLC_427
+    en-US: Desired command if not interlocked
+  - id: MLC_3jV
+    en-US: Timer for pulse active
+  - id: MLC_4KL
+    en-US: Timer between pulses
+  - id: MLC_3wq
+    en-US: Filter in idle state
+  - id: MLC_4FL
+    en-US: Filter is active
+  - id: MLC_cN
+    en-US: FIlter is pulsing air
+  - id: MLC_58N
+    en-US: Filter waiting for next pulse

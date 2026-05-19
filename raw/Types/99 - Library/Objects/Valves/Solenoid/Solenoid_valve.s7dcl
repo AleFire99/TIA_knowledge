@@ -1,0 +1,69 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Solenoid_valve"
+    VAR_IN_OUT 
+        XY : _.UDT_Solenoid_valve;
+    END_VAR
+    VAR 
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_q7";
+            S7_Visibility := "Hidden := External"
+        }
+        desired_open_command : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_Vi";
+            S7_Visibility := "Hidden := External"
+        }
+        validated_open_command : Bool;
+    END_VAR
+    VAR CONSTANT 
+        { S7_MLC := "MLC_4rF" }
+        OPEN : Int := 3;
+        { S7_MLC := "MLC_47m" }
+        CLOSED : Int := 1;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Determine desired target
+            IF #XY.CMD.manual_mode THEN
+                #desired_open_command := #XY.CMD.manual;
+            ELSE
+                #desired_open_command := #XY.CMD.auto;
+            END_IF;
+            // Only update validated command if not interlocked
+            IF NOT #XY.CMD.interlocked THEN
+                #validated_open_command := #desired_open_command;
+            END_IF;
+            // If interlocked, validated_open_command retains its last value
+        END_REGION
+        
+        REGION State management
+            IF #validated_open_command THEN
+                #XY.STATUS.state := #OPEN;    // Valve open
+            ELSE
+                #XY.STATUS.state := #CLOSED;    // Valve closed
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #XY.out := FALSE;
+            #XY.STATUS.is_closed := TRUE;
+            #XY.STATUS.is_open := FALSE;
+            
+            IF #XY.STATUS.state = #OPEN THEN
+                #XY.out := TRUE; // energize solenoid to open and hold
+                #XY.STATUS.is_closed := FALSE;
+                #XY.STATUS.is_open := TRUE;
+            END_IF;
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION_BLOCK

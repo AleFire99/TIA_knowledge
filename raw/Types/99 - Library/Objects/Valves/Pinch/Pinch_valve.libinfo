@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 4e4ef102-e49d-49c1-8099-c270f8f94eea
+  Comment:
+    en-US: Uniformed states and fixed HMI visibility
+LibraryVersion:
+  VersionNumber: 1.5.3
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added SimaticSD export capabilities

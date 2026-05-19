@@ -1,0 +1,35 @@
+﻿MultiLingualTexts:
+  - id: MLC_4BV
+    en-US: TRUE if first scan, then set to FALSE
+  - id: MLC_4RG
+    en-US: Actual desired command based on active mode
+  - id: MLC_3Kx
+    en-US: Desired command if not interlocked
+  - id: MLC_35c
+    en-US: Movement timer
+  - id: MLC_Rv
+    en-US: Normal state of previous scan
+  - id: MLC_3Xe
+    en-US: Movement counter of valve disk
+  - id: MLC_3DQ
+    en-US: ALARM - Sensor conflict
+  - id: MLC_gt
+    en-US: ALARM - Valve failed to close
+  - id: MLC_4eR
+    en-US: ALARM - Valve failed to open
+  - id: MLC_4QX
+    en-US: ALARM - Movement timeout
+  - id: MLC_4yQ
+    en-US: WARNING - Number of valve cycles reached
+  - id: MLC_3JW
+    en-US: Error valve state
+  - id: MLC_XS
+    en-US: Normal valve state
+  - id: MLC_4HP
+    en-US: Closed valve state
+  - id: MLC_4x8
+    en-US: Opening valve state
+  - id: MLC_3xp
+    en-US: Open valve state
+  - id: MLC_5CV
+    en-US: Closing valve state

@@ -15,3 +15,26 @@ udt_output_dir = "raw/UDTs"
 
 # Export format
 format = "ExternalSource"
+
+# Ctrl FB overrides — for library FBs not yet exported to raw/.
+# Add entries here when a controlling FB exists in the library but is absent from raw/.
+# Format: udt = UDT name, name = FB block name, param = VAR_IN_OUT parameter name.
+[[manifest.ctrl_overrides]]
+udt   = "UDT_SS_Valve"
+name  = "SS_valve"
+param = "XV"
+
+[[manifest.ctrl_overrides]]
+udt   = "UDT_DS_Valve"
+name  = "DS_valve"
+param = "XV"
+
+[[manifest.ctrl_overrides]]
+udt   = "UDT_Solenoid_valve"
+name  = "Solenoid_valve"
+param = "XY"
+
+[[manifest.ctrl_overrides]]
+udt   = "UDT_Pinch_Valve"
+name  = "Pinch_valve"
+param = "XV"

@@ -1,0 +1,9 @@
+﻿MultiLingualTexts:
+  - id: MLC_q7
+    en-US: Actual desired command based on active mode
+  - id: MLC_Vi
+    en-US: Desired command if not interlocked
+  - id: MLC_4rF
+    en-US: Open valve state
+  - id: MLC_47m
+    en-US: Closed valve state

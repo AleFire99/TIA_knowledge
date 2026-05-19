@@ -2,7 +2,7 @@
 
 ## Overview
 
-The 1-sleeve filter cleaner drives periodic compressed air pulses through a single solenoid valve (`XY`) to dislodge accumulated dust from a filter sleeve. The cleaning cycle runs automatically as long as the enable command is active, alternating between an active pulse and a waiting interval. There is no position feedback — the system is open-loop.
+The 1-sleeve filter cleaner drives periodic compressed air pulses through a single solenoid valve (`XY`) to dislodge accumulated dust from a filter sleeve. When enabled, the cycle always begins with a waiting interval (`interval_duration`) before the first pulse, then alternates waiting and pulsing indefinitely. There is no position feedback — the system is open-loop.
 
 ---
 
@@ -24,13 +24,13 @@ The 1-sleeve filter cleaner drives periodic compressed air pulses through a sing
 
 ## Operating Routine
 
-When the enable command is received (`auto = TRUE` or `manual = TRUE` in manual mode), the system immediately begins pulsing. Each cycle:
+When the enable command is active (`auto = TRUE` or `manual = TRUE` in manual mode), the system transitions to ACTIVE and starts the cleaning cycle. The cycle always follows this sequence:
 
-1. **ACTIVE** — `XY` energized for `pulse_duration` (air blast into sleeve)
-2. **WAITING** — `XY` de-energized for `interval_duration` (sleeve recovers, tank re-pressurizes)
-3. Repeat until command is removed
+1. **WAITING** — `XY` de-energized for `interval_duration` (tank re-pressurizes, sleeve settles)
+2. **PULSING** — `XY` energized for `pulse_duration` (air blast into sleeve)
+3. Return to WAITING — repeat until command is removed
 
-Removing the command at any point returns the system to **IDLE** (`XY = FALSE`) at the end of the current phase. If `interlocked = TRUE`, the validated command freezes and pulsing pauses.
+Removing the command at any point returns the system to **IDLE** (`XY = FALSE`). If `interlocked = TRUE`, the validated command freezes and pulsing pauses in the current phase.
 
 ---
 
@@ -85,23 +85,19 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-	
-	state FILTER{
-    [*] --> IDLE
+    state FILTER {
+        [*] --> IDLE
 
-    IDLE --> ACTIVE: enabled = TRUE
-    
-    state ACTIVE{
-    
-    [*] --> PULSING
-    
-	    PULSING --> WAITING: pulse_timer complete
-	    
-	    WAITING --> PULSING: interval_timer complete
-    
-    }
-    ACTIVE --> IDLE: enabled = FALSE
-	}
+        IDLE --> ACTIVE : enabled = TRUE
+
+        state ACTIVE {
+            [*] --> WAITING
+            WAITING --> PULSING : interval_timer done
+            PULSING --> WAITING : pulse_timer done
+        }
+
+        ACTIVE --> IDLE : enabled = FALSE
+    }
 ```
 
 ### State and Output Table
@@ -109,16 +105,15 @@ stateDiagram-v2
 | `state` | `active_state` | `XY` | Description |
 |---------|---------------|------|-------------|
 | IDLE (1) | — | FALSE | Standby, no cleaning |
-| ACTIVE (2) | PULSING (1) | TRUE | Pulse active — air blast into sleeve |
 | ACTIVE (2) | WAITING (2) | FALSE | Between pulses — interval timer running |
+| ACTIVE (2) | PULSING (1) | TRUE | Pulse active — air blast into sleeve |
 
 ### State Transition Table
 
 | Current State | Condition | Next State | Action |
 |---------------|-----------|------------|--------|
-| IDLE | enable command | ACTIVE | `XY` → TRUE; start pulse timer |
-| ACTIVE | Pulse timer done | WAITING | `XY` → FALSE; start interval timer |
-| ACTIVE | Command removed | IDLE | `XY` → FALSE |
-| WAITING | Interval timer done AND command active | ACTIVE | `XY` → TRUE; start pulse timer |
-| WAITING | Command removed | IDLE | — |
-| WAITING | Interval timer done AND command inactive | IDLE | — |
+| IDLE | enable command | ACTIVE/WAITING | `XY` → FALSE; start interval timer |
+| WAITING | interval timer done | PULSING | `XY` → TRUE; start pulse timer |
+| WAITING | command removed | IDLE | `XY` → FALSE |
+| PULSING | pulse timer done | WAITING | `XY` → FALSE; start interval timer |
+| PULSING | command removed | IDLE | `XY` → FALSE |

@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-05-19T07:14:31Z",
+  "generated_at": "2026-05-19T08:50:47Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
@@ -191,6 +191,13 @@
       },
       "sim": null
     },
+    "UDT_Filter_1_sleeve": {
+      "ctrl": {
+        "name": "Filter_1_sleeve",
+        "param": "filter"
+      },
+      "sim": null
+    },
     "UDT_Filter_2_sleeves": {
       "ctrl": {
         "name": "Filter_2_sleeves",
@@ -212,6 +219,13 @@
       },
       "sim": null
     },
+    "UDT_Nolvac": {
+      "ctrl": {
+        "name": "Nolvac",
+        "param": "VC"
+      },
+      "sim": null
+    },
     "UDT_Pipeline": {
       "ctrl": {
         "name": "Pipeline",
@@ -220,25 +234,41 @@
       "sim": null
     },
     "UDT_DS_Valve": {
-      "ctrl": null,
+      "ctrl": {
+        "name": "DS_valve",
+        "param": "XV"
+      },
       "sim": {
         "name": "DS_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_SS_Valve": {
-      "ctrl": null,
+      "ctrl": {
+        "name": "SS_valve",
+        "param": "XV"
+      },
       "sim": {
         "name": "SS_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_Pinch_Valve": {
-      "ctrl": null,
+      "ctrl": {
+        "name": "Pinch_valve",
+        "param": "XV"
+      },
       "sim": {
         "name": "Pinch_valve_simulator",
         "param": "XV"
       }
+    },
+    "UDT_Solenoid_valve": {
+      "ctrl": {
+        "name": "Solenoid_valve",
+        "param": "XY"
+      },
+      "sim": null
     }
   }
 }
