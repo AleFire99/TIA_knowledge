@@ -13,6 +13,9 @@ __pycache__/
 # TIA Portal internal dirs — TIA_Portal staging project (track only .ap20 + src/)
 TIA_Portal/
 
+# TIA Portal backup folders
+library/TIA_Portal.backup/
+
 # TIA Portal internal dirs — AleFire-Library binary (track only .al20)
 library/AleFire-Library/AdditionalFiles/
 library/AleFire-Library/IM/
