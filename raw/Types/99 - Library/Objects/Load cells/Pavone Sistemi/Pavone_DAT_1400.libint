@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: Pavone_DAT_1400.s7dcl
-    Hash: 2qRCtRtA8S66b+Pnnq8Ffx1r//guNGat6h7MtfzCjNo=
-LibraryMetaFileHash: glZzLObXRvmuH/R4bYygSjoslhHjtu29YqGDguoo9Ck=
+    Hash: 6mOnGFEcKzOstIX7bkFG+mStufnRZ6PWAhc1/Y+XZvM=
+LibraryMetaFileHash: nT+RfeQc1FvGLXN1bTZtjMzde1jIH7vbtpGspitzRsg=
 LibraryVersion:
-  Guid: c3b09afe-67b0-47e9-9c5e-5c7401aa8d37
+  Guid: 7312347b-5e46-4dc2-88a1-7552ea3e083f
   DependsOn:
     - TypeName: UDT_Pavone_IN
       VersionNumber: 0.0.2
     - TypeName: UDT_Pavone_OUT
       VersionNumber: 0.0.1
     - TypeName: UDT_Load_cells
-      VersionNumber: 0.1.9
+      VersionNumber: 0.2.6

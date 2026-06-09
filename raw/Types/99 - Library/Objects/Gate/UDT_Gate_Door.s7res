@@ -1,17 +1,21 @@
 ﻿MultiLingualTexts:
-  - id: MLC_39z
-    en-US: INPUT - Pressure received
+  - id: MLC_4hJ
+    en-US: INPUT - Gate closed and locked
   - id: MLC_56T
     en-US: OUTPUT - Command
-  - id: MLC_3jF
-    en-US: COMMAND - Manual command
+  - id: MLC_3Lb
+    en-US: COMMAND - Open command
+  - id: MLC_4dL
+    en-US: COMMAND - Close command
   - id: MLC_4um
     en-US: COMMAND - 0=enabled/1=interlocked
-  - id: MLC_cs
-    en-US: STATE -  1=ClosedLocked, 2=ClosedUnlocked, 3=Open
+  - id: MLC_4xE
+    en-US: STATE -  1=Closed, 2=Opening, 3=Open, 4=Closing
   - id: MLC_Qy
     en-US: STATUS - Door is closed and locked
-  - id: MLC_3Nu
-    en-US: STATUS - Door is closed but unlocked
-  - id: MLC_4Vd
+  - id: MLC_4iB
+    en-US: STATUS - Door is opening
+  - id: MLC_4Tg
     en-US: STATUS - Door is open
+  - id: MLC_Ly
+    en-US: STATUS - Door is closing

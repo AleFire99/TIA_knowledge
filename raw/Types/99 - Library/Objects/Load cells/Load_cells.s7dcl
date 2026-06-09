@@ -17,102 +17,96 @@ FUNCTION_BLOCK "Load_cells"
         transport_timer : TON_TIME;
     END_VAR
     VAR CONSTANT 
-        NORMAL : Int := 1;
-        { S7_MLC := "MLC_4sw" }
-        ERROR : Int := 0;
         { S7_MLC := "MLC_5AQ" }
         IDLE : Int := 1;
         { S7_MLC := "MLC_Ue" }
         SNAPSHOT : Int := 2;
         { S7_MLC := "MLC_4KT" }
-        TRANSPORTING : Int := 3;
+        CONVEYING : Int := 3;
         { S7_MLC := "MLC_b5" }
-        INCOMPLETE : Int := 0;
+        PAUSED : Int := 4;
+        FINISHED : Int := 5;
+        TIMEOUT : Int := 0;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
         REGION Timeout timer
-            // Timer runs only in RUNNING state, preset comes from operator-configurable setting
-            #transport_timer(IN := (#scale.STATUS.normal_state = #TRANSPORTING),
-                             PT := #scale.SETTING.timeout_pt);
+          #transport_timer(IN := (#scale.STATUS.state = #CONVEYING),
+                           PT := #scale.SETTING.conveying_timeout);
         END_REGION
         
         REGION Configuration
-            #scale.ALARMS.weight_invalid := (#scale.IN.current_weight < #scale.SETTING.weight_min)
-            OR (#scale.IN.current_weight > #scale.SETTING.weight_max);
-            
-            #scale.ALARMS.setpoint_invalid := (#scale.CMD.setpoint <= 0)
-            OR (#scale.CMD.setpoint >= #scale.IN.current_weight);
-            
-            #scale.BATCH.configured := (NOT #scale.ALARMS.weight_invalid) AND (NOT #scale.ALARMS.setpoint_invalid);
+          #scale.ALARMS.weight_invalid := (#scale.IN.current_weight < #scale.SETTING.weight_min)
+          OR (#scale.IN.current_weight > #scale.SETTING.weight_max);
+          
+          #scale.ALARMS.setpoint_invalid := (#scale.CMD.setpoint <= 0);
+          
+          #scale.BATCH.configured := (NOT #scale.ALARMS.weight_invalid) AND (NOT #scale.ALARMS.setpoint_invalid);
         END_REGION
         
-        REGION Top FSM logic
-            CASE #scale.STATUS.state OF
-                    
-                #NORMAL:
-                    IF #scale.STATUS.is_in_error THEN
-                        #scale.STATUS.state := #ERROR;
-                    END_IF;
-                    
-                #ERROR:
-                    IF #scale.CMD.ack THEN
-                        #scale.STATUS.state := #NORMAL;
-                        #scale.STATUS.normal_state := #IDLE;
-                    END_IF;
-            END_CASE;
-        END_REGION
-        
-        REGION Normal behaviour FSM
-            IF #scale.STATUS.state = #NORMAL THEN
-                CASE #scale.STATUS.normal_state OF
-                    #IDLE:
-                        IF #scale.CMD.plant_start AND #scale.BATCH.configured THEN
-                            #scale.STATUS.normal_state := #SNAPSHOT;
-                        END_IF;
-                        
-                    #SNAPSHOT:
-                        #scale.BATCH.weight_at_start := #scale.IN.current_weight;
-                        #scale.STATUS.normal_state := #TRANSPORTING;
-                        
-                    #TRANSPORTING:
-                        IF #transport_timer.Q THEN
-                            #scale.STATUS.normal_state := #INCOMPLETE;
-                        ELSIF #scale.BATCH.conveyed >= #scale.CMD.setpoint
-                            OR #scale.CMD.plant_stop THEN
-                            #scale.STATUS.normal_state := #IDLE;
-                        END_IF;
-                        
-                    #INCOMPLETE:
-                        IF #scale.CMD.ack THEN
-                            #scale.STATUS.normal_state := #IDLE;
-                        END_IF;
-                        
-                END_CASE;
-            END_IF;
+        REGION FSM
+          CASE #scale.STATUS.state OF
+              
+            #IDLE:
+              #scale.BATCH.conveyed := 0.0;
+              IF #scale.CMD.start AND #scale.BATCH.configured THEN
+                #scale.STATUS.state := #SNAPSHOT;
+              END_IF;
+              
+            #SNAPSHOT:
+              // On first start:  conveyed = 0.0, so weight_at_start = current_weight (normal snapshot)
+              // On resume:       conveyed holds frozen value, so we back-calculate the effective anchor
+              //                  such that (weight_at_start - current_weight) = previous conveyed immediately
+              #scale.BATCH.weight_at_start := #scale.IN.current_weight + #scale.BATCH.conveyed;
+              #scale.STATUS.state := #CONVEYING;
+              
+            #CONVEYING:
+              IF #transport_timer.Q THEN
+                #scale.STATUS.state := #TIMEOUT;
+              ELSIF #scale.CMD.stop OR (#scale.IN.current_weight <= #scale.SETTING.weight_min) OR #scale.IN.plant_error THEN
+                #scale.STATUS.state := #PAUSED;
+              ELSIF #scale.BATCH.conveyed >= #scale.CMD.setpoint - #scale.SETTING.batch_tail THEN
+                #scale.STATUS.state := #FINISHED;
+              END_IF;
+              
+            #PAUSED:
+              IF #scale.CMD.start THEN
+                #scale.STATUS.state := #SNAPSHOT;
+              ELSIF #scale.CMD.reset THEN
+                #scale.STATUS.state := #IDLE;
+              END_IF;
+              
+            #FINISHED:
+              #scale.STATUS.state := #IDLE;
+              
+            #TIMEOUT:
+              IF #scale.CMD.ack THEN
+                #scale.STATUS.state := #PAUSED;
+              END_IF;
+              
+          END_CASE;
         END_REGION
         
         REGION Conveyed quantity
-            // Computed every scan. Only meaningful during TRANSPORTING.
-            // Clamped to zero to avoid negative display on sensor drift.
-            IF #scale.STATUS.normal_state = #TRANSPORTING THEN
-                #scale.BATCH.conveyed := #scale.BATCH.weight_at_start - #scale.IN.current_weight;
-                IF #scale.BATCH.conveyed < 0.0 THEN
-                    #scale.BATCH.conveyed := 0.0;
-                END_IF;
-            ELSE
-                #scale.BATCH.conveyed := 0.0;
+          // Computed every scan. Only meaningful during CONVEYING.
+          // Clamped to zero to avoid negative display on sensor drift.
+          // PAUSED / TIMEOUT / FINISHED: no assignment — holds last frozen value.
+          IF #scale.STATUS.state = #CONVEYING THEN
+            #scale.BATCH.conveyed := #scale.BATCH.weight_at_start - #scale.IN.current_weight;
+            IF #scale.BATCH.conveyed < 0.0 THEN
+              #scale.BATCH.conveyed := 0.0;
             END_IF;
+          END_IF;
         END_REGION
         
         REGION Mapped outputs
-            // Moore outputs — derived purely from state, reset each scan.
-            #scale.STATUS.is_transporting := (#scale.STATUS.state = #NORMAL) AND (#scale.STATUS.normal_state = #TRANSPORTING);
-            #scale.STATUS.is_idle := (#scale.STATUS.state = #NORMAL) AND (#scale.STATUS.normal_state = #IDLE);
-            #scale.STATUS.is_incomplete := (#scale.STATUS.state = #NORMAL) AND (#scale.STATUS.normal_state = #INCOMPLETE);
-            #scale.STATUS.is_in_error := (#scale.STATUS.state = #ERROR);
+          // Moore outputs — derived purely from state, reset each scan.
+          #scale.STATUS.is_conveying := (#scale.STATUS.state = #CONVEYING);
+          #scale.STATUS.is_idle := (#scale.STATUS.state = #IDLE);
+          #scale.STATUS.is_paused := (#scale.STATUS.state = #PAUSED);
+          #scale.STATUS.is_finished := (#scale.STATUS.state = #FINISHED);
+          #scale.ALARMS.transport_timeout := (#scale.STATUS.state = #TIMEOUT);
         END_REGION
-        
     END_NETWORK
 END_FUNCTION_BLOCK

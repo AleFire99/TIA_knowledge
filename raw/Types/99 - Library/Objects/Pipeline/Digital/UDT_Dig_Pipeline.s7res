@@ -1,0 +1,7 @@
+﻿MultiLingualTexts:
+  - id: MLC_wR
+    en-US: STATUS - Valve in fault state
+  - id: MLC_4i4
+    en-US: STATUS - Valve opening
+  - id: MLC_3Gw
+    en-US: ALARM - General error

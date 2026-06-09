@@ -63,6 +63,15 @@ def _load_ctrl_overrides() -> list[dict]:
     return data.get("manifest", {}).get("ctrl_overrides", [])
 
 
+def _load_udt_labels() -> dict[str, str]:
+    toml_path = REPO_ROOT / "config.toml"
+    if not toml_path.exists():
+        return {}
+    with toml_path.open("rb") as f:
+        data = tomllib.load(f)
+    return data.get("manifest", {}).get("udt_labels", {})
+
+
 def _read_libinfo_description(path: Path) -> str:
     """Read en-US comment from sibling .libinfo file, return empty string if absent."""
     libinfo = path.with_suffix(".libinfo")
@@ -173,8 +182,11 @@ def parse_udt(path: Path) -> dict:
 
     devices: dict[str, dict] = {}
     has_out = False
+    cmd_ack = False
+    cmd_manual_mode = False
     depth = 0
     in_devices = False
+    in_cmd = False
 
     for line in lines:
         stripped = line.strip()
@@ -190,7 +202,9 @@ def parse_udt(path: Path) -> dict:
         )
         if named_struct_m:
             if depth == 1:
-                in_devices = (named_struct_m.group(1).upper() == "DEVICES")
+                field_upper = named_struct_m.group(1).upper()
+                in_devices = (field_upper == "DEVICES")
+                in_cmd = (field_upper == "CMD")
             depth += 1
             continue
 
@@ -201,6 +215,7 @@ def parse_udt(path: Path) -> dict:
         if re.match(r'^END_STRUCT\s*;?\s*$', stripped, re.IGNORECASE):
             if depth == 2:
                 in_devices = False
+                in_cmd = False
             if depth > 0:
                 depth -= 1
             continue
@@ -218,7 +233,23 @@ def parse_udt(path: Path) -> dict:
                 fdesc = comment_m.group(1).strip() if comment_m else ""
                 devices[fname] = {"type": ftype, "description": fdesc}
 
-    return {"name": name, "description": description, "has_out": has_out, "devices": devices}
+        elif depth == 2 and in_cmd:
+            member = _parse_member_line(line)
+            if member:
+                fname_lower = member[0].lower()
+                if fname_lower == "ack":
+                    cmd_ack = True
+                elif fname_lower == "manual_mode":
+                    cmd_manual_mode = True
+
+    return {
+        "name": name,
+        "description": description,
+        "has_out": has_out,
+        "cmd_ack": cmd_ack,
+        "cmd_manual_mode": cmd_manual_mode,
+        "devices": devices,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -271,12 +302,16 @@ def parse_fb(path: Path) -> dict | None:
 # Manifest assembly
 # ---------------------------------------------------------------------------
 
-def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict], ctrl_overrides: list[dict] | None = None) -> dict:
+def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict], ctrl_overrides: list[dict] | None = None, udt_labels: dict[str, str] | None = None) -> dict:
+    labels = udt_labels or {}
     udt_section: dict[str, dict] = {}
     for u in udts:
         udt_section[u["name"]] = {
             "description": u["description"],
+            "label": labels.get(u["name"], ""),
             "has_out": u["has_out"],
+            "cmd_ack": u.get("cmd_ack", False),
+            "cmd_manual_mode": u.get("cmd_manual_mode", False),
             "devices": {
                 fname: {"type": fd["type"], "description": fd["description"]}
                 for fname, fd in u["devices"].items()
@@ -374,7 +409,8 @@ def main() -> None:
 
     sim_overrides  = _load_sim_overrides()
     ctrl_overrides = _load_ctrl_overrides()
-    manifest = build_manifest(udts, fbs, sim_overrides, ctrl_overrides)
+    udt_labels     = _load_udt_labels()
+    manifest = build_manifest(udts, fbs, sim_overrides, ctrl_overrides, udt_labels)
     write_manifest_atomic(manifest, cfg.MANIFEST_PATH)
     _write_delta(delta, cfg.INGEST_DELTA_PATH, total=len(current_hashes))
     _save_cache(current_hashes, cfg.INGEST_CACHE_PATH)

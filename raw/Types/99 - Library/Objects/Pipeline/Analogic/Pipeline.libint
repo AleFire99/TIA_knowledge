@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: Pipeline.s7dcl
+    Hash: 1Vw8IRafoRs766tPXnb9HpMkYoJFonby/BRBjJY2U+A=
+LibraryMetaFileHash: dg2KLgZ+uL0EyR1XCoXVV9STYyB0a+YjocnBta4vGnA=
+LibraryVersion:
+  Guid: 8f35a01b-3792-46f8-b012-89d23f3776c2
+  DependsOn:
+    - TypeName: UDT_An_Pipeline
+      VersionNumber: 0.0.3

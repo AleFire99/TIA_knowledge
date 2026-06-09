@@ -2,17 +2,17 @@
 
 ## Panoramica
 
-Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia. `XY03` attiva il percorso di aspirazione per convogliare il materiale durante la fase di convogliamento; `XV01` (valvola a farfalla SS) e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno. Il blocco funzionale `Nolvac` gestisce il ciclo completo tramite il parametro `VC : UDT_Nolvac`.
+Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia. `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` (valvola a farfalla SS) e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno. Il blocco funzionale `Nolvac` gestisce il ciclo completo tramite il parametro `VC : UDT_Nolvac`.
 
-Il ciclo alterna due fasi: **convogliamento** (`suction_time`) e **pulizia** (`cleaning_time`). Al termine di ogni fase il ciclo riparte automaticamente finché `CMD.auto` è attivo.
+Il ciclo alterna due fasi — **convogliamento** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché `CMD.auto` è attivo.
 
 ---
 
 ## Componenti principali
 
-- **Elettrovalvola convogliamento `XY03`** — attiva la depressione/il percorso d'aria per il convogliamento del materiale; eccitata per tutta la fase CONVEYING
-- **Valvola di ingresso `XV01`** — valvola a farfalla SS che apre l'ingresso durante la fase di pulizia; vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.it.md)
-- **Elettrovalvola pulizia `XY02`** — fornisce aria compressa per il retrolavaggio/pulizia del filtro durante la fase CLEANING
+- **Elettrovalvola convogliamento `XY03`** — attiva la depressione per il trasporto del materiale; eccitata per tutta la fase CONVEYING
+- **Valvola a farfalla SS `XV01`** — apre l'ingresso durante la fase di pulizia; vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.it.md)
+- **Elettrovalvola pulizia `XY02`** — fornisce aria compressa per il retrolavaggio del filtro durante CLEANING
 
 ---
 
@@ -25,8 +25,9 @@ Il ciclo alterna due fasi: **convogliamento** (`suction_time`) e **pulizia** (`c
 | `DEVICES.XY03` | UDT_Solenoid_valve | Solenoide convogliamento; eccitato durante CONVEYING |
 | `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
 | `CMD.auto` | Bool | Comando automazione: TRUE = avvia ciclo |
+| `CMD.interlocked` | Bool | Interblocco (attualmente non utilizzato nella FSM) |
 | `CMD.ack` | Bool | Conferma allarme operatore |
-| `STATUS.state` | Int | Stato FSM corrente (0=ERROR, 1=IDLE, 2=CONVEYING, 3=CLEANING) |
+| `STATUS.state` | Int | Stato FSM: 0=ERROR, 1=IDLE, 2=CONVEYING, 3=CLEANING |
 | `STATUS.is_conveying` | Bool | TRUE durante la fase di convogliamento |
 | `STATUS.is_cleaning` | Bool | TRUE durante la fase di pulizia filtro |
 | `ALARMS.valve_error` | Bool | Guasto rilevato su `XV01` |
@@ -35,15 +36,17 @@ Il ciclo alterna due fasi: **convogliamento** (`suction_time`) e **pulizia** (`c
 
 ## Funzionamento
 
-Il ciclo operativo standard si articola in due fasi che si alternano fintanto che il comando `auto` è attivo:
+Il ciclo operativo standard alterna due fasi mentre `CMD.auto` è attivo:
 
-**Fase CONVEYING** — `XY03` viene eccitato per la durata `suction_time`. Il percorso di convogliamento è attivo e il materiale viene trasportato. Al termine del timer, il sistema transisce in CLEANING.
+**Fase CONVEYING** — `XY03` viene eccitato per la durata `suction_time`. Il percorso di convogliamento è attivo. Al termine, il sistema transisce in CLEANING.
 
-**Fase CLEANING** — `XV01` viene aperta e `XY02` eccitata per la durata `cleaning_time`. L'aria compressa rigenerava il filtro tramite retrolavaggio. Al termine del timer, il sistema torna in CONVEYING se `CMD.auto` è ancora attivo.
+**Fase CLEANING** — `XV01` viene aperta e `XY02` eccitata per la durata `cleaning_time`. L'aria compressa rigenerava il filtro tramite retrolavaggio. Al termine, se `CMD.auto` è ancora attivo, il sistema torna in CONVEYING.
 
 Se `CMD.auto` viene rimosso in qualsiasi momento durante CONVEYING o CLEANING, il sistema torna immediatamente a IDLE, disattivando tutte le uscite.
 
-Un guasto su `XV01` (rilevato tramite `XV01.ALARMS.error`) imposta `ALARMS.valve_error = TRUE` e porta il sistema in ERROR indipendentemente dalla fase corrente. Per riprendere, l'operatore deve risolvere il guasto sulla sotto-valvola e confermare con `CMD.ack`. Dopo la conferma, il sistema torna in IDLE e può ricevere un nuovo comando `auto`.
+Un guasto su `XV01` (`XV01.ALARMS.error`) imposta `ALARMS.valve_error = TRUE` e porta il sistema in ERROR da qualsiasi stato. `CMD.ack` riporta il sistema a IDLE.
+
+Il `manual_mode` viene propagato a `XV01`, `XY02` e `XY03` permettendo all'operatore di controllare manualmente i dispositivi dall'HMI.
 
 ---
 
@@ -111,11 +114,11 @@ stateDiagram-v2
     IDLE --> ERROR : valve_error
 
     CONVEYING --> IDLE : NOT CMD.auto
-    CONVEYING --> CLEANING : suction_time scaduto
+    CONVEYING --> CLEANING : suction_timer scaduto
     CONVEYING --> ERROR : valve_error
 
     CLEANING --> IDLE : NOT CMD.auto
-    CLEANING --> CONVEYING : cleaning_time scaduto
+    CLEANING --> CONVEYING : cleaning_timer scaduto
     CLEANING --> ERROR : valve_error
 
     ERROR --> IDLE : CMD.ack
@@ -134,12 +137,12 @@ stateDiagram-v2
 
 | Stato attuale | Condizione | Stato successivo | Azione |
 |---------------|------------|-----------------|--------|
-| IDLE | CMD.auto = TRUE | CONVEYING | XY03 → eccitata; avvia suction_timer |
-| IDLE | valve_error | ERROR | — |
-| CONVEYING | NOT CMD.auto | IDLE | Tutte uscite → diseccitate |
+| IDLE | `CMD.auto` = TRUE | CONVEYING | XY03 → eccitata; avvia suction_timer |
+| IDLE | `valve_error` | ERROR | — |
+| CONVEYING | NOT `CMD.auto` | IDLE | Tutte uscite → diseccitate |
 | CONVEYING | suction_timer scaduto | CLEANING | XY03 → spenta; XV01 apre, XY02 → eccitata; avvia cleaning_timer |
-| CONVEYING | valve_error | ERROR | Tutte uscite → diseccitate |
-| CLEANING | NOT CMD.auto | IDLE | Tutte uscite → diseccitate |
+| CONVEYING | `valve_error` | ERROR | Tutte uscite → diseccitate |
+| CLEANING | NOT `CMD.auto` | IDLE | Tutte uscite → diseccitate |
 | CLEANING | cleaning_timer scaduto | CONVEYING | XV01 chiude, XY02 → spenta; XY03 → eccitata; avvia suction_timer |
-| CLEANING | valve_error | ERROR | Tutte uscite → diseccitate |
-| ERROR | CMD.ack = TRUE | IDLE | Azzera allarmi; attende nuovo CMD.auto |
+| CLEANING | `valve_error` | ERROR | Tutte uscite → diseccitate |
+| ERROR | `CMD.ack` = TRUE | IDLE | Azzera allarmi; attende nuovo `CMD.auto` |

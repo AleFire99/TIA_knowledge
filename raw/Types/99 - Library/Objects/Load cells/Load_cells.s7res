@@ -8,8 +8,6 @@
        ============================================================
   - id: MLC_3fF
     it-IT: Conveying timeout timer
-  - id: MLC_4sw
-    it-IT: Scale fault and waiting for ack
   - id: MLC_5AQ
     it-IT: Waiting for new batch command
   - id: MLC_Ue

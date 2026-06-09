@@ -2,17 +2,18 @@
 
 ## Panoramica
 
-`Gate_door` gestisce un portello a blocco pneumatico in tre stati. Il solenoide (`XY`) controlla il chiavistello: eccitato = bloccato, diseccitato = rilasciato. Il portello viene aperto e chiuso fisicamente dall'operatore — non c'è attuatore di apertura. `ZSL` conferma la posizione fisica chiusa.
+`Gate_door` gestisce un portello pneumatico a singolo effetto. Il solenoide (`XY`) comanda l'apertura: eccitato = portello in apertura o aperto; diseccitato = molla riporta il portello in chiusura. `ZSL` fornisce il feedback della posizione chiusa. L'orchestratore controlla il portello tramite `CMD.open` e `CMD.close`; `CMD.interlocked` blocca la transizione verso l'apertura quando attivo.
 
-Il portello non ha modalità manuale/automatica standard né struttura `ALARMS` separata — il comportamento è determinato dai comandi dell'orchestratore (`CMD.open`, `CMD.close`, `CMD.interlocked`).
+Non esiste struttura `ALARMS` separata né stato di guasto — il blocco è un Moore sequencer a quattro stati senza rilevamento d'errore proprio.
 
 ---
 
 ## Componenti principali
 
-- **Chiavistello pneumatico** (`XY`) — solenoide che blocca il portello: eccitato = bloccato (CLOSED_LOCKED), diseccitato = rilasciato (CLOSED_UNLOCKED)
-- **Finecorsa `ZSL`** — TRUE = portello fisicamente chiuso; FALSE = portello aperto
-- **CMD.interlocked** — guardia attiva-bassa: FALSE = apertura consentita dall'orchestratore; TRUE = apertura bloccata
+- **Attuatore pneumatico** — singolo effetto, ritorno a molla in chiusura
+- **Elettrovalvola `XY`** — controlla l'aria all'attuatore: eccitata = porta verso apertura o mantiene aperta
+- **Finecorsa `ZSL`** — TRUE = portello fisicamente in posizione chiusa
+- **CMD.interlocked** — guardia attiva-alta: TRUE = transizione CLOSED → OPENING bloccata
 
 ---
 
@@ -21,44 +22,47 @@ Il portello non ha modalità manuale/automatica standard né struttura `ALARMS` 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
 | `DEVICES.ZSL` | Bool | INPUT — Finecorsa posizione chiusa: TRUE = portello chiuso |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Solenoide chiavistello |
-| `CMD.open` | Bool | COMANDO — Richiesta apertura (rilascio chiavistello) |
-| `CMD.close` | Bool | COMANDO — Richiesta chiusura/blocco |
-| `CMD.interlocked` | Bool | COMANDO — TRUE = apertura bloccata dall'orchestratore |
-| `STATUS.state` | Int | STATO — 1=ClosedLocked, 2=ClosedUnlocked, 3=Open |
-| `STATUS.is_closed_locked` | Bool | STATO — Portello chiuso e bloccato |
-| `STATUS.is_closed_unlocked` | Bool | STATO — Portello chiuso ma sbloccato |
-| `STATUS.is_open` | Bool | STATO — Portello aperto |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola attuatore |
+| `CMD.open` | Bool | COMANDO — Richiesta apertura |
+| `CMD.close` | Bool | COMANDO — Richiesta chiusura |
+| `CMD.interlocked` | Bool | GUARDIA — TRUE = apertura bloccata dall'orchestratore |
+| `STATUS.state` | Int | STATO — 1=Chiuso, 2=In apertura, 3=Aperto, 4=In chiusura |
+| `STATUS.is_closed` | Bool | STATO — Portello fermo in posizione chiusa |
+| `STATUS.is_opening` | Bool | STATO — Attuatore in movimento verso apertura |
+| `STATUS.is_open` | Bool | STATO — Portello completamente aperto |
+| `STATUS.is_closing` | Bool | STATO — Molla in rientro verso chiusura |
 
 ---
 
 ## Funzionamento
 
-**CLOSED_LOCKED** — Il chiavistello è inserito (`XY.CMD.auto = TRUE`). `CMD.open` con `NOT interlocked` diseccita il solenoide → CLOSED_UNLOCKED. Se `interlocked = TRUE`, il comando `open` viene ignorato.
+**CLOSED** — Il portello è fermo in posizione chiusa con `ZSL = TRUE`. Il solenoide è diseccitato. `CMD.open` con `NOT CMD.interlocked` transita verso OPENING. Se `interlocked = TRUE`, il comando viene ignorato.
 
-**CLOSED_UNLOCKED** — Il chiavistello è rilasciato (`XY.CMD.auto = FALSE`). Due transizioni possibili: `CMD.close` re-inserisce il chiavistello → CLOSED_LOCKED; oppure l'operatore spinge fisicamente il portello aperto → `ZSL` scende a FALSE → OPEN.
+**OPENING** — Il solenoide viene eccitato (`XY.CMD.auto = TRUE`) e l'attuatore spinge il portello verso l'apertura. Quando `ZSL` scende a FALSE, il portello non è più in posizione chiusa → transizione verso OPEN.
 
-**OPEN** — Portello completamente aperto. Nessuna azione sul solenoide. Quando l'operatore riporta il portello in posizione chiusa → `ZSL` sale a TRUE → CLOSED_LOCKED (chiavistello si reinserisce automaticamente).
+**OPEN** — Il solenoide rimane eccitato per mantenere il portello aperto contro la molla. `CMD.close` transita verso CLOSING.
 
-**Inizializzazione** — Al primo ciclo PLC, lo stato viene derivato dalla posizione fisica: `ZSL = TRUE` → CLOSED_LOCKED; `ZSL = FALSE` → OPEN.
+**CLOSING** — Il solenoide viene diseccitato (`XY.CMD.auto = FALSE`); la molla riporta il portello in chiusura. Quando `ZSL` sale a TRUE, il portello ha raggiunto la posizione chiusa → transizione verso CLOSED.
+
+**Inizializzazione** — Al primo ciclo PLC, lo stato viene derivato da `ZSL`: TRUE → CLOSED, FALSE → OPEN.
+
+`CMD.interlocked` blocca solo la transizione CLOSED → OPENING. Non ha effetto sugli altri stati: un portello già aperto o in movimento non viene fermato dall'interblocco.
 
 ---
 
 ## Allarmi
 
-Il blocco `UDT_Gate_Door` non include una struttura `ALARMS` separata. Guasti del solenoide (`XY`) sono visibili tramite `DEVICES.XY.ALARMS`.
+`UDT_Gate_Door` non include una struttura `ALARMS`. Guasti dell'elettrovalvola sono visibili tramite `DEVICES.XY.ALARMS` (vedere [Elettrovalvola](../../valves/solenoid/index.it.md#allarmi)).
 
 ---
 
 ## Parametri
 
-Nessun parametro configurabile in `UDT_Gate_Door`. Il simulatore espone `SIM_TRAVEL_TIME` (default `T#2S`) per la durata della corsa simulata.
+Nessun parametro configurabile in `UDT_Gate_Door`.
 
 ---
 
 ## Struttura dati
-
-<!-- AUTO-GENERATED: do not edit manually -->
 
 ```mermaid
 classDiagram
@@ -74,9 +78,10 @@ classDiagram
     }
     class STATUS {
         +Int state
-        +Bool is_closed_locked
-        +Bool is_closed_unlocked
+        +Bool is_closed
+        +Bool is_opening
         +Bool is_open
+        +Bool is_closing
     }
     UDT_Gate_Door *-- DEVICES
     UDT_Gate_Door *-- CMD
@@ -87,35 +92,31 @@ classDiagram
 
 ## Macchina a stati (FSM)
 
-<!-- AUTO-GENERATED: do not edit manually -->
-
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
+    [*] --> CLOSED : ZSL=TRUE all'avvio
+    [*] --> OPEN : ZSL=FALSE all'avvio
 
-    state NORMAL {
-        [*] --> CLOSED_LOCKED : ZSL=TRUE all'avvio
-        [*] --> OPEN : ZSL=FALSE all'avvio
-        CLOSED_LOCKED --> CLOSED_UNLOCKED : CMD.open & NOT interlocked
-        CLOSED_UNLOCKED --> CLOSED_LOCKED : CMD.close
-        CLOSED_UNLOCKED --> OPEN : ZSL scende (operatore apre)
-        OPEN --> CLOSED_LOCKED : ZSL sale (operatore chiude)
-    }
+    CLOSED --> OPENING : CMD.open AND NOT interlocked
+    OPENING --> OPEN : NOT ZSL
+    OPEN --> CLOSING : CMD.close
+    CLOSING --> CLOSED : ZSL
 ```
 
 ### Tabella stati e uscite
 
 | Stato | Valore | XY.CMD.auto | Descrizione |
 |-------|--------|-------------|-------------|
-| CLOSED_LOCKED | 1 | TRUE | Solenoide eccitato — chiavistello inserito |
-| CLOSED_UNLOCKED | 2 | FALSE | Solenoide diseccitato — operatore può aprire |
-| OPEN | 3 | FALSE | Portello fisicamente aperto |
+| CLOSED | 1 | FALSE | Portello chiuso, molla in posizione |
+| OPENING | 2 | TRUE | Attuatore spinge il portello verso apertura |
+| OPEN | 3 | TRUE | Portello aperto, solenoide mantiene contro la molla |
+| CLOSING | 4 | FALSE | Molla riporta il portello in posizione chiusa |
 
 ### Tabella transizioni di stato
 
 | Stato attuale | Condizione | Stato successivo | Azione |
 |---------------|------------|-----------------|--------|
-| CLOSED_LOCKED | `CMD.open` AND NOT `interlocked` | CLOSED_UNLOCKED | `XY.CMD.auto` → FALSE |
-| CLOSED_UNLOCKED | `CMD.close` | CLOSED_LOCKED | `XY.CMD.auto` → TRUE |
-| CLOSED_UNLOCKED | NOT `ZSL` | OPEN | — |
-| OPEN | `ZSL` | CLOSED_LOCKED | `XY.CMD.auto` → TRUE |
+| CLOSED | `CMD.open` AND NOT `interlocked` | OPENING | `XY.CMD.auto` → TRUE |
+| OPENING | NOT `ZSL` | OPEN | — |
+| OPEN | `CMD.close` | CLOSING | `XY.CMD.auto` → FALSE |
+| CLOSING | `ZSL` | CLOSED | — |

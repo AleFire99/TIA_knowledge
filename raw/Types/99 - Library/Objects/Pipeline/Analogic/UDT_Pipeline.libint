@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: UDT_Pipeline.s7dcl
+    Hash: 5ETJVytU0hEITpnFaf1BC9zEiGWklBPEgfFag3qniMI=
+  - FileName: UDT_Pipeline.s7res
+    Hash: j4ey+wzRNq9OS7e7/LgUZxieil+heXNWLm42ySfTDqo=
+LibraryMetaFileHash: rQB0BdTRpheqWMnMaJ3nEbhD0e3Wa3O9MnoPqtZ78uc=
+LibraryVersion:
+  Guid: 46f8b40e-168a-4282-9ff9-551d00739121
+  DependsOn:
+    - TypeName: UDT_Analogic_signal
+      VersionNumber: 0.0.2

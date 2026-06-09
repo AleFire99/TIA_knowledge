@@ -2,100 +2,98 @@
 
 ## Overview
 
-`Load_cells` controls a weight-based batch transport cycle. The FB reads the current weight from the transmitter, validates configuration conditions (weight within scale range, setpoint coherent with current weight), then monitors the quantity transported during the active cycle. Transport ends when the weight difference reaches the setpoint or when the orchestrator issues a stop command.
+`Load_cells` controls a weight-based batch transport cycle. It validates scale and setpoint conditions, takes a weight snapshot at the start of each run, then tracks quantity transported until the batch is complete, stopped, or timed out. Pause and resume are supported without losing the already-transported count.
 
-The block exposes `BATCH.configured` as a ready flag for the orchestrator: only when this is TRUE can the transport cycle start.
+`BATCH.configured` is the ready flag for the orchestrator: the cycle can only start when TRUE.
+
+The `Pavone_DAT_1400` function is an optional hardware adapter that converts raw Pavone DAT 1400 transmitter registers into the `IN` format expected by `UDT_Load_cells`.
 
 ---
 
 ## Main Components
 
-- **Load cells** — physical sensors generating the raw weight signal
-- **Weight transmitter** — converts cell signal into `IN.current_weight` [kg]; publishes `IN.scale_error` on hardware fault
-- **Orchestrator** — sends `CMD.plant_start` / `CMD.plant_stop`; reads `BATCH.configured`
-- **Operator** — sets `CMD.setpoint`, sends `CMD.tare_request` if needed, acknowledges with `CMD.ack`
+- **Load cells** — physical sensors producing the raw weight signal
+- **Transmitter** — converts signal to `IN.current_weight` [kg]; reports faults via `IN.scale_error` and `IN.plant_error`
+- **`Pavone_DAT_1400`** — optional FC: scales `net_weight` and handles tare command for the Pavone DAT 1400 transmitter
+- **Orchestrator** — sends `CMD.start` / `CMD.stop` / `CMD.reset`; reads `BATCH.configured`
 
 ---
 
 ## I/O Signals
 
-### Commands (`CMD` — from HMI/orchestrator)
+### Commands (`CMD`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `CMD.ack` | Bool | Operator acknowledgement for INCOMPLETE or ERROR |
-| `CMD.setpoint` | Real | Weight to transport in the cycle [kg] |
-| `CMD.tare_request` | Bool | Tare request to external transmitter |
-| `CMD.plant_start` | Bool | Transport start from orchestrator |
-| `CMD.plant_stop` | Bool | Immediate transport stop from orchestrator |
+| `CMD.ack` | Bool | Acknowledge for TIMEOUT state |
+| `CMD.setpoint` | Real | Weight to transport in this batch [kg] |
+| `CMD.tare_request` | Bool | Request tare from transmitter |
+| `CMD.start` | Bool | Start or resume batch |
+| `CMD.stop` | Bool | Pause transport immediately |
+| `CMD.reset` | Bool | Return to IDLE from PAUSED state |
 
 ### Inputs (`IN` — from transmitter)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `IN.current_weight` | Real | Current weight in engineering units [kg] |
-| `IN.scale_error` | Bool | Hardware fault from transmitter |
-
-### Outputs (`OUT` — to transmitter)
-
-| Signal | Type | Description |
-|--------|------|-------------|
-| `OUT.tare_cmd` | Bool | Tare command to external transmitter |
-
-### Batch (`BATCH`)
-
-| Signal | Type | Description |
-|--------|------|-------------|
-| `BATCH.configured` | Bool | TRUE when weight and setpoint are valid — ready for transport |
-| `BATCH.conveyed` | Real | kg transported in the current cycle (computed every scan) |
-| `BATCH.weight_at_start` | Real | Weight captured on TRANSPORTING entry [kg] |
+| `IN.current_weight` | Real | Current weight reading [kg] |
+| `IN.scale_error` | Bool | Transmitter hardware fault |
+| `IN.plant_error` | Bool | External plant error (e.g. material loss) |
 
 ### Status (`STATUS`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `STATUS.state` | Int | Top-level FSM state: 1=NORMAL, 0=ERROR |
-| `STATUS.normal_state` | Int | Sub-state: 1=IDLE, 2=SNAPSHOT, 3=TRANSPORTING, 0=INCOMPLETE |
-| `STATUS.is_idle` | Bool | TRUE when state=NORMAL and normal_state=IDLE |
-| `STATUS.is_transporting` | Bool | TRUE during active transport |
-| `STATUS.is_incomplete` | Bool | TRUE when batch timed out without completing |
-| `STATUS.is_in_error` | Bool | TRUE when state=ERROR |
+| `STATUS.state` | Int | FSM state: 1=IDLE, 2=SNAPSHOT, 3=CONVEYING, 4=PAUSED, 5=FINISHED, 0=TIMEOUT |
+| `STATUS.is_idle` | Bool | TRUE in IDLE |
+| `STATUS.is_conveying` | Bool | TRUE in CONVEYING |
+| `STATUS.is_paused` | Bool | TRUE in PAUSED |
+| `STATUS.is_finished` | Bool | TRUE in FINISHED (lasts 1 scan, then auto-IDLE) |
+
+### Batch (`BATCH`)
+
+| Signal | Type | Description |
+|--------|------|-------------|
+| `BATCH.configured` | Bool | TRUE when weight and setpoint are valid |
+| `BATCH.conveyed` | Real | kg transported in current batch |
+| `BATCH.weight_at_start` | Real | Weight snapshot taken at CONVEYING entry [kg] |
 
 ### Alarms (`ALARMS`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `ALARMS.weight_invalid` | Bool | Weight out of scale: `current_weight < weight_min` or `> weight_max` |
-| `ALARMS.setpoint_invalid` | Bool | Invalid setpoint: ≤ 0 or ≥ current weight |
+| `ALARMS.weight_invalid` | Bool | Weight outside `[weight_min, weight_max]` |
+| `ALARMS.setpoint_invalid` | Bool | Setpoint ≤ 0 |
+| `ALARMS.transport_timeout` | Bool | TRUE when state = TIMEOUT |
 
 ---
 
 ## Operating Routine
 
-`BATCH.configured` is updated every scan from the condition:
+`BATCH.configured` is updated every scan:
 
 ```
 configured = NOT weight_invalid AND NOT setpoint_invalid
 ```
 
-`weight_invalid` triggers if weight is outside the range `[weight_min, weight_max]`. `setpoint_invalid` triggers if setpoint is ≤ 0 or ≥ current weight. While either is active, `configured = FALSE` and the orchestrator cannot start transport.
+`weight_invalid` trips if weight is outside `[weight_min, weight_max]`. `setpoint_invalid` trips if setpoint ≤ 0. The batch cannot start while either is active.
 
-When `CMD.plant_start = TRUE` and `BATCH.configured = TRUE`, the FB enters **SNAPSHOT** (transient state) where it captures `weight_at_start := current_weight`, then advances immediately to **TRANSPORTING**.
+**IDLE** — Waiting for `CMD.start` with `BATCH.configured = TRUE`. `BATCH.conveyed` is reset to 0 on every re-entry to IDLE.
 
-In **TRANSPORTING**, every scan computes:
+**SNAPSHOT** — Transient state (one scan). Acquires `weight_at_start`. On first start: `weight_at_start := current_weight`. On resume after pause: `weight_at_start := current_weight + conveyed` — this re-anchors the calculation so `conveyed` continues from the correct value.
 
-```
-conveyed := weight_at_start − current_weight   (clamped to 0 to avoid negative display on sensor drift)
-```
+**CONVEYING** — Transport active. Every scan computes `conveyed := weight_at_start - current_weight` (clamped to 0). Cycle ends on the first matching condition:
+- `conveyed ≥ setpoint - batch_tail` → FINISHED
+- `CMD.stop` OR `current_weight ≤ weight_min` OR `IN.plant_error` → PAUSED
+- `conveying_timeout` expired → TIMEOUT
 
-Transport ends when:
-- `conveyed ≥ setpoint` → IDLE (completed)
-- `CMD.plant_stop` → IDLE (stopped by orchestrator)
-- `timeout_pt` expires → INCOMPLETE (timed out, waits for `ack`)
+`batch_tail` cuts off transport slightly before the full setpoint to account for in-flight material.
 
-In **INCOMPLETE**, the batch failed due to timeout. The operator must acknowledge with `CMD.ack` to return to IDLE.
+**PAUSED** — Transport suspended; `BATCH.conveyed` frozen. `CMD.start` resumes (→ SNAPSHOT). `CMD.reset` cancels the batch (→ IDLE).
 
-In **ERROR**, all normal operation is blocked. `CMD.ack` returns the block to NORMAL/IDLE.
+**FINISHED** — Setpoint reached. Active for exactly one scan, then the system returns to IDLE automatically.
+
+**TIMEOUT** — `conveying_timeout` expired during transport. `ALARMS.transport_timeout = TRUE`. `CMD.ack` moves to PAUSED (batch can then be resumed or cancelled).
 
 ---
 
@@ -103,9 +101,9 @@ In **ERROR**, all normal operation is blocked. `CMD.ack` returns the block to NO
 
 | ID | Condition | Cause |
 |----|-----------|-------|
-| LC-A01 | `ALARMS.weight_invalid` | Weight out of hardware scale range (`weight_min` / `weight_max`) — check cells, wiring, transmitter |
-| LC-A02 | `ALARMS.setpoint_invalid` | Setpoint not physically achievable — verify setpoint < current_weight and > 0 |
-| LC-W01 | `STATUS.is_incomplete` | Transport timed out without reaching setpoint (`timeout_pt`) |
+| LC-A01 | `ALARMS.weight_invalid` | Weight out of scale range — check load cells, wiring, transmitter |
+| LC-A02 | `ALARMS.setpoint_invalid` | Setpoint ≤ 0 — set a positive value |
+| LC-W01 | `ALARMS.transport_timeout` | CONVEYING cycle exceeded `conveying_timeout` — check plant, valve, or material supply |
 
 ---
 
@@ -113,9 +111,10 @@ In **ERROR**, all normal operation is blocked. `CMD.ack` returns the block to NO
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.weight_min` | 10.0 kg | Lower valid weight threshold |
-| `SETTING.weight_max` | 1000.0 kg | Upper valid weight threshold — physical scale limit |
-| `SETTING.timeout_pt` | T#2M | Maximum TRANSPORTING cycle duration before INCOMPLETE |
+| `SETTING.weight_min` | 10.0 | Lower valid weight threshold [kg] |
+| `SETTING.weight_max` | 1000.0 | Upper valid weight threshold [kg] |
+| `SETTING.batch_tail` | — | Early cut-off before setpoint [kg] |
+| `SETTING.conveying_timeout` | T#10M | Maximum CONVEYING duration before TIMEOUT |
 
 ---
 
@@ -128,28 +127,27 @@ classDiagram
         +Bool ack
         +Real setpoint
         +Bool tare_request
-        +Bool plant_start
-        +Bool plant_stop
+        +Bool start
+        +Bool stop
+        +Bool reset
     }
     class IN {
         +Real current_weight
         +Bool scale_error
-    }
-    class OUT {
-        +Bool tare_cmd
+        +Bool plant_error
     }
     class SETTING {
         +Real weight_min
         +Real weight_max
-        +Time timeout_pt
+        +Real batch_tail
+        +Time conveying_timeout
     }
     class STATUS {
         +Int state
-        +Int normal_state
         +Bool is_idle
-        +Bool is_transporting
-        +Bool is_incomplete
-        +Bool is_in_error
+        +Bool is_conveying
+        +Bool is_finished
+        +Bool is_paused
     }
     class BATCH {
         +Bool configured
@@ -159,10 +157,10 @@ classDiagram
     class ALARMS {
         +Bool weight_invalid
         +Bool setpoint_invalid
+        +Bool transport_timeout
     }
     UDT_Load_cells *-- CMD
     UDT_Load_cells *-- IN
-    UDT_Load_cells *-- OUT
     UDT_Load_cells *-- SETTING
     UDT_Load_cells *-- STATUS
     UDT_Load_cells *-- BATCH
@@ -175,41 +173,40 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
+    [*] --> IDLE
 
-    state NORMAL {
-        [*] --> IDLE
-
-        IDLE --> SNAPSHOT : plant_start AND configured
-        SNAPSHOT --> TRANSPORTING : (captures weight_at_start — transient)
-        TRANSPORTING --> IDLE : conveyed >= setpoint
-        TRANSPORTING --> IDLE : plant_stop
-        TRANSPORTING --> INCOMPLETE : timeout_pt expired
-        INCOMPLETE --> IDLE : CMD.ack
-    }
-
-    NORMAL --> ERROR : is_in_error
-    ERROR --> NORMAL : CMD.ack
+    IDLE --> SNAPSHOT : CMD.start AND configured
+    SNAPSHOT --> CONVEYING : (acquires weight_at_start — 1 scan)
+    CONVEYING --> FINISHED : conveyed >= setpoint - batch_tail
+    CONVEYING --> PAUSED : CMD.stop or plant_error or weight <= weight_min
+    CONVEYING --> TIMEOUT : conveying_timeout expired
+    FINISHED --> IDLE : automatic (1 scan)
+    PAUSED --> SNAPSHOT : CMD.start
+    PAUSED --> IDLE : CMD.reset
+    TIMEOUT --> PAUSED : CMD.ack
 ```
 
 ### State and Output Table
 
 | State | Value | Description |
 |-------|-------|-------------|
-| ERROR | state=0 | Operation blocked; waits for ack |
-| IDLE | normal_state=1 | Waiting for plant_start |
-| SNAPSHOT | normal_state=2 | Captures initial weight (transient, 1 scan) |
-| TRANSPORTING | normal_state=3 | Active transport; `conveyed` updated every scan |
-| INCOMPLETE | normal_state=0 | Timeout; waits for operator acknowledgement |
+| TIMEOUT | 0 | Timer expired; `transport_timeout=TRUE`; awaiting ACK |
+| IDLE | 1 | Waiting for start with `configured=TRUE`; `conveyed=0` |
+| SNAPSHOT | 2 | Acquires `weight_at_start` (transient, 1 scan) |
+| CONVEYING | 3 | Transport active; `conveyed` updated every scan |
+| PAUSED | 4 | Batch suspended; `conveyed` frozen |
+| FINISHED | 5 | Setpoint reached; auto-transitions to IDLE |
 
 ### State Transition Table
 
-| Current State | Condition | Next State |
+| Current state | Condition | Next state |
 |---------------|-----------|------------|
-| IDLE | `plant_start` AND `BATCH.configured` | SNAPSHOT |
-| SNAPSHOT | — (transient) | TRANSPORTING |
-| TRANSPORTING | `conveyed >= setpoint` | IDLE |
-| TRANSPORTING | `CMD.plant_stop` | IDLE |
-| TRANSPORTING | `timeout_timer.Q` | INCOMPLETE |
-| INCOMPLETE | `CMD.ack` | IDLE |
-| ERROR | `CMD.ack` | NORMAL/IDLE |
+| IDLE | `CMD.start` AND `BATCH.configured` | SNAPSHOT |
+| SNAPSHOT | — (transient) | CONVEYING |
+| CONVEYING | `conveyed ≥ setpoint − batch_tail` | FINISHED |
+| CONVEYING | `CMD.stop` OR `plant_error` OR `current_weight ≤ weight_min` | PAUSED |
+| CONVEYING | `conveying_timeout` expired | TIMEOUT |
+| FINISHED | — (automatic, 1 scan) | IDLE |
+| PAUSED | `CMD.start` | SNAPSHOT |
+| PAUSED | `CMD.reset` | IDLE |
+| TIMEOUT | `CMD.ack` | PAUSED |

@@ -124,27 +124,6 @@ FUNCTION_BLOCK "Pinch_diverter"
         REGION Top FSM
           CASE #DIV.STATUS.state OF
             #NORMAL:
-              CASE #DIV.STATUS.normal_state OF
-                #ROUTE_A:
-                  IF #desired_route_B THEN
-                    #DIV.STATUS.normal_state := #A_TO_B;
-                  END_IF;
-                  
-                #A_TO_B:
-                  IF #DIV.DEVICES.XVA.STATUS.is_closed AND #DIV.DEVICES.XVB.STATUS.is_open THEN
-                    #DIV.STATUS.normal_state := #ROUTE_B;
-                  END_IF;
-                  
-                #ROUTE_B:
-                  IF NOT #desired_route_B THEN
-                    #DIV.STATUS.normal_state := #B_TO_A;
-                  END_IF;
-                  
-                #B_TO_A:
-                  IF #DIV.DEVICES.XVA.STATUS.is_open AND #DIV.DEVICES.XVB.STATUS.is_closed THEN
-                    #DIV.STATUS.normal_state := #ROUTE_A;
-                  END_IF;
-              END_CASE;
               IF #DIV.ALARMS.error THEN
                 #DIV.STATUS.state := #FAULT;
               END_IF;
@@ -161,6 +140,32 @@ FUNCTION_BLOCK "Pinch_diverter"
               END_IF;
           END_CASE;
         END_REGION
+        
+        REGION Normal FSM
+          IF #DIV.STATUS.state = #NORMAL THEN
+            CASE #DIV.STATUS.normal_state OF
+              #ROUTE_A:
+                IF #desired_route_B THEN
+                  #DIV.STATUS.normal_state := #A_TO_B;
+                END_IF;
+                
+              #A_TO_B:
+                IF #DIV.DEVICES.XVA.STATUS.is_closed AND #DIV.DEVICES.XVB.STATUS.is_open THEN
+                  #DIV.STATUS.normal_state := #ROUTE_B;
+                END_IF;
+                
+              #ROUTE_B:
+                IF NOT #desired_route_B THEN
+                  #DIV.STATUS.normal_state := #B_TO_A;
+                END_IF;
+                
+              #B_TO_A:
+                IF #DIV.DEVICES.XVA.STATUS.is_open AND #DIV.DEVICES.XVB.STATUS.is_closed THEN
+                  #DIV.STATUS.normal_state := #ROUTE_A;
+                END_IF;
+            END_CASE;
+          END_IF;
+        END_REGION ;
         
         REGION Output mapping
           #DIV.DEVICES.XVA.CMD.auto := FALSE;

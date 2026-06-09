@@ -20,26 +20,24 @@
     it-IT: INPUT - Live net weight from scale controller (kg)
   - id: MLC_NA
     it-IT: INPUT - Any fault from scale controller
-  - id: MLC_4xZ
-    it-IT: OUTPUT - Tare command to scale controller
+  - id: MLC_3sc
+    it-IT: INPUT - Any fault from overall plant
   - id: MLC_56e
     it-IT: SETTING - Physical lower limit for loaded bag (kg)
   - id: MLC_4BM
     it-IT: SETTING - Physical upper limit for loaded bag (kg)
+  - id: MLC_54D
+    it-IT: SETTING - Weight drift between desired and actual conveyed material
   - id: MLC_4uy
     it-IT: SETTING - Maximum allowed conveying time before INCOMPLETE
   - id: MLC_3K4
     it-IT: STATUS - Current top FSM state
-  - id: MLC_3MB
-    it-IT: STATUS - Current normal behaviour FSM state
   - id: MLC_556
     it-IT: STATUS - Scale in idle state
   - id: MLC_4vV
     it-IT: STATUS - Material is beying conveyed
   - id: MLC_3Qz
     it-IT: ERROR - Batch did not reach setpoint before timeout
-  - id: MLC_4KD
-    it-IT: ERROR - Scale fault, overload, underload
   - id: MLC_3EY
     it-IT: BATCH - Batch configured
   - id: MLC_XT

@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed filter states with other objects
 LibraryVersion:
-  VersionNumber: 1.2.6
+  VersionNumber: 1.2.7
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added Simatic SD export capabilities
+    en-US: Added simulation capabilities

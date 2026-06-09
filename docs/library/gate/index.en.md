@@ -1,18 +1,19 @@
-# Gate Door
+# Gate / Door
 
 ## Overview
 
-`Gate_door` manages a pneumatically latched door in three states. The solenoid (`XY`) controls the latch: energised = locked, de-energised = released. The door itself is opened and closed physically by the operator — there is no opening actuator. `ZSL` confirms the physical closed position.
+`Gate_door` controls a single-acting pneumatic gate. The solenoid (`XY`) drives opening: energised = gate opening or held open; de-energised = spring returns gate to closed position. `ZSL` provides closed-position feedback. The orchestrator controls the gate via `CMD.open` and `CMD.close`; `CMD.interlocked` prevents the CLOSED → OPENING transition when active.
 
-The gate door has no standard manual/automatic mode or separate `ALARMS` structure — behaviour is driven by Orchestrator commands (`CMD.open`, `CMD.close`, `CMD.interlocked`).
+No `ALARMS` struct or fault state exists — the block is a four-state Moore sequencer with no built-in error detection.
 
 ---
 
 ## Main Components
 
-- **Pneumatic latch** (`XY`) — solenoid that locks the gate: energised = locked (CLOSED_LOCKED), de-energised = released (CLOSED_UNLOCKED)
-- **Limit switch `ZSL`** — TRUE = gate physically closed; FALSE = gate open
-- **CMD.interlocked** — active-low guard: FALSE = Orchestrator permits opening; TRUE = opening blocked
+- **Pneumatic actuator** — single-acting, spring-return to closed
+- **Solenoid valve `XY`** — controls air to the actuator: energised = pushes gate open or holds it open
+- **Limit switch `ZSL`** — TRUE = gate physically in closed position
+- **CMD.interlocked** — active-high guard: TRUE = CLOSED → OPENING transition blocked
 
 ---
 
@@ -20,45 +21,48 @@ The gate door has no standard manual/automatic mode or separate `ALARMS` structu
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `DEVICES.ZSL` | Bool | INPUT — Closed position limit switch: TRUE = gate closed |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Latch solenoid |
-| `CMD.open` | Bool | COMMAND — Request latch release (open) |
-| `CMD.close` | Bool | COMMAND — Request latch engagement (close) |
-| `CMD.interlocked` | Bool | COMMAND — TRUE = opening blocked by Orchestrator |
-| `STATUS.state` | Int | STATE — 1=ClosedLocked, 2=ClosedUnlocked, 3=Open |
-| `STATUS.is_closed_locked` | Bool | STATUS — Gate closed and locked |
-| `STATUS.is_closed_unlocked` | Bool | STATUS — Gate closed but unlocked |
-| `STATUS.is_open` | Bool | STATUS — Gate open |
+| `DEVICES.ZSL` | Bool | INPUT — Closed-position limit switch: TRUE = gate closed |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Actuator solenoid valve |
+| `CMD.open` | Bool | COMMAND — Open request |
+| `CMD.close` | Bool | COMMAND — Close request |
+| `CMD.interlocked` | Bool | GUARD — TRUE = opening blocked by orchestrator |
+| `STATUS.state` | Int | STATE — 1=Closed, 2=Opening, 3=Open, 4=Closing |
+| `STATUS.is_closed` | Bool | STATE — Gate stationary in closed position |
+| `STATUS.is_opening` | Bool | STATE — Actuator moving toward open |
+| `STATUS.is_open` | Bool | STATE — Gate fully open |
+| `STATUS.is_closing` | Bool | STATE — Spring returning gate to closed |
 
 ---
 
 ## Operating Routine
 
-**CLOSED_LOCKED** — Latch engaged (`XY.CMD.auto = TRUE`). `CMD.open` with `NOT interlocked` de-energises solenoid → CLOSED_UNLOCKED. If `interlocked = TRUE`, the open command is ignored.
+**CLOSED** — Gate is at rest with `ZSL = TRUE`. Solenoid de-energised. `CMD.open` with `NOT CMD.interlocked` transitions to OPENING. If `interlocked = TRUE`, the command is ignored.
 
-**CLOSED_UNLOCKED** — Latch released (`XY.CMD.auto = FALSE`). Two transitions: `CMD.close` re-engages the latch → CLOSED_LOCKED; or the operator physically pushes the gate open → `ZSL` drops to FALSE → OPEN.
+**OPENING** — Solenoid energises (`XY.CMD.auto = TRUE`) and the actuator pushes the gate toward the open position. When `ZSL` falls to FALSE, the gate has left the closed position → transitions to OPEN.
 
-**OPEN** — Gate fully open. No solenoid action. When operator pushes gate back to closed position → `ZSL` rises to TRUE → CLOSED_LOCKED (latch auto-engages).
+**OPEN** — Solenoid remains energised to hold the gate open against the return spring. `CMD.close` transitions to CLOSING.
 
-**Initialisation** — On first PLC scan, state is derived from physical position: `ZSL = TRUE` → CLOSED_LOCKED; `ZSL = FALSE` → OPEN.
+**CLOSING** — Solenoid de-energises (`XY.CMD.auto = FALSE`); the spring returns the gate to closed. When `ZSL` rises to TRUE, the gate has reached the closed position → transitions to CLOSED.
+
+**Initialisation** — On first PLC scan, state is derived from `ZSL`: TRUE → CLOSED, FALSE → OPEN.
+
+`CMD.interlocked` only blocks the CLOSED → OPENING transition. A gate already open or in motion is not affected.
 
 ---
 
 ## Alarms
 
-`UDT_Gate_Door` does not include a separate `ALARMS` struct. Solenoid faults (`XY`) are visible via `DEVICES.XY.ALARMS`.
+`UDT_Gate_Door` has no `ALARMS` struct. Solenoid faults are visible via `DEVICES.XY.ALARMS` (see [Solenoid valve](../../valves/solenoid/index.en.md#alarms)).
 
 ---
 
 ## Settings
 
-No configurable parameters in `UDT_Gate_Door`. The simulator exposes `SIM_TRAVEL_TIME` (default `T#2S`) for the simulated travel duration.
+No configurable parameters in `UDT_Gate_Door`.
 
 ---
 
 ## Data Structure
-
-<!-- AUTO-GENERATED: do not edit manually -->
 
 ```mermaid
 classDiagram
@@ -74,9 +78,10 @@ classDiagram
     }
     class STATUS {
         +Int state
-        +Bool is_closed_locked
-        +Bool is_closed_unlocked
+        +Bool is_closed
+        +Bool is_opening
         +Bool is_open
+        +Bool is_closing
     }
     UDT_Gate_Door *-- DEVICES
     UDT_Gate_Door *-- CMD
@@ -87,35 +92,31 @@ classDiagram
 
 ## State Machine (FSM)
 
-<!-- AUTO-GENERATED: do not edit manually -->
-
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
+    [*] --> CLOSED : ZSL=TRUE at startup
+    [*] --> OPEN : ZSL=FALSE at startup
 
-    state NORMAL {
-        [*] --> CLOSED_LOCKED : ZSL=TRUE on startup
-        [*] --> OPEN : ZSL=FALSE on startup
-        CLOSED_LOCKED --> CLOSED_UNLOCKED : CMD.open & NOT interlocked
-        CLOSED_UNLOCKED --> CLOSED_LOCKED : CMD.close
-        CLOSED_UNLOCKED --> OPEN : ZSL falls (operator opens)
-        OPEN --> CLOSED_LOCKED : ZSL rises (operator closes)
-    }
+    CLOSED --> OPENING : CMD.open AND NOT interlocked
+    OPENING --> OPEN : NOT ZSL
+    OPEN --> CLOSING : CMD.close
+    CLOSING --> CLOSED : ZSL
 ```
 
 ### State and Output Table
 
 | State | Value | XY.CMD.auto | Description |
 |-------|-------|-------------|-------------|
-| CLOSED_LOCKED | 1 | TRUE | Solenoid energised — latch engaged |
-| CLOSED_UNLOCKED | 2 | FALSE | Solenoid de-energised — operator can push open |
-| OPEN | 3 | FALSE | Gate physically open |
+| CLOSED | 1 | FALSE | Gate closed, spring at rest |
+| OPENING | 2 | TRUE | Actuator pushing gate toward open |
+| OPEN | 3 | TRUE | Gate fully open, solenoid holding against spring |
+| CLOSING | 4 | FALSE | Spring returning gate to closed position |
 
 ### State Transition Table
 
-| Current State | Condition | Next State | Action |
+| Current state | Condition | Next state | Action |
 |---------------|-----------|------------|--------|
-| CLOSED_LOCKED | `CMD.open` AND NOT `interlocked` | CLOSED_UNLOCKED | `XY.CMD.auto` → FALSE |
-| CLOSED_UNLOCKED | `CMD.close` | CLOSED_LOCKED | `XY.CMD.auto` → TRUE |
-| CLOSED_UNLOCKED | NOT `ZSL` | OPEN | — |
-| OPEN | `ZSL` | CLOSED_LOCKED | `XY.CMD.auto` → TRUE |
+| CLOSED | `CMD.open` AND NOT `interlocked` | OPENING | `XY.CMD.auto` → TRUE |
+| OPENING | NOT `ZSL` | OPEN | — |
+| OPEN | `CMD.close` | CLOSING | `XY.CMD.auto` → FALSE |
+| CLOSING | `ZSL` | CLOSED | — |

@@ -1,8 +1,8 @@
 ﻿LibraryType:
   Guid: ad4a2eee-a581-4eb4-b132-a47396626cc3
 LibraryVersion:
-  VersionNumber: 0.1.0
+  VersionNumber: 0.1.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    it-IT: Removed FSM for lookup table
+    it-IT: Updated UDT thresholds

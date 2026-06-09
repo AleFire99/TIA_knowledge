@@ -1,14 +1,51 @@
 {
   "delta_version": "1.0.0",
-  "generated_at": "2026-05-19T08:50:54Z",
-  "total_types": 34,
+  "generated_at": "2026-06-09T06:33:59Z",
+  "total_types": 36,
   "counts": {
-    "new": 0,
-    "changed": 0,
+    "new": 2,
+    "changed": 15,
     "removed": 0
   },
-  "needs_doc_update": [],
-  "new": [],
-  "changed": [],
+  "needs_doc_update": [
+    "Dig_Pipeline",
+    "UDT_Dig_Pipeline",
+    "DS_valve",
+    "Filter_1_sleeve",
+    "Gate_door",
+    "Load_cells",
+    "Nolvac",
+    "Pavone_DAT_1400",
+    "Pinch_diverter",
+    "Pinch_diverter_simulator",
+    "Pinch_valve",
+    "Pipeline",
+    "SS_valve",
+    "Solenoid_valve",
+    "UDT_Gate_Door",
+    "UDT_Load_cells",
+    "UDT_Pipeline"
+  ],
+  "new": [
+    "Dig_Pipeline",
+    "UDT_Dig_Pipeline"
+  ],
+  "changed": [
+    "DS_valve",
+    "Filter_1_sleeve",
+    "Gate_door",
+    "Load_cells",
+    "Nolvac",
+    "Pavone_DAT_1400",
+    "Pinch_diverter",
+    "Pinch_diverter_simulator",
+    "Pinch_valve",
+    "Pipeline",
+    "SS_valve",
+    "Solenoid_valve",
+    "UDT_Gate_Door",
+    "UDT_Load_cells",
+    "UDT_Pipeline"
+  ],
   "removed": []
 }

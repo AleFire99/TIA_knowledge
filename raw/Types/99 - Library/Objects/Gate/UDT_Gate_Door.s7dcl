@@ -4,7 +4,7 @@
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_39z"
+                S7_MLC := "MLC_4hJ"
             }
             ZSL : Bool;
             {
@@ -14,8 +14,9 @@
             XY : _.UDT_Solenoid_valve;
         END_STRUCT;
         CMD : STRUCT
-            { S7_MLC := "MLC_3jF" }
+            { S7_MLC := "MLC_3Lb" }
             open : Bool;
+            { S7_MLC := "MLC_4dL" }
             close : Bool;
             {
                 S7_Access := "ReadOnly := External";
@@ -27,24 +28,29 @@
         STATUS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_cs"
+                S7_MLC := "MLC_4xE"
             }
-            state : Int;
+            state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
                 S7_MLC := "MLC_Qy"
             }
-            is_closed_locked : Bool;
+            is_closed : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Nu"
+                S7_MLC := "MLC_4iB"
             }
-            is_closed_unlocked : Bool;
+            is_opening : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Vd"
+                S7_MLC := "MLC_4Tg"
             }
             is_open : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Ly"
+            }
+            is_closing : Bool;
         END_STRUCT;
     END_STRUCT;
 END_TYPE

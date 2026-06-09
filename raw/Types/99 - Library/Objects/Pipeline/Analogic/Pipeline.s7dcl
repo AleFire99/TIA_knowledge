@@ -3,7 +3,7 @@
     S7_Optimized := "TRUE";
     S7_Version := "0.1"
 }
-FUNCTION_BLOCK "Pipeline"
+FUNCTION_BLOCK "An_Pipeline"
     VAR_IN_OUT 
         pipeline : _.UDT_Pipeline;
     END_VAR

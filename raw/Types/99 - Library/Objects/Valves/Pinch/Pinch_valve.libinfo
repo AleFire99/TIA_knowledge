@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 1.5.3
+  VersionNumber: 1.5.4
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added SimaticSD export capabilities
+    en-US: Added simulation capabilities

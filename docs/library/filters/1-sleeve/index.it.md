@@ -2,15 +2,15 @@
 
 ## Panoramica
 
-Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola elettrovalvola (`XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, e poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola elettrovalvola (`XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
 ## Componenti principali
 
-- **Corpo filtro** — contiene la manica filtrante (sacco, cartuccia o schermo)
-- **Alimentazione aria compressa / accumulatore** — fornisce la pressione degli impulsi
-- **Elettrovalvola `XY`** — rilascia ogni impulso d'aria nella manica
+- **Elettrovalvola `XY`** — inietta aria compressa nella manica durante ogni impulso di pulizia
+- **Timer impulso** — determina la durata di ogni singolo impulso (`pulse_duration`)
+- **Timer intervallo** — determina il tempo di attesa tra impulsi successivi (`interval_duration`)
 
 ---
 
@@ -18,25 +18,35 @@ Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `XY` | Uscita — Bool | Comando solenoide: TRUE = impulso attivo (aria rilasciata nella manica) |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola impulso pulizia |
+| `CMD.manual_mode` | Bool | COMANDO — TRUE = modalità manuale |
+| `CMD.manual` | Bool | COMANDO — Abilitazione in modalità manuale |
+| `CMD.auto` | Bool | COMANDO — Abilitazione in modalità automatica |
+| `CMD.interlocked` | Bool | GUARDIA — TRUE = comando congelato al valore precedente |
+| `STATUS.state` | Int | STATO — 1=Inattivo, 2=Attivo |
+| `STATUS.active_state` | Int | SOTTO-STATO — 1=Impulso, 2=Attesa |
+| `STATUS.is_idle` | Bool | STATO — Filtro in attesa di abilitazione |
+| `STATUS.is_active` | Bool | STATO — Ciclo di pulizia in corso |
 
 ---
 
 ## Funzionamento
 
-Quando il comando di abilitazione è attivo (`auto = TRUE` o `manual = TRUE` in modalità manuale), il sistema transisce in ACTIVE e avvia il ciclo di pulizia. Il ciclo segue sempre questa sequenza:
+**IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di apertura (manuale o automatico) non interblocato, lo stato transita verso ACTIVE con `active_state = WAITING`.
 
-1. **WAITING** — `XY` diseccitato per `interval_duration` (il serbatoio si ripressurizza, la manica si assesta)
-2. **PULSING** — `XY` eccitato per `pulse_duration` (scarica d'aria nella manica)
-3. Ritorno a WAITING — ripetere fino alla rimozione del comando
+**ACTIVE / WAITING** — Il filtro è attivo ma in pausa tra un impulso e l'altro. `XY` è diseccitata. Il timer intervallo (`interval_duration`) è in esecuzione. Alla scadenza, lo stato interno passa a PULSING.
 
-La rimozione del comando in qualsiasi momento riporta il sistema in **IDLE** (`XY = FALSE`). Se `interlocked = TRUE`, il comando validato si blocca e la pulsazione si mette in pausa nella fase corrente.
+**ACTIVE / PULSING** — `XY` viene eccitata per tutta la durata dell'impulso (`pulse_duration`). Alla scadenza del timer impulso, lo stato interno torna a WAITING.
+
+Il ciclo WAITING → PULSING → WAITING si ripete finché il comando rimane attivo. La disabilitazione del comando in qualsiasi momento riporta il filtro in IDLE.
+
+In **modalità manuale** (`manual_mode = TRUE`), il comando proviene da `CMD.manual`. In **modalità automatica**, da `CMD.auto`. Se `interlocked = TRUE`, il valore del comando validato viene congelato all'ultimo stato: l'interblocco non forza la chiusura, ma impedisce cambiamenti.
 
 ---
 
 ## Allarmi
 
-Nessun allarme — nessun sensore di feedback.
+`UDT_Filter_1_sleeve` non include una struttura `ALARMS`.
 
 ---
 
@@ -44,8 +54,8 @@ Nessun allarme — nessun sensore di feedback.
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Durata di ogni impulso d'aria (solenoide eccitato) |
-| `interval_duration` | T#3s | Tempo di attesa tra gli impulsi |
+| `pulse_duration` | T#500ms | Durata di ogni impulso di pulizia |
+| `interval_duration` | T#3s | Tempo di attesa tra impulsi successivi |
 
 ---
 
@@ -85,35 +95,31 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-    state FILTER {
-        [*] --> IDLE
+    [*] --> IDLE
 
-        IDLE --> ACTIVE : abilitazione = TRUE
+    IDLE --> ACTIVE : comando abilitazione
+    ACTIVE --> IDLE : comando disabilitazione
 
-        state ACTIVE {
-            [*] --> WAITING
-            WAITING --> PULSING : interval_timer scaduto
-            PULSING --> WAITING : pulse_timer scaduto
-        }
-
-        ACTIVE --> IDLE : abilitazione = FALSE
+    state ACTIVE {
+        [*] --> WAITING
+        WAITING --> PULSING : interval_timer scaduto
+        PULSING --> WAITING : pulse_timer scaduto
     }
 ```
 
 ### Tabella stati e uscite
 
-| `state` | `active_state` | `XY` | Descrizione |
-|---------|---------------|------|-------------|
-| IDLE (1) | — | FALSE | Standby, nessuna pulizia |
-| ACTIVE (2) | WAITING (2) | FALSE | Attesa tra impulsi — interval_timer in esecuzione |
-| ACTIVE (2) | PULSING (1) | TRUE | Impulso attivo — scarica d'aria nella manica |
+| Stato | Sotto-stato | XY.CMD.auto | Descrizione |
+|-------|------------|-------------|-------------|
+| IDLE | — | FALSE | Filtro inattivo |
+| ACTIVE | WAITING | FALSE | In pausa tra impulsi; interval_timer in esecuzione |
+| ACTIVE | PULSING | TRUE | Impulso di pulizia attivo; pulse_timer in esecuzione |
 
 ### Tabella transizioni di stato
 
-| Stato attuale | Condizione | Stato successivo | Azione |
-|---------------|------------|-----------------|--------|
-| IDLE | Comando abilitazione | ACTIVE/WAITING | `XY` → FALSE; avvia interval_timer |
-| WAITING | interval_timer scaduto | PULSING | `XY` → TRUE; avvia pulse_timer |
-| WAITING | Comando rimosso | IDLE | `XY` → FALSE |
-| PULSING | pulse_timer scaduto | WAITING | `XY` → FALSE; avvia interval_timer |
-| PULSING | Comando rimosso | IDLE | `XY` → FALSE |
+| Stato | Condizione | Stato successivo | Azione |
+|-------|------------|-----------------|--------|
+| IDLE | Comando abilitazione | ACTIVE / WAITING | Avvia interval_timer |
+| ACTIVE | Comando disabilitazione | IDLE | Ferma timer, XY → FALSE |
+| ACTIVE / WAITING | interval_timer.Q | ACTIVE / PULSING | XY → TRUE; avvia pulse_timer |
+| ACTIVE / PULSING | pulse_timer.Q | ACTIVE / WAITING | XY → FALSE; avvia interval_timer |

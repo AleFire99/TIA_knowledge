@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: 9ba11a57-037a-43e2-a499-96ccc310facc
+LibraryVersion:
+  VersionNumber: 0.1.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    it-IT: Changed states with digital ones

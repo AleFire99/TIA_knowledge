@@ -1,16 +1,22 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-05-19T08:50:47Z",
+  "generated_at": "2026-06-09T06:33:56Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Pinch_diverter": {
       "description": "Uniformed states and fixed HMI visibility",
+      "label": "Pinch diverter",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "XVA": {
           "type": "UDT_Pinch_Valve",
@@ -24,17 +30,26 @@
     },
     "UDT_DIGITAL_OUTPUT": {
       "description": "Types / 99 - Library / Objects / Diverters / Plug_type_diverter",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_PTD_IO": {
       "description": "First version",
+      "label": "Plug-type diverter",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Filter_1_sleeve": {
       "description": "Uniformed filter states with other objects",
+      "label": "Filter (1 sleeve)",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {
         "XY": {
           "type": "UDT_Solenoid_valve",
@@ -44,7 +59,10 @@
     },
     "UDT_Filter_2_sleeves": {
       "description": "Added new Structure with solenoid valves",
+      "label": "Filter (2 sleeves)",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {
         "XYA": {
           "type": "UDT_Solenoid_valve",
@@ -57,8 +75,11 @@
       }
     },
     "UDT_Gate_Door": {
-      "description": "Updated UDT",
+      "description": "updated stats and added comments",
+      "label": "Gate / door",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {
         "ZSL": {
           "type": "Bool",
@@ -72,22 +93,34 @@
     },
     "UDT_Pavone_IN": {
       "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Pavone_OUT": {
       "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Load_cells": {
       "description": "Types / 99 - Library / Objects / Load cells",
+      "label": "Load cells",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Nolvac": {
       "description": "First release",
+      "label": "Nolvac",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "XV01": {
           "type": "UDT_SS_Valve",
@@ -103,9 +136,12 @@
         }
       }
     },
-    "UDT_Pipeline": {
-      "description": "Types / 99 - Library / Objects / Pipeline",
+    "UDT_An_Pipeline": {
+      "description": "Types / 99 - Library / Objects / Pipeline / Analogic",
+      "label": "Pipeline (analogic)",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {
         "PT": {
           "type": "UDT_Analogic_signal",
@@ -113,9 +149,29 @@
         }
       }
     },
+    "UDT_Dig_Pipeline": {
+      "description": "Types / 99 - Library / Objects / Pipeline / Digital",
+      "label": "Pipeline (digital)",
+      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {
+        "PSL": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PSH": {
+          "type": "Bool",
+          "description": ""
+        }
+      }
+    },
     "UDT_DS_Valve": {
       "description": "First commit",
+      "label": "Double solenoid valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "ZSL": {
           "type": "Bool",
@@ -137,7 +193,10 @@
     },
     "UDT_SS_Valve": {
       "description": "Uniformed states and variables visibility in HMI",
+      "label": "Single solenoid valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "ZSL": {
           "type": "Bool",
@@ -155,7 +214,10 @@
     },
     "UDT_Pinch_Valve": {
       "description": "Uniformed states and fixed HMI visibility",
+      "label": "Pinch valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "PSL": {
           "type": "Bool",
@@ -169,7 +231,10 @@
     },
     "UDT_Solenoid_valve": {
       "description": "Added same states as other valves",
+      "label": "Solenoid valve",
       "has_out": true,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {}
     }
   },
@@ -228,7 +293,14 @@
     },
     "UDT_Pipeline": {
       "ctrl": {
-        "name": "Pipeline",
+        "name": "An_Pipeline",
+        "param": "pipeline"
+      },
+      "sim": null
+    },
+    "UDT_Dig_Pipeline": {
+      "ctrl": {
+        "name": "Dig_Pipeline",
         "param": "pipeline"
       },
       "sim": null
@@ -267,6 +339,13 @@
       "ctrl": {
         "name": "Solenoid_valve",
         "param": "XY"
+      },
+      "sim": null
+    },
+    "UDT_An_Pipeline": {
+      "ctrl": {
+        "name": "An_Pipeline",
+        "param": "pipeline"
       },
       "sim": null
     }

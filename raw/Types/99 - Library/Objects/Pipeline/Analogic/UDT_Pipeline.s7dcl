@@ -1,34 +1,34 @@
 ﻿TYPE
-    UDT_Pipeline : STRUCT
+    UDT_An_Pipeline : STRUCT
         { S7_Access := "ReadOnly := External" }
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_46Q"
+                S7_MLC := "MLC_hp"
             }
             PT : _.UDT_Analogic_signal;
         END_STRUCT;
         SETTING : STRUCT
-            { S7_MLC := "MLC_rW" }
-            empty_thresh : Real := 0.5;
-            material_thresh : Real := 1.0;
-            clogged_thresh : Real := 1.5;
+            { S7_MLC := "MLC_49g" }
+            empty_thresh : Real := 0.1;
+            material_thresh : Real := 0.4;
+            clogged_thresh : Real := 0.8;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_xx"
+                S7_MLC := "MLC_wR"
             }
             is_empty : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_m4"
+                S7_MLC := "MLC_3vg"
             }
             is_pressurised : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Es"
+                S7_MLC := "MLC_4i4"
             }
             is_with_material : Bool;
         END_STRUCT;
@@ -36,7 +36,7 @@
         ALARMS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Qp"
+                S7_MLC := "MLC_3Gw"
             }
             is_clogged : Bool;
         END_STRUCT;

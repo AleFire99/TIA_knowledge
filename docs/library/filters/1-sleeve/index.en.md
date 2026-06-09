@@ -8,9 +8,9 @@ The 1-sleeve filter cleaner drives periodic compressed air pulses through a sing
 
 ## Main Components
 
-- **Filter housing** — contains the filter sleeve (sock, cartridge, or screen)
-- **Compressed air supply / accumulator** — provides pulse pressure
-- **Solenoid valve `XY`** — releases each air pulse into the sleeve
+- **Solenoid valve `XY`** — injects compressed air into the sleeve during each cleaning pulse
+- **Pulse timer** — sets the duration of each individual pulse (`pulse_duration`)
+- **Interval timer** — sets the rest time between successive pulses (`interval_duration`)
 
 ---
 
@@ -18,25 +18,35 @@ The 1-sleeve filter cleaner drives periodic compressed air pulses through a sing
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `XY` | Output — Bool | Solenoid command: TRUE = pulse active (air released into sleeve) |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Cleaning pulse solenoid |
+| `CMD.manual_mode` | Bool | COMMAND — TRUE = manual mode |
+| `CMD.manual` | Bool | COMMAND — Enable in manual mode |
+| `CMD.auto` | Bool | COMMAND — Enable in automatic mode |
+| `CMD.interlocked` | Bool | GUARD — TRUE = validated command frozen at last value |
+| `STATUS.state` | Int | STATE — 1=Idle, 2=Active |
+| `STATUS.active_state` | Int | SUB-STATE — 1=Pulsing, 2=Waiting |
+| `STATUS.is_idle` | Bool | STATE — Filter waiting for enable command |
+| `STATUS.is_active` | Bool | STATE — Cleaning cycle running |
 
 ---
 
 ## Operating Routine
 
-When the enable command is active (`auto = TRUE` or `manual = TRUE` in manual mode), the system transitions to ACTIVE and starts the cleaning cycle. The cycle always follows this sequence:
+**IDLE** — Filter inactive. `XY` de-energised. When an enable command arrives (manual or auto) and not interlocked, state transitions to ACTIVE with `active_state = WAITING`.
 
-1. **WAITING** — `XY` de-energized for `interval_duration` (tank re-pressurizes, sleeve settles)
-2. **PULSING** — `XY` energized for `pulse_duration` (air blast into sleeve)
-3. Return to WAITING — repeat until command is removed
+**ACTIVE / WAITING** — Filter active but resting between pulses. `XY` de-energised. Interval timer (`interval_duration`) running. When the timer expires, internal state transitions to PULSING.
 
-Removing the command at any point returns the system to **IDLE** (`XY = FALSE`). If `interlocked = TRUE`, the validated command freezes and pulsing pauses in the current phase.
+**ACTIVE / PULSING** — `XY` energised for the duration of the pulse (`pulse_duration`). When the pulse timer expires, internal state returns to WAITING.
+
+The WAITING → PULSING → WAITING cycle repeats as long as the enable command remains active. Removing the enable command at any point returns the filter to IDLE.
+
+In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. In **automatic mode**, from `CMD.auto`. If `interlocked = TRUE`, the validated command is frozen at its last value — interlock does not force closure, but prevents changes.
 
 ---
 
 ## Alarms
 
-No alarms — no feedback sensors.
+`UDT_Filter_1_sleeve` has no `ALARMS` struct.
 
 ---
 
@@ -44,8 +54,8 @@ No alarms — no feedback sensors.
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Duration of each air pulse (solenoid energized) |
-| `interval_duration` | T#3s | Wait time between pulses |
+| `pulse_duration` | T#500ms | Duration of each cleaning pulse |
+| `interval_duration` | T#3s | Rest time between successive pulses |
 
 ---
 
@@ -81,39 +91,35 @@ classDiagram
 
 ---
 
-## State Machine
+## State Machine (FSM)
 
 ```mermaid
 stateDiagram-v2
-    state FILTER {
-        [*] --> IDLE
+    [*] --> IDLE
 
-        IDLE --> ACTIVE : enabled = TRUE
+    IDLE --> ACTIVE : enable command
+    ACTIVE --> IDLE : disable command
 
-        state ACTIVE {
-            [*] --> WAITING
-            WAITING --> PULSING : interval_timer done
-            PULSING --> WAITING : pulse_timer done
-        }
-
-        ACTIVE --> IDLE : enabled = FALSE
+    state ACTIVE {
+        [*] --> WAITING
+        WAITING --> PULSING : interval_timer expired
+        PULSING --> WAITING : pulse_timer expired
     }
 ```
 
 ### State and Output Table
 
-| `state` | `active_state` | `XY` | Description |
-|---------|---------------|------|-------------|
-| IDLE (1) | — | FALSE | Standby, no cleaning |
-| ACTIVE (2) | WAITING (2) | FALSE | Between pulses — interval timer running |
-| ACTIVE (2) | PULSING (1) | TRUE | Pulse active — air blast into sleeve |
+| State | Sub-state | XY.CMD.auto | Description |
+|-------|-----------|-------------|-------------|
+| IDLE | — | FALSE | Filter inactive |
+| ACTIVE | WAITING | FALSE | Resting between pulses; interval_timer running |
+| ACTIVE | PULSING | TRUE | Cleaning pulse active; pulse_timer running |
 
 ### State Transition Table
 
-| Current State | Condition | Next State | Action |
-|---------------|-----------|------------|--------|
-| IDLE | enable command | ACTIVE/WAITING | `XY` → FALSE; start interval timer |
-| WAITING | interval timer done | PULSING | `XY` → TRUE; start pulse timer |
-| WAITING | command removed | IDLE | `XY` → FALSE |
-| PULSING | pulse timer done | WAITING | `XY` → FALSE; start interval timer |
-| PULSING | command removed | IDLE | `XY` → FALSE |
+| State | Condition | Next state | Action |
+|-------|-----------|------------|--------|
+| IDLE | Enable command | ACTIVE / WAITING | Start interval_timer |
+| ACTIVE | Disable command | IDLE | Stop timers, XY → FALSE |
+| ACTIVE / WAITING | interval_timer.Q | ACTIVE / PULSING | XY → TRUE; start pulse_timer |
+| ACTIVE / PULSING | pulse_timer.Q | ACTIVE / WAITING | XY → FALSE; start interval_timer |

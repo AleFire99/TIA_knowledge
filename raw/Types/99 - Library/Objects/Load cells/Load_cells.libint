@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: Load_cells.s7dcl
-    Hash: +d7CMPhQhN6K/fIfbUcF0YFQxciod6+hL4BCZg00noY=
+    Hash: DtcH3WskJvbvP26vQHn3DZ9b50wiQRtcPUbZYWp0mng=
   - FileName: Load_cells.s7res
-    Hash: pkwdTb2PnlkKLcAV8Tlgc0z98lnKtJWnlLviCUn+ff0=
-LibraryMetaFileHash: nwX4gmFXEUg2uOFg8tfhwbhygxws3JhpuXBJ4jd3cug=
+    Hash: J9EVJDOoTzXzkD6jEnPK2ditHJ/0Wu61mQ/Bmlb0FKs=
+LibraryMetaFileHash: fYh9ozGzEyEs5QGvEZ6ETHt76ETVULZpp5dKLLhn6ok=
 LibraryVersion:
-  Guid: 39c58da7-f837-48ca-ac03-9c697b159751
+  Guid: c8582b28-301b-41fd-a0fc-69580840a81c
   DependsOn:
     - TypeName: UDT_Load_cells
-      VersionNumber: 0.1.9
+      VersionNumber: 0.2.6

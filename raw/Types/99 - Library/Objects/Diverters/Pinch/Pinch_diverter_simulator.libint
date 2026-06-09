@@ -1,9 +1,9 @@
 ﻿DocumentHash:
   - FileName: Pinch_diverter_simulator.s7dcl
-    Hash: ZK0Zf3mhtYzeyS21GblhNFX9IGsP7yVkJifSYq677LI=
-LibraryMetaFileHash: k+eMVnf2d4ZXROMP+G6y43hTM2FOaMUnZzlIP/ZsZIo=
+    Hash: W0VyS6dW3WOnHac8B8ivkM1YRpID79CxIMpJjci+4YU=
+LibraryMetaFileHash: 89ja/xiigoP+UlYNirEIALwk4mfniLSe4nSzFvGjG40=
 LibraryVersion:
-  Guid: 843ba599-9313-40d9-a8cf-f73aa7c7e691
+  Guid: 2c88860b-e82f-43c8-aa1a-74e69d73d48f
   DependsOn:
     - TypeName: UDT_Pinch_diverter
       VersionNumber: 1.4.2

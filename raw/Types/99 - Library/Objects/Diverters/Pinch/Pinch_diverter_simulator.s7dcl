@@ -18,6 +18,11 @@ FUNCTION_BLOCK "Pinch_diverter_simulator"
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
         }
+        first_scan : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
         XVA : _.Pinch_valve_simulator;
         {
             S7_Access := "ReadOnly := External";
@@ -38,6 +43,16 @@ FUNCTION_BLOCK "Pinch_diverter_simulator"
           #XVB(ON_Delay := #ON_Delay,
                OFF_Delay := #OFF_Delay,
                XV := #DIV.DEVICES.XVB);
+        END_REGION
+        
+        REGION Simulation init
+          IF #first_scan THEN
+            #first_scan := FALSE;
+            #DIV.DEVICES.XVA.CMD.auto := FALSE;
+            #DIV.DEVICES.XVA.CMD.manual := FALSE;
+            #DIV.DEVICES.XVB.CMD.auto := TRUE;
+            #DIV.DEVICES.XVB.CMD.manual := TRUE;
+          END_IF;
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

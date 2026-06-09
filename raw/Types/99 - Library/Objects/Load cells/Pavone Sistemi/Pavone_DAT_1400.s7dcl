@@ -13,6 +13,9 @@ FUNCTION "Pavone_DAT_1400" : Void
     VAR_IN_OUT 
         scale : _.UDT_Load_cells;
     END_VAR
+    VAR_TEMP 
+        magnitude : Real;
+    END_VAR
     VAR CONSTANT 
         ZERO_CALIBRATION : Word := 16#4;
     END_VAR
@@ -20,9 +23,23 @@ FUNCTION "Pavone_DAT_1400" : Void
     { S7_Language := "SCL" }
     NETWORK
         #scale.IN.scale_error := #dat_IN.Status_register.weight_error;
-        #scale.IN.current_weight := DINT_TO_REAL(DWORD_TO_DINT(#dat_IN.gross_weight));
         
-        IF #scale.OUT.tare_cmd THEN
+        CASE #dat_IN.decimals OF
+          0:
+            #magnitude := 1;
+          1:
+            #magnitude := 0.1;
+          2:
+            #magnitude := 0.01;
+          3:
+            #magnitude := 0.001;
+          4:
+            #magnitude := 0.0001;
+        END_CASE;
+        
+        #scale.IN.current_weight := DINT_TO_REAL(DWORD_TO_DINT(#dat_IN.net_weight))*#magnitude;
+        
+        IF #scale.CMD.tare_request THEN
             #dat_OUT.Command_register := #ZERO_CALIBRATION;
         ELSE
             #dat_OUT.Command_register := 0;
