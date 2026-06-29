@@ -1,5 +1,7 @@
 ﻿LibraryType:
   Guid: 2a00b842-00ec-4e0c-9597-632355700d7a
+  Comment:
+    it-IT: First version of pipeline
 LibraryVersion:
   VersionNumber: 0.0.3
   Author: Alessandro Firetto

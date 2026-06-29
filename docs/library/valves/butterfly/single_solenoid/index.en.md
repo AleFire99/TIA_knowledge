@@ -1,18 +1,19 @@
-# Butterfly Valve — Single Solenoid (SS)
+# Single-Solenoid Butterfly Valve (SS)
 
 ## Overview
 
-The SS butterfly valve is a pneumatic rotary valve with a single solenoid. Energizing `XY` drives the actuator to open the disc; de-energizing allows the spring to close it. Two limit switches (`ZSL` closed, `ZSH` open) provide position feedback. A movement cycle counter triggers a maintenance warning when the configured threshold is reached.
+`SS_valve` controls a pneumatic butterfly valve with a single solenoid. Energising `XY` drives the actuator toward the open position; de-energising it lets the return spring close the disc. Two limit switches (`ZSL` closed, `ZSH` open) provide position feedback. The state machine operates on two levels: a fault state (`FAULT`) and a normal state (`NORMAL`) with four sub-states.
+
+On the first PLC scan, the block reads `ZSL` and `ZSH` to establish the initial state: ZSL active → NORMAL/CLOSED, ZSH active → NORMAL/OPEN, ambiguous → FAULT.
 
 ---
 
 ## Main Components
 
-- **Valve body** — flanged inlet/outlet, disc mounted on shaft
 - **Pneumatic actuator** — single-acting, spring-return to closed
-- **Solenoid valve `XY`** — controls air to actuator (energized = open)
-- **Limit switch `ZSL`** — TRUE when disc is fully closed
-- **Limit switch `ZSH`** — TRUE when disc is fully open
+- **Solenoid valve `XY`** — controls air to the actuator: energised = opening or holding open
+- **Limit switch `ZSL`** — TRUE = disc fully closed
+- **Limit switch `ZSH`** — TRUE = disc fully open
 
 ---
 
@@ -20,35 +21,56 @@ The SS butterfly valve is a pneumatic rotary valve with a single solenoid. Energ
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `ZSL` | Input — Bool | Limit switch: TRUE = valve fully closed |
-| `ZSH` | Input — Bool | Limit switch: TRUE = valve fully open |
-| `XY` | Output — Bool | Solenoid command: TRUE = energize (open valve) |
+| `DEVICES.ZSL` | Bool | INPUT — Closed-position limit switch |
+| `DEVICES.ZSH` | Bool | INPUT — Open-position limit switch |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Actuator solenoid valve |
+| `CMD.manual_mode` | Bool | COMMAND — TRUE = HMI manual mode |
+| `CMD.manual` | Bool | COMMAND — Open command in manual mode |
+| `CMD.auto` | Bool | COMMAND — Open command from automation (ReadOnly external) |
+| `CMD.interlocked` | Bool | GUARD — TRUE = freezes the validated command (ReadOnly external) |
+| `CMD.ack` | Bool | COMMAND — Acknowledges alarms and clears FAULT |
+| `SETTING.actuator_timeout` | Time | Actuator movement timeout (default T#2s) |
+| `STATUS.state` | Int | STATE — 0=FAULT, 1=NORMAL |
+| `STATUS.normal_state` | Int | SUB-STATE — 1=CLOSED, 2=OPENING, 3=OPEN, 4=CLOSING |
+| `STATUS.is_fault` | Bool | STATE — Block in fault condition |
+| `STATUS.is_closed` | Bool | STATE — Valve at rest in closed position |
+| `STATUS.is_opening` | Bool | STATE — Actuator moving toward open |
+| `STATUS.is_open` | Bool | STATE — Valve fully open |
+| `STATUS.is_closing` | Bool | STATE — Spring returning disc to closed |
+| `ALARMS.error` | Bool | ALARM — One or more faults active |
 
 ---
 
 ## Operating Routine
 
-On an **open command**, `XY` is energized and the actuator rotates the disc toward open. The valve confirms the open position when `ZSH = TRUE` and `ZSL = FALSE`.
+Each scan, the block resolves the desired command:
+- If `manual_mode = TRUE`: `desired_open_command := CMD.manual`
+- Otherwise: `desired_open_command := CMD.auto`
 
-On a **close command**, `XY` is de-energized and the spring returns the disc to closed. The valve confirms the closed position when `ZSL = TRUE` and `ZSH = FALSE`.
+The command is validated only when `NOT CMD.interlocked`: while the interlock is active, `validated_open_command` holds its last value — the valve is neither forced open nor closed.
 
-In **manual mode** (`manual_mode = TRUE`), the operator commands the valve from HMI via `manual`. In **automatic mode**, the command comes from the process via `auto`. If `interlocked = TRUE`, the valve holds position.
+**CLOSED** — `XY` de-energised; spring holds disc closed. When `validated_open_command = TRUE`, transition to OPENING.
 
-Each completed movement (OPENING→OPEN or CLOSING→CLOSED) increments `movement_counter`. When it reaches `maintenance_threshold`, `ALARMS.warning` is raised. Reset with `maintenance_reset = TRUE`.
+**OPENING** — `XY` energised; actuator pushes disc. When `ZSH = TRUE AND ZSL = FALSE`, disc has reached open position → OPEN. If the `actuator_timeout` timer expires first, `movement_timeout` is raised.
 
-All errors must be acknowledged via `ack`. After acknowledgment, the FB re-reads both sensors to determine actual position.
+**OPEN** — `XY` remains energised to hold the disc against the spring. When `validated_open_command = FALSE`, transition to CLOSING.
+
+**CLOSING** — `XY` de-energised; spring returns disc. When `ZSL = TRUE AND ZSH = FALSE` → CLOSED. If timer expires → `movement_timeout`.
+
+Any fault (`ALARMS.error = TRUE`) pushes the block into FAULT. `CMD.ack` clears all internal alarms; if the fault conditions have cleared and sensors show a valid position, the block returns to NORMAL with state derived from the limit switches.
 
 ---
 
 ## Alarms
 
-| ID | Condition | Cause |
-|----|-----------|-------|
-| SS-E01 | ZSL = TRUE and ZSH = TRUE simultaneously | Sensor fault, misalignment, wiring short |
-| SS-E02 | Valve in CLOSED state but ZSL = FALSE | ZSL fault, mechanical obstruction, spring fault |
-| SS-E03 | Valve in OPEN state but ZSH = FALSE | ZSH fault, solenoid fault, no air supply |
-| SS-E04 | Movement did not complete within `actuator_timeout` | Mechanical obstruction, solenoid fault, insufficient air |
-| SS-W01 | `movement_counter` ≥ `maintenance_threshold` | Inspection interval reached — reset with `maintenance_reset` |
+Four internal alarms are ORed into `ALARMS.error`. All clear on `CMD.ack`.
+
+| Alarm | Condition | Typical cause |
+|-------|-----------|---------------|
+| `sensor_conflict` | `ZSL = TRUE AND ZSH = TRUE` | Short circuit, limit switch out of position |
+| `failed_to_close` | NORMAL/CLOSED but `ZSL = FALSE` | ZSL signal lost, mechanical obstruction |
+| `failed_to_open` | NORMAL/OPEN but `ZSH = FALSE` | ZSH signal lost, solenoid fault, air supply lost |
+| `movement_timeout` | OPENING or CLOSING beyond `actuator_timeout` | Obstruction, insufficient air, solenoid fault |
 
 ---
 
@@ -56,8 +78,7 @@ All errors must be acknowledged via `ack`. After acknowledgment, the FB re-reads
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `actuator_timeout` | T#2s | Maximum time for actuator to reach target position |
-| `maintenance_threshold` | 10000 | Movement count before maintenance warning |
+| `SETTING.actuator_timeout` | T#2s | Maximum time allowed for OPENING and CLOSING before `movement_timeout` is raised |
 
 ---
 
@@ -74,14 +95,12 @@ classDiagram
     class CMD {
         +Bool manual_mode
         +Bool manual
-        +Bool ack
-        +Bool maintenance_reset
         +Bool auto
         +Bool interlocked
+        +Bool ack
     }
     class SETTING {
         +Time actuator_timeout
-        +Int maintenance_threshold
     }
     class STATUS {
         +Int state
@@ -94,7 +113,6 @@ classDiagram
     }
     class ALARMS {
         +Bool error
-        +Bool warning
     }
     UDT_SS_Valve *-- DEVICES
     UDT_SS_Valve *-- CMD
@@ -105,46 +123,43 @@ classDiagram
 
 ---
 
-## State Machine
+## State Machine (FSM)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
-    [*] --> FAULT : sensors conflict on start
-    NORMAL --> FAULT : alarm
-    FAULT --> NORMAL : ACK + sensors valid
+    [*] --> NORMAL : ZSL XOR ZSH on first scan
+    [*] --> FAULT : ambiguous sensors on first scan
+
+    NORMAL --> FAULT : ALARMS.error
+    FAULT --> NORMAL : CMD.ack AND NOT error AND valid sensors
 
     state NORMAL {
-        [*] --> CLOSED : ZSL=TRUE, ZSH=FALSE
-        [*] --> OPEN : ZSH=TRUE, ZSL=FALSE
-        CLOSED --> OPENING : open command
-        OPENING --> OPEN : ZSH=TRUE, ZSL=FALSE
-        OPEN --> CLOSING : close command
-        CLOSING --> CLOSED : ZSL=TRUE, ZSH=FALSE
+        [*] --> CLOSED : ZSL=TRUE at startup
+        [*] --> OPEN : ZSH=TRUE at startup
+        CLOSED --> OPENING : validated_open_command
+        OPENING --> OPEN : ZSH AND NOT ZSL
+        OPEN --> CLOSING : NOT validated_open_command
+        CLOSING --> CLOSED : ZSL AND NOT ZSH
     }
 ```
 
 ### State and Output Table
 
-| State | `XY` | `ZSL` expected | `ZSH` expected | Description |
-|-------|------|---------------|---------------|-------------|
-| CLOSED | FALSE | TRUE | FALSE | Disc closed, flow blocked |
-| OPENING | TRUE | (transitioning) | (transitioning) | Actuator rotating disc toward open |
-| OPEN | TRUE | FALSE | TRUE | Disc fully open, flow permitted |
-| CLOSING | FALSE | (transitioning) | (transitioning) | Spring returning disc to closed |
-| FAULT | — | — | — | Outputs frozen; operator ACK required |
+| State | Sub-state | `XY.CMD.auto` | Description |
+|-------|-----------|---------------|-------------|
+| FAULT | — | FALSE | Fault; awaits CMD.ack with valid sensors |
+| NORMAL | CLOSED | FALSE | Disc closed; spring at rest |
+| NORMAL | OPENING | TRUE | Actuator pushing disc toward open |
+| NORMAL | OPEN | TRUE | Disc open; solenoid holding against spring |
+| NORMAL | CLOSING | FALSE | Spring returning disc to closed |
 
 ### State Transition Table
 
-| Current State | Condition | Next State | Action |
-|---------------|-----------|------------|--------|
-| CLOSED | open command | OPENING | `XY` → TRUE; start timeout timer |
-| OPENING | ZSH=TRUE, ZSL=FALSE | OPEN | Stop timeout timer; increment counter |
-| OPENING | Timeout elapsed | FAULT | Raise SS-E04 |
-| OPEN | close command | CLOSING | `XY` → FALSE; start timeout timer |
-| CLOSING | ZSL=TRUE, ZSH=FALSE | CLOSED | Stop timeout timer; increment counter |
-| CLOSING | Timeout elapsed | FAULT | Raise SS-E04 |
-| CLOSED | ZSL=FALSE | FAULT | Raise SS-E02 |
-| OPEN | ZSH=FALSE | FAULT | Raise SS-E03 |
-| Any | ZSL=TRUE AND ZSH=TRUE | FAULT | Raise SS-E01 |
-| FAULT | ACK=TRUE, sensors valid | CLOSED or OPEN | Re-read sensors; clear alarms |
+| Current state | Condition | Next state |
+|---------------|-----------|------------|
+| NORMAL/CLOSED | `validated_open_command` | NORMAL/OPENING |
+| NORMAL/OPENING | `ZSH AND NOT ZSL` | NORMAL/OPEN |
+| NORMAL/OPEN | `NOT validated_open_command` | NORMAL/CLOSING |
+| NORMAL/CLOSING | `ZSL AND NOT ZSH` | NORMAL/CLOSED |
+| NORMAL (any) | `ALARMS.error` | FAULT |
+| FAULT | `CMD.ack AND NOT error AND ZSL XOR ZSH` | NORMAL/CLOSED or NORMAL/OPEN |

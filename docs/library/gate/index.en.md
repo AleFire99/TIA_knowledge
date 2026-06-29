@@ -58,7 +58,9 @@ No `ALARMS` struct or fault state exists — the block is a four-state Moore seq
 
 ## Settings
 
-No configurable parameters in `UDT_Gate_Door`.
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `SETTING.door_timeout` | T#3M | Maximum time in OPEN state before automatic closing is triggered |
 
 ---
 
@@ -76,6 +78,9 @@ classDiagram
         +Bool close
         +Bool interlocked
     }
+    class SETTING {
+        +Time door_timeout
+    }
     class STATUS {
         +Int state
         +Bool is_closed
@@ -85,6 +90,7 @@ classDiagram
     }
     UDT_Gate_Door *-- DEVICES
     UDT_Gate_Door *-- CMD
+    UDT_Gate_Door *-- SETTING
     UDT_Gate_Door *-- STATUS
 ```
 
@@ -99,7 +105,7 @@ stateDiagram-v2
 
     CLOSED --> OPENING : CMD.open AND NOT interlocked
     OPENING --> OPEN : NOT ZSL
-    OPEN --> CLOSING : CMD.close
+    OPEN --> CLOSING : CMD.close OR door_timeout expired
     CLOSING --> CLOSED : ZSL
 ```
 
@@ -117,6 +123,6 @@ stateDiagram-v2
 | Current state | Condition | Next state | Action |
 |---------------|-----------|------------|--------|
 | CLOSED | `CMD.open` AND NOT `interlocked` | OPENING | `XY.CMD.auto` → TRUE |
-| OPENING | NOT `ZSL` | OPEN | — |
-| OPEN | `CMD.close` | CLOSING | `XY.CMD.auto` → FALSE |
+| OPENING | NOT `ZSL` | OPEN | Start door_timer |
+| OPEN | `CMD.close` OR `door_timer.Q` | CLOSING | `XY.CMD.auto` → FALSE |
 | CLOSING | `ZSL` | CLOSED | — |

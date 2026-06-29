@@ -1,0 +1,77 @@
+﻿TYPE
+    UDT_SS_Sealed_Valve : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            { S7_Access := "ReadOnly := External" }
+            XV : _.UDT_SS_Valve;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4A3"
+            }
+            XY_seal : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_52S" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_4Af" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_VM"
+            }
+            auto : Bool;
+            { S7_MLC := "MLC_4Sq" }
+            ack : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_4Bi" }
+            actuator_timeout : Time := T#2s;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4PA"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4H9"
+            }
+            normal_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4TN"
+            }
+            is_fault : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_uX"
+            }
+            is_closed : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3F7"
+            }
+            is_opening : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Qh"
+            }
+            is_open : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Zx"
+            }
+            is_closing : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4be"
+            }
+            error : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

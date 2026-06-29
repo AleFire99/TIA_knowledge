@@ -13,14 +13,10 @@
     en-US: COMMAND - Automatic command
   - id: MLC_4Hr
     en-US: COMMAND - 0=enabled/1=interlocked
-  - id: MLC_3QE
-    en-US: COMMAND - Reset movement cycle counter
   - id: MLC_4ZL
     en-US: COMMAND - Acknowledge all errors
   - id: MLC_3yu
     en-US: SETTING - Max time to complete movement
-  - id: MLC_3xZ
-    en-US: SETTING - Max number of movements before maintenance warning
   - id: MLC_4ib
     en-US: STATE - 0=fault, 1=normal
   - id: MLC_3Yw
@@ -37,5 +33,3 @@
     en-US: STATUS - Valve closing
   - id: MLC_4L5
     en-US: ALARM - General error
-  - id: MLC_4JR
-    en-US: ALARM - Maintenance warning

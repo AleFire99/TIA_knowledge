@@ -1,0 +1,99 @@
+﻿MultiLingualTexts:
+  - id: MLC_3kb
+    en-US: |2-
+       ============================================================
+        TRANSPORTER
+        Flat FSM â€” Moore machine
+
+        Top state : TR.STATUS.state   (NORMAL=1 / FAULT=0)
+        Flat step : TR.STATUS.step    (IDLE=10 / FILLING=20 / SEALING=30 /
+                                       PRESSURIZING=40 / CONVEYING=50 / DEPRESSURIZING=60)
+
+        Devices
+          XV01  Inlet (loading) valve        UDT_SS_Sealed_Valve
+          XV02  Vent valve                   UDT_DS_Valve
+          XV03  Orifice valve                UDT_SS_Valve
+          XV04  Outlet (discharge) valve     UDT_SS_Valve
+          XV05  Line valve                   UDT_SS_Valve
+          XY    Pressurization solenoid      UDT_Solenoid_valve
+          WT01  Load cells                   UDT_Load_cells
+          LSH   Vessel high-level switch     Bool
+          PSL   Supply air pressure switch   Bool
+          PT01  Vessel pressure              UDT_Analogic_signal
+          PT02  Line pressure                UDT_Analogic_signal
+       ============================================================
+       ============================================================
+        UDT_Transporter
+       ============================================================
+  - id: MLC_gP
+    en-US: DEVICE - Inlet valve
+  - id: MLC_3Hq
+    en-US: DEVICE - Vent valve
+  - id: MLC_3Vc
+    en-US: DEVICE - Orifice valve
+  - id: MLC_aP
+    en-US: DEVICE - Outlet valve
+  - id: MLC_Vm
+    en-US: DEVICE - Line valve
+  - id: MLC_3mn
+    en-US: DEVICE - Pressurization solenoid
+  - id: MLC_wP
+    en-US: DEVICE - Load cells
+  - id: MLC_54J
+    en-US: DEVICE - Vessel high level switch
+  - id: MLC_4wK
+    en-US: DEVICE - Supply air pressure switch
+  - id: MLC_3rt
+    en-US: DEVICE - Vessel pressure
+  - id: MLC_3Zh
+    en-US: DEVICE - Line pressure
+  - id: MLC_48X
+    en-US: COMMAND - Start loading routine
+  - id: MLC_42P
+    en-US: COMMAND - Start conveying routine (seals first)
+  - id: MLC_37n
+    en-US: COMMAND - Stop current cycle
+  - id: MLC_3Sx
+    en-US: COMMAND - Acknowledge fault
+  - id: MLC_4sf
+    en-US: SETTING - Vessel pressure threshold to consider empty (barg)
+  - id: MLC_3BL
+    en-US: SETTING - Line pressure threshold to consider empty (barg)
+  - id: MLC_4x9
+    en-US: SETTING - Vessel overpressure required before opening line valve (barg)
+  - id: MLC_SG
+    en-US: SETTING - Internal valves timeout setting
+  - id: MLC_3CB
+    en-US: SETTING - Timeout timer for pressurization phase
+  - id: MLC_Xb
+    en-US: SETTING - Timeout timer for depressurization phase
+  - id: MLC_56C
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_4tP
+    en-US: STATE - 10=idle, 20=filling, 30=sealing, 40=pressurizing, 50=conveying, 60=depressurizing
+  - id: MLC_589
+    en-US: STATUS - Transporter idle
+  - id: MLC_3mQ
+    en-US: STATUS - Vessel being filled
+  - id: MLC_52E
+    en-US: STATUS - Loading valves closing
+  - id: MLC_4mL
+    en-US: STATUS - Vessel being pressurized
+  - id: MLC_42N
+    en-US: STATUS - Material being conveyed
+  - id: MLC_yn
+    en-US: STATUS - Vessel venting to atmosphere
+  - id: MLC_3Sc
+    en-US: STATUS - Transporter is in fault
+  - id: MLC_38F
+    en-US: OUT - Loading setpoint reached
+  - id: MLC_ac
+    en-US: OUT - Full cycle completed, back to idle
+  - id: MLC_3Dt
+    en-US: OUT - kg transferred in last cycle
+  - id: MLC_3En
+    en-US: ALARM - General fault active
+  - id: MLC_3be
+    en-US: ALARM - Pressurization phase took too long
+  - id: MLC_45F
+    en-US: ALARM - Depressurization phase took too long

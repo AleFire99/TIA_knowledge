@@ -1,0 +1,21 @@
+﻿DocumentHash:
+  - FileName: UDT_Sealed_inlet_Transporter.s7dcl
+    Hash: wg1Bp19TLn5uEkRo9fiQ82dkof4LDtBvIls/tgOUP2I=
+  - FileName: UDT_Sealed_inlet_Transporter.s7res
+    Hash: lD3NOQgdowu1/fcPPKbixwIE/NZPBiorA4gUwFET3Oo=
+LibraryMetaFileHash: mZ6NKTmtIYqsrXhboYRRR2qP4jabpLs7Fus3f/j4+M8=
+LibraryVersion:
+  Guid: 96329585-9e39-49ea-896b-10f0c04a9bf7
+  DependsOn:
+    - TypeName: UDT_SS_Sealed_Valve
+      VersionNumber: 0.1.0
+    - TypeName: UDT_DS_Valve
+      VersionNumber: 1.3.2
+    - TypeName: UDT_SS_Valve
+      VersionNumber: 1.5.2
+    - TypeName: UDT_Solenoid_valve
+      VersionNumber: 1.6.0
+    - TypeName: UDT_Load_cells
+      VersionNumber: 0.4.7
+    - TypeName: UDT_Analogic_signal
+      VersionNumber: 0.0.2

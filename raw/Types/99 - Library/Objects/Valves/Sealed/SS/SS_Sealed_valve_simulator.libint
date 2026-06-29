@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: SS_Sealed_valve_simulator.s7dcl
+    Hash: KiROtP0FXpcbpvsB+ZmciwTBPOSLGfbko6hekHWYrhU=
+LibraryMetaFileHash: KG9Liuf+pLNh9+XGfwuuF5bWKXPZTTUGlhNxXLdAJrU=
+LibraryVersion:
+  Guid: 6265870b-c044-401f-a15a-f76678e4a61a
+  DependsOn:
+    - TypeName: UDT_SS_Sealed_Valve
+      VersionNumber: 0.1.0
+    - TypeName: SS_valve_simulator
+      VersionNumber: 0.0.5

@@ -1,51 +1,63 @@
 {
   "delta_version": "1.0.0",
-  "generated_at": "2026-06-09T06:33:59Z",
-  "total_types": 36,
+  "generated_at": "2026-06-29T12:21:43Z",
+  "total_types": 42,
   "counts": {
-    "new": 2,
-    "changed": 15,
-    "removed": 0
+    "new": 9,
+    "changed": 12,
+    "removed": 3
   },
   "needs_doc_update": [
-    "Dig_Pipeline",
-    "UDT_Dig_Pipeline",
+    "An_Pipeline",
+    "Loading",
+    "SS_Sealed_valve",
+    "SS_Sealed_valve_simulator",
+    "Sealed_inlet_Transporter",
+    "Sealed_inlet_Transporter_simulator",
+    "UDT_An_Pipeline",
+    "UDT_SS_Sealed_Valve",
+    "Unloading",
     "DS_valve",
-    "Filter_1_sleeve",
+    "DS_valve_simulator",
     "Gate_door",
-    "Load_cells",
     "Nolvac",
     "Pavone_DAT_1400",
-    "Pinch_diverter",
-    "Pinch_diverter_simulator",
-    "Pinch_valve",
-    "Pipeline",
     "SS_valve",
-    "Solenoid_valve",
+    "SS_valve_simulator",
+    "UDT_DS_Valve",
     "UDT_Gate_Door",
     "UDT_Load_cells",
-    "UDT_Pipeline"
+    "UDT_Nolvac",
+    "UDT_SS_Valve"
   ],
   "new": [
-    "Dig_Pipeline",
-    "UDT_Dig_Pipeline"
+    "An_Pipeline",
+    "Loading",
+    "SS_Sealed_valve",
+    "SS_Sealed_valve_simulator",
+    "Sealed_inlet_Transporter",
+    "Sealed_inlet_Transporter_simulator",
+    "UDT_An_Pipeline",
+    "UDT_SS_Sealed_Valve",
+    "Unloading"
   ],
   "changed": [
     "DS_valve",
-    "Filter_1_sleeve",
+    "DS_valve_simulator",
     "Gate_door",
-    "Load_cells",
     "Nolvac",
     "Pavone_DAT_1400",
-    "Pinch_diverter",
-    "Pinch_diverter_simulator",
-    "Pinch_valve",
-    "Pipeline",
     "SS_valve",
-    "Solenoid_valve",
+    "SS_valve_simulator",
+    "UDT_DS_Valve",
     "UDT_Gate_Door",
     "UDT_Load_cells",
-    "UDT_Pipeline"
+    "UDT_Nolvac",
+    "UDT_SS_Valve"
   ],
-  "removed": []
+  "removed": [
+    "Load_cells",
+    "Pipeline",
+    "UDT_Pipeline"
+  ]
 }

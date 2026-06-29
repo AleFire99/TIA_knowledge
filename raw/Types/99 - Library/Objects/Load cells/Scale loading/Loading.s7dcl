@@ -1,0 +1,107 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Loading"
+    VAR_IN_OUT 
+        scale : _.UDT_Load_cells;
+    END_VAR
+    VAR 
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        prev_state : Int := 1;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        loading_timer : TON_TIME;
+    END_VAR
+    VAR CONSTANT 
+        IDLE : Int := 1;
+        LOADING : Int := 2;
+        ERROR : Int := 0;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Timeout timer
+          #loading_timer(IN := (#scale.STATUS.LOADING.state = #LOADING),
+                         PT := #scale.SETTING.loading_timeout);
+        END_REGION
+        
+        REGION Configuration
+          #scale.ALARMS.weight_invalid := (#scale.IN.current_weight > #scale.SETTING.max_weight);
+        END_REGION
+        
+        REGION FSM
+          CASE #scale.STATUS.LOADING.state OF
+              
+            #IDLE:
+              IF #scale.CMD.loading_start AND NOT #scale.ALARMS.weight_invalid THEN
+                #scale.STATUS.LOADING.state := #LOADING;
+              END_IF;
+              
+            #LOADING:
+              IF #loading_timer.Q THEN
+                #scale.STATUS.LOADING.state := #ERROR;
+              ELSIF #scale.CMD.stop OR (#scale.IN.current_weight >= #scale.CMD.loading_setpoint - #scale.SETTING.loading_tail) THEN
+                #scale.STATUS.LOADING.state := #IDLE;
+              END_IF;
+              
+            #ERROR:
+              IF #scale.CMD.ack THEN
+                #scale.STATUS.LOADING.state := #IDLE;
+              END_IF;
+              
+          END_CASE;
+        END_REGION
+        
+        REGION Entry actions
+          // Executed once on the scan the state changes.
+        
+          #scale.STATUS.LOADING.loading_finished := FALSE;
+          
+          IF #scale.STATUS.LOADING.state <> #prev_state THEN
+            
+            CASE #scale.STATUS.LOADING.state OF
+                
+              #IDLE:
+                // Reset batch counter when entering IDLE.
+                #scale.BATCH.transferred := 0.0;
+                #scale.STATUS.LOADING.loading_finished := TRUE;
+                
+              #LOADING:
+                // Snapshot weight anchor on loading start.
+                #scale.BATCH.weight_at_start := #scale.IN.current_weight;
+                
+            END_CASE;
+            
+            #prev_state := #scale.STATUS.LOADING.state;
+          END_IF;
+        END_REGION
+        
+        REGION Loaded quantity
+          // Computed every scan. Only meaningful during LOADING.
+          // Clamped to zero to avoid negative display on sensor drift.
+          // ERROR: no assignment — holds last frozen value.
+          IF #scale.STATUS.LOADING.state = #LOADING THEN
+            #scale.BATCH.transferred := #scale.IN.current_weight - #scale.BATCH.weight_at_start;
+            IF #scale.BATCH.transferred < 0.0 THEN
+              #scale.BATCH.transferred := 0.0;
+            END_IF;
+          END_IF;
+        END_REGION
+        
+        REGION Mapped outputs
+          // Moore outputs — derived purely from state, reset each scan.
+          #scale.STATUS.LOADING.is_loading := (#scale.STATUS.LOADING.state = #LOADING);
+          #scale.STATUS.LOADING.is_idle := (#scale.STATUS.LOADING.state = #IDLE);
+          #scale.ALARMS.loading_timeout := (#scale.STATUS.LOADING.state = #ERROR);
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

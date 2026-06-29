@@ -2,11 +2,9 @@
 
 ## Overview
 
-`Load_cells` controls a weight-based batch transport cycle. It validates scale and setpoint conditions, takes a weight snapshot at the start of each run, then tracks quantity transported until the batch is complete, stopped, or timed out. Pause and resume are supported without losing the already-transported count.
+`UDT_Load_cells` is the shared data structure used by two independent function blocks — `Loading` and `Unloading` — and the optional hardware adapter `Pavone_DAT_1400`. Each block manages its own state machine via the `STATUS.LOADING` and `STATUS.UNLOADING` sub-structs of the same UDT instance.
 
-`BATCH.configured` is the ready flag for the orchestrator: the cycle can only start when TRUE.
-
-The `Pavone_DAT_1400` function is an optional hardware adapter that converts raw Pavone DAT 1400 transmitter registers into the `IN` format expected by `UDT_Load_cells`.
+`Loading` handles filling a vessel to a target weight. `Unloading` handles emptying with pause and resume support. `Pavone_DAT_1400` is an optional FC that converts raw Pavone DAT 1400 transmitter registers into the `IN` fields expected by the UDT.
 
 ---
 
@@ -14,8 +12,9 @@ The `Pavone_DAT_1400` function is an optional hardware adapter that converts raw
 
 - **Load cells** — physical sensors producing the raw weight signal
 - **Transmitter** — converts signal to `IN.current_weight` [kg]; reports faults via `IN.scale_error` and `IN.plant_error`
-- **`Pavone_DAT_1400`** — optional FC: scales `net_weight` and handles tare command for the Pavone DAT 1400 transmitter
-- **Orchestrator** — sends `CMD.start` / `CMD.stop` / `CMD.reset`; reads `BATCH.configured`
+- **`Pavone_DAT_1400`** — optional FC: scales `net_weight` using the `decimals` field and manages the tare command (bit `16#4` in the command register)
+- **`Loading`** — loading FB: manages filling up to the setpoint with timeout detection
+- **`Unloading`** — unloading FB: manages conveying with pause/resume support
 
 ---
 
@@ -25,75 +24,99 @@ The `Pavone_DAT_1400` function is an optional hardware adapter that converts raw
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `CMD.ack` | Bool | Acknowledge for TIMEOUT state |
-| `CMD.setpoint` | Real | Weight to transport in this batch [kg] |
+| `CMD.ack` | Bool | Acknowledge for ERROR state (Loading or Unloading) |
+| `CMD.loading_setpoint` | Real | Target loading weight [kg] |
+| `CMD.unloading_setpoint` | Real | Weight to unload in this cycle [kg] |
 | `CMD.tare_request` | Bool | Request tare from transmitter |
-| `CMD.start` | Bool | Start or resume batch |
-| `CMD.stop` | Bool | Pause transport immediately |
-| `CMD.reset` | Bool | Return to IDLE from PAUSED state |
+| `CMD.loading_start` | Bool | Start loading cycle |
+| `CMD.unloading_start` | Bool | Start or resume unloading cycle |
+| `CMD.stop` | Bool | Stop the active cycle |
+| `CMD.reset` | Bool | Return to IDLE from PAUSED (Unloading only) |
 
 ### Inputs (`IN` — from transmitter)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `IN.current_weight` | Real | Current weight reading [kg] |
+| `IN.current_weight` | Real | Current weight [kg] |
 | `IN.scale_error` | Bool | Transmitter hardware fault |
 | `IN.plant_error` | Bool | External plant error (e.g. material loss) |
 
-### Status (`STATUS`)
+### Loading Status (`STATUS.LOADING`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `STATUS.state` | Int | FSM state: 1=IDLE, 2=SNAPSHOT, 3=CONVEYING, 4=PAUSED, 5=FINISHED, 0=TIMEOUT |
-| `STATUS.is_idle` | Bool | TRUE in IDLE |
-| `STATUS.is_conveying` | Bool | TRUE in CONVEYING |
-| `STATUS.is_paused` | Bool | TRUE in PAUSED |
-| `STATUS.is_finished` | Bool | TRUE in FINISHED (lasts 1 scan, then auto-IDLE) |
+| `STATUS.LOADING.state` | Int | FSM state: 0=ERROR, 1=IDLE, 2=LOADING |
+| `STATUS.LOADING.is_idle` | Bool | TRUE in IDLE |
+| `STATUS.LOADING.is_loading` | Bool | TRUE during loading |
+| `STATUS.LOADING.loading_finished` | Bool | 1-scan pulse on entering IDLE after a completed load |
+
+### Unloading Status (`STATUS.UNLOADING`)
+
+| Signal | Type | Description |
+|--------|------|-------------|
+| `STATUS.UNLOADING.state` | Int | FSM state: 0=ERROR, 1=IDLE, 2=CONVEYING, 3=PAUSED |
+| `STATUS.UNLOADING.is_idle` | Bool | TRUE in IDLE |
+| `STATUS.UNLOADING.is_unloading` | Bool | TRUE during conveying (CONVEYING state) |
+| `STATUS.UNLOADING.is_paused` | Bool | TRUE in PAUSED |
+| `STATUS.UNLOADING.unloading_finished` | Bool | 1-scan pulse on entering IDLE after a completed unload |
 
 ### Batch (`BATCH`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `BATCH.configured` | Bool | TRUE when weight and setpoint are valid |
-| `BATCH.conveyed` | Real | kg transported in current batch |
-| `BATCH.weight_at_start` | Real | Weight snapshot taken at CONVEYING entry [kg] |
+| `BATCH.transferred` | Real | Quantity processed in the current cycle [kg] |
+| `BATCH.weight_at_start` | Real | Weight snapshot taken at the start of the active phase [kg] |
 
 ### Alarms (`ALARMS`)
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `ALARMS.weight_invalid` | Bool | Weight outside `[weight_min, weight_max]` |
-| `ALARMS.setpoint_invalid` | Bool | Setpoint ≤ 0 |
-| `ALARMS.transport_timeout` | Bool | TRUE when state = TIMEOUT |
+| `ALARMS.weight_invalid` | Bool | Weight out of range (loading: > max_weight; unloading: < min_weight or > max_weight) |
+| `ALARMS.loading_timeout` | Bool | TRUE when Loading is in ERROR |
+| `ALARMS.unloading_timeout` | Bool | TRUE when Unloading is in ERROR |
 
 ---
 
 ## Operating Routine
 
-`BATCH.configured` is updated every scan:
+### FB Loading
+
+**IDLE** — Waiting for `CMD.loading_start` with valid weight (`NOT weight_invalid`). On entry to IDLE: `BATCH.transferred := 0`.
+
+**LOADING** — Computes every scan: `BATCH.transferred := current_weight − weight_at_start` (clamped to 0). Loading ends when:
+- `current_weight ≥ loading_setpoint − loading_tail` → IDLE (`loading_finished` = TRUE for 1 scan)
+- `CMD.stop` → IDLE
+- `loading_timeout` expires → ERROR
+
+`weight_at_start` is snapshotted on entry to LOADING.
+
+**ERROR** — `ALARMS.loading_timeout = TRUE`. `CMD.ack` returns to IDLE.
+
+### FB Unloading
+
+**IDLE** — Waiting for `CMD.unloading_start` with valid weight. On entry to IDLE: `BATCH.transferred := 0`.
+
+**CONVEYING** — Computes every scan: `BATCH.transferred := weight_at_start − current_weight` (clamped to 0). Ends when:
+- `BATCH.transferred ≥ unloading_setpoint − unloading_tail` → IDLE (`unloading_finished` = TRUE for 1 scan)
+- `CMD.stop` OR `current_weight ≤ min_weight` OR `IN.plant_error` → PAUSED
+- `unloading_timeout` expires → ERROR
+
+On resume (PAUSED → CONVEYING): `weight_at_start := current_weight + transferred` — the anchor is re-calculated so `transferred` continues from the frozen value without a jump.
+
+**PAUSED** — `BATCH.transferred` frozen. `CMD.unloading_start` resumes; `CMD.reset` returns to IDLE.
+
+**ERROR** — `ALARMS.unloading_timeout = TRUE`. `CMD.ack` transitions to PAUSED.
+
+### FC Pavone_DAT_1400
+
+Converts raw transmitter data:
 
 ```
-configured = NOT weight_invalid AND NOT setpoint_invalid
+scale.IN.scale_error := dat_IN.Status_register.weight_error
+scale.IN.current_weight := DINT_TO_REAL(net_weight) × 10^(−decimals)
 ```
 
-`weight_invalid` trips if weight is outside `[weight_min, weight_max]`. `setpoint_invalid` trips if setpoint ≤ 0. The batch cannot start while either is active.
-
-**IDLE** — Waiting for `CMD.start` with `BATCH.configured = TRUE`. `BATCH.conveyed` is reset to 0 on every re-entry to IDLE.
-
-**SNAPSHOT** — Transient state (one scan). Acquires `weight_at_start`. On first start: `weight_at_start := current_weight`. On resume after pause: `weight_at_start := current_weight + conveyed` — this re-anchors the calculation so `conveyed` continues from the correct value.
-
-**CONVEYING** — Transport active. Every scan computes `conveyed := weight_at_start - current_weight` (clamped to 0). Cycle ends on the first matching condition:
-- `conveyed ≥ setpoint - batch_tail` → FINISHED
-- `CMD.stop` OR `current_weight ≤ weight_min` OR `IN.plant_error` → PAUSED
-- `conveying_timeout` expired → TIMEOUT
-
-`batch_tail` cuts off transport slightly before the full setpoint to account for in-flight material.
-
-**PAUSED** — Transport suspended; `BATCH.conveyed` frozen. `CMD.start` resumes (→ SNAPSHOT). `CMD.reset` cancels the batch (→ IDLE).
-
-**FINISHED** — Setpoint reached. Active for exactly one scan, then the system returns to IDLE automatically.
-
-**TIMEOUT** — `conveying_timeout` expired during transport. `ALARMS.transport_timeout = TRUE`. `CMD.ack` moves to PAUSED (batch can then be resumed or cancelled).
+Output: `dat_OUT.Command_register := 16#4` if `CMD.tare_request`, otherwise 0.
 
 ---
 
@@ -101,9 +124,9 @@ configured = NOT weight_invalid AND NOT setpoint_invalid
 
 | ID | Condition | Cause |
 |----|-----------|-------|
-| LC-A01 | `ALARMS.weight_invalid` | Weight out of scale range — check load cells, wiring, transmitter |
-| LC-A02 | `ALARMS.setpoint_invalid` | Setpoint ≤ 0 — set a positive value |
-| LC-W01 | `ALARMS.transport_timeout` | CONVEYING cycle exceeded `conveying_timeout` — check plant, valve, or material supply |
+| LC-A01 | `ALARMS.weight_invalid` | Weight out of scale range — check cells, wiring, transmitter |
+| LC-E01 | `ALARMS.loading_timeout` | Loading cycle exceeded `loading_timeout` — check plant |
+| LC-E02 | `ALARMS.unloading_timeout` | Unloading cycle exceeded `unloading_timeout` — check plant |
 
 ---
 
@@ -111,10 +134,12 @@ configured = NOT weight_invalid AND NOT setpoint_invalid
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.weight_min` | 10.0 | Lower valid weight threshold [kg] |
-| `SETTING.weight_max` | 1000.0 | Upper valid weight threshold [kg] |
-| `SETTING.batch_tail` | — | Early cut-off before setpoint [kg] |
-| `SETTING.conveying_timeout` | T#10M | Maximum CONVEYING duration before TIMEOUT |
+| `SETTING.min_weight` | 0.0 | Lower valid weight threshold [kg] (used by Unloading) |
+| `SETTING.max_weight` | 1000.0 | Upper valid weight threshold [kg] |
+| `SETTING.loading_tail` | — | Early cut-off before loading setpoint [kg] |
+| `SETTING.unloading_tail` | — | Early cut-off before unloading setpoint [kg] |
+| `SETTING.loading_timeout` | T#10M | Maximum LOADING cycle duration before ERROR |
+| `SETTING.unloading_timeout` | T#10M | Maximum CONVEYING cycle duration before ERROR |
 
 ---
 
@@ -125,9 +150,11 @@ classDiagram
     class UDT_Load_cells
     class CMD {
         +Bool ack
-        +Real setpoint
+        +Real loading_setpoint
+        +Real unloading_setpoint
         +Bool tare_request
-        +Bool start
+        +Bool loading_start
+        +Bool unloading_start
         +Bool stop
         +Bool reset
     }
@@ -137,76 +164,84 @@ classDiagram
         +Bool plant_error
     }
     class SETTING {
-        +Real weight_min
-        +Real weight_max
-        +Real batch_tail
-        +Time conveying_timeout
+        +Real min_weight
+        +Real max_weight
+        +Real loading_tail
+        +Real unloading_tail
+        +Time loading_timeout
+        +Time unloading_timeout
     }
-    class STATUS {
+    class STATUS_LOADING {
         +Int state
         +Bool is_idle
-        +Bool is_conveying
-        +Bool is_finished
+        +Bool is_loading
+        +Bool loading_finished
+    }
+    class STATUS_UNLOADING {
+        +Int state
+        +Bool is_idle
+        +Bool is_unloading
         +Bool is_paused
+        +Bool unloading_finished
     }
     class BATCH {
-        +Bool configured
-        +Real conveyed
+        +Real transferred
         +Real weight_at_start
     }
     class ALARMS {
         +Bool weight_invalid
-        +Bool setpoint_invalid
-        +Bool transport_timeout
+        +Bool loading_timeout
+        +Bool unloading_timeout
     }
     UDT_Load_cells *-- CMD
     UDT_Load_cells *-- IN
     UDT_Load_cells *-- SETTING
-    UDT_Load_cells *-- STATUS
+    UDT_Load_cells *-- STATUS_LOADING
+    UDT_Load_cells *-- STATUS_UNLOADING
     UDT_Load_cells *-- BATCH
     UDT_Load_cells *-- ALARMS
 ```
 
 ---
 
-## State Machine (FSM)
+## State Machines (FSM)
+
+### Loading
 
 ```mermaid
 stateDiagram-v2
     [*] --> IDLE
 
-    IDLE --> SNAPSHOT : CMD.start AND configured
-    SNAPSHOT --> CONVEYING : (acquires weight_at_start — 1 scan)
-    CONVEYING --> FINISHED : conveyed >= setpoint - batch_tail
-    CONVEYING --> PAUSED : CMD.stop or plant_error or weight <= weight_min
-    CONVEYING --> TIMEOUT : conveying_timeout expired
-    FINISHED --> IDLE : automatic (1 scan)
-    PAUSED --> SNAPSHOT : CMD.start
-    PAUSED --> IDLE : CMD.reset
-    TIMEOUT --> PAUSED : CMD.ack
+    IDLE --> LOADING : loading_start AND NOT weight_invalid
+    LOADING --> IDLE : weight >= setpoint - tail OR CMD.stop
+    LOADING --> ERROR : loading_timeout expired
+    ERROR --> IDLE : CMD.ack
 ```
-
-### State and Output Table
 
 | State | Value | Description |
 |-------|-------|-------------|
-| TIMEOUT | 0 | Timer expired; `transport_timeout=TRUE`; awaiting ACK |
-| IDLE | 1 | Waiting for start with `configured=TRUE`; `conveyed=0` |
-| SNAPSHOT | 2 | Acquires `weight_at_start` (transient, 1 scan) |
-| CONVEYING | 3 | Transport active; `conveyed` updated every scan |
-| PAUSED | 4 | Batch suspended; `conveyed` frozen |
-| FINISHED | 5 | Setpoint reached; auto-transitions to IDLE |
+| ERROR | 0 | Timeout; `loading_timeout=TRUE`; awaiting ACK |
+| IDLE | 1 | Waiting; `transferred=0` on entry |
+| LOADING | 2 | Loading active; `transferred` updated every scan |
 
-### State Transition Table
+### Unloading
 
-| Current state | Condition | Next state |
-|---------------|-----------|------------|
-| IDLE | `CMD.start` AND `BATCH.configured` | SNAPSHOT |
-| SNAPSHOT | — (transient) | CONVEYING |
-| CONVEYING | `conveyed ≥ setpoint − batch_tail` | FINISHED |
-| CONVEYING | `CMD.stop` OR `plant_error` OR `current_weight ≤ weight_min` | PAUSED |
-| CONVEYING | `conveying_timeout` expired | TIMEOUT |
-| FINISHED | — (automatic, 1 scan) | IDLE |
-| PAUSED | `CMD.start` | SNAPSHOT |
-| PAUSED | `CMD.reset` | IDLE |
-| TIMEOUT | `CMD.ack` | PAUSED |
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+
+    IDLE --> CONVEYING : unloading_start AND NOT weight_invalid
+    CONVEYING --> IDLE : transferred >= setpoint - tail
+    CONVEYING --> PAUSED : CMD.stop OR plant_error OR weight <= min_weight
+    CONVEYING --> ERROR : unloading_timeout expired
+    PAUSED --> CONVEYING : unloading_start
+    PAUSED --> IDLE : CMD.reset
+    ERROR --> PAUSED : CMD.ack
+```
+
+| State | Value | Description |
+|-------|-------|-------------|
+| ERROR | 0 | Timeout; `unloading_timeout=TRUE`; awaiting ACK → PAUSED |
+| IDLE | 1 | Waiting; `transferred=0` on entry |
+| CONVEYING | 2 | Unloading active; `transferred` updated every scan |
+| PAUSED | 3 | Batch suspended; `transferred` frozen |

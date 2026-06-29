@@ -4,12 +4,14 @@
         CMD : STRUCT
             { S7_MLC := "MLC_gs" }
             ack : Bool;
+            loading_setpoint : Real;
             { S7_MLC := "MLC_3JK" }
-            setpoint : Real;
+            unloading_setpoint : Real;
             { S7_MLC := "MLC_xz" }
             tare_request : Bool;
+            loading_start : Bool;
             { S7_MLC := "MLC_3aM" }
-            start : Bool;
+            unloading_start : Bool;
             { S7_MLC := "MLC_3uX" }
             stop : Bool;
             reset : Bool;
@@ -33,52 +35,62 @@
             plant_error : Bool;
         END_STRUCT;
         SETTING : STRUCT
-            { S7_MLC := "MLC_56e" }
-            weight_min : Real := 10.0;
+            min_weight : Real := 0.0;
             { S7_MLC := "MLC_4BM" }
-            weight_max : Real := 1000.0;
+            max_weight : Real := 1000.0;
+            loading_tail : Real;
             { S7_MLC := "MLC_54D" }
-            batch_tail : Real;
+            unloading_tail : Real;
+            loading_timeout : Time := T#10M;
             { S7_MLC := "MLC_4uy" }
-            conveying_timeout : Time := T#10M;
+            unloading_timeout : Time := T#10M;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3K4"
-            }
-            state : Int := 1;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_556"
-            }
-            is_idle : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4vV"
-            }
-            is_conveying : Bool;
             { S7_Access := "ReadOnly := External" }
-            is_finished : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Qz"
-            }
-            is_paused : Bool;
+            LOADING : STRUCT
+                { S7_Access := "ReadOnly := External" }
+                state : Int := 1;
+                { S7_Access := "ReadOnly := External" }
+                is_idle : Bool;
+                { S7_Access := "ReadOnly := External" }
+                is_loading : Bool;
+                { S7_Access := "ReadOnly := External" }
+                loading_finished : Bool;
+            END_STRUCT;
+            { S7_Access := "ReadOnly := External" }
+            UNLOADING : STRUCT
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_4Zk"
+                }
+                state : Int := 1;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_3NK"
+                }
+                is_idle : Bool;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_3zQ"
+                }
+                is_unloading : Bool;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_4PX"
+                }
+                is_paused : Bool;
+                { S7_Access := "ReadOnly := External" }
+                unloading_finished : Bool;
+            END_STRUCT;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         BATCH : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3EY"
-            }
-            configured : Bool;
-            {
-                S7_Access := "ReadOnly := External";
                 S7_MLC := "MLC_XT"
             }
-            conveyed : Real;
+            transferred : Real;
             {
                 S7_Access := "ReadOnly := External";
                 S7_MLC := "MLC_3Ss"
@@ -92,13 +104,10 @@
                 S7_MLC := "MLC_4LS"
             }
             weight_invalid : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4BE"
-            }
-            setpoint_invalid : Bool;
             { S7_Access := "ReadOnly := External" }
-            transport_timeout : Bool;
+            loading_timeout : Bool;
+            { S7_Access := "ReadOnly := External" }
+            unloading_timeout : Bool;
         END_STRUCT;
     END_STRUCT;
 END_TYPE

@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and variables visibility in HMI
 LibraryVersion:
-  VersionNumber: 1.5.3
+  VersionNumber: 1.5.6
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added simulation capabilities
+    en-US: Removed movement counter

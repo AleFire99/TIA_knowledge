@@ -24,6 +24,10 @@
             }
             interlocked : Bool;
         END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_3Ya" }
+            door_timeout : Time := T#3M;
+        END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
             {

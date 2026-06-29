@@ -1,0 +1,154 @@
+﻿TYPE
+    { S7_BlockComment := "MLC_3kb" }
+    UDT_Sealed_inlet_Transporter : STRUCT
+        DEVICES : STRUCT
+            { S7_MLC := "MLC_gP" }
+            XV01 : _.UDT_SS_Sealed_Valve;
+            { S7_MLC := "MLC_3Hq" }
+            XV02 : _.UDT_DS_Valve;
+            { S7_MLC := "MLC_3Vc" }
+            XV03 : _.UDT_SS_Valve;
+            { S7_MLC := "MLC_aP" }
+            XV04 : _.UDT_SS_Valve;
+            { S7_MLC := "MLC_Vm" }
+            XV05 : _.UDT_SS_Valve;
+            { S7_MLC := "MLC_3mn" }
+            XY : _.UDT_Solenoid_valve;
+            { S7_MLC := "MLC_wP" }
+            WT01 : _.UDT_Load_cells;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_54J"
+            }
+            LSH : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4wK"
+            }
+            PSL : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3rt"
+            }
+            PT01 : _.UDT_Analogic_signal;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Zh"
+            }
+            PT02 : _.UDT_Analogic_signal;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_48X" }
+            start_loading : Bool;
+            { S7_MLC := "MLC_42P" }
+            start_convey : Bool;
+            { S7_MLC := "MLC_37n" }
+            stop : Bool;
+            { S7_MLC := "MLC_3Sx" }
+            ack : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_4sf" }
+            vessel_empty_thresh : Real := 0.2;
+            { S7_MLC := "MLC_3BL" }
+            line_empty_thresh : Real := 0.2;
+            { S7_MLC := "MLC_4x9" }
+            pressure_delta : Real := 0.2;
+            { S7_MLC := "MLC_SG" }
+            actuator_timeout : Time := T#2s;
+            { S7_MLC := "MLC_3CB" }
+            pressurizing_timeout : Time := T#1M;
+            { S7_MLC := "MLC_Xb" }
+            depressurizing_timeout : Time := T#1M;
+            cleaning_timer : Time := T#2M;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_56C"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4tP"
+            }
+            normal_state : Int := 10;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_589"
+            }
+            is_idle : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3mQ"
+            }
+            is_filling : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_52E"
+            }
+            is_sealing : Bool;
+            { S7_Access := "ReadOnly := External" }
+            is_cleaning : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4mL"
+            }
+            is_pressurizing : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_42N"
+            }
+            is_conveying : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_yn"
+            }
+            is_depressurizing : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Sc"
+            }
+            is_fault : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        OUT : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_38F"
+            }
+            loading_finished : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_ac"
+            }
+            conveying_done : Bool;
+            { S7_Access := "ReadOnly := External" }
+            filter_cleaner_command : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Dt"
+            }
+            last_transferred : Real;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3En"
+            }
+            internal_error : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3be"
+            }
+            pressurization_timeout : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_45F"
+            }
+            depressurization_timeout : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

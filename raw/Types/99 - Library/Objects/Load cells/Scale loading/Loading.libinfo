@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 0c7e0083-2e64-485c-ba5b-ec93fab96a40
+  Comment:
+    en-US: First version
+LibraryVersion:
+  VersionNumber: 0.1.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added entry action in idle for finished loading

@@ -9,6 +9,8 @@
     en-US: COMMAND - Close command
   - id: MLC_4um
     en-US: COMMAND - 0=enabled/1=interlocked
+  - id: MLC_3Ya
+    en-US: SETTING - Door auto locked when timer is expired
   - id: MLC_4xE
     en-US: STATE -  1=Closed, 2=Opening, 3=Open, 4=Closing
   - id: MLC_Qy

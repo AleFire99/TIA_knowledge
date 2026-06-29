@@ -3,8 +3,8 @@
   Comment:
     en-US: First commit
 LibraryVersion:
-  VersionNumber: 1.3.0
+  VersionNumber: 1.3.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Modified internal UDT structure for hierarchical FSm
+    en-US: Removed maintenance settings

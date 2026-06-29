@@ -33,16 +33,12 @@
                 S7_MLC := "MLC_4Hr"
             }
             interlocked : Bool;
-            { S7_MLC := "MLC_3QE" }
-            maintenance_reset : Bool;
             { S7_MLC := "MLC_4ZL" }
             ack : Bool;
         END_STRUCT;
         SETTING : STRUCT
             { S7_MLC := "MLC_3yu" }
             actuator_timeout : Time := T#2s;
-            { S7_MLC := "MLC_3xZ" }
-            maintenance_threshold : Int := 10000;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
@@ -89,11 +85,6 @@
                 S7_MLC := "MLC_4L5"
             }
             error : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4JR"
-            }
-            warning : Bool;
         END_STRUCT;
     END_STRUCT;
 END_TYPE

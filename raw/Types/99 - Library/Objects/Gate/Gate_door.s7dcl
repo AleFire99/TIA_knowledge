@@ -18,6 +18,11 @@ FUNCTION_BLOCK "Gate_door"
             S7_Visibility := "Hidden := External"
         }
         fb_XY : _.Solenoid_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        door_timer : TON_TIME;
     END_VAR
     VAR CONSTANT 
         CLOSED : Int := 1;
@@ -44,6 +49,12 @@ FUNCTION_BLOCK "Gate_door"
           #fb_XY(#gate_door.DEVICES.XY);
         END_REGION
         
+        REGION Timers
+          
+          #door_timer(IN := (#gate_door.STATUS.state = #OPEN),
+                      PT := #gate_door.SETTING.door_timeout);
+        END_REGION
+        
         REGION FSM logic
           // Moore machine: transitions driven by inputs, outputs assigned in Output mapping region
           CASE #gate_door.STATUS.state OF
@@ -60,7 +71,7 @@ FUNCTION_BLOCK "Gate_door"
               END_IF;
               
             #OPEN:
-              IF #gate_door.CMD.close THEN
+              IF #gate_door.CMD.close OR #door_timer.Q THEN
                 #gate_door.STATUS.state := #CLOSING;
               END_IF;
               

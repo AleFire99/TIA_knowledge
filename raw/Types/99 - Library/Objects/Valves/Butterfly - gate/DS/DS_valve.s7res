@@ -7,10 +7,6 @@
     en-US: Desired command if not interlocked
   - id: MLC_3EU
     en-US: Movement timer
-  - id: MLC_4AN
-    en-US: Movement counter of valve disk
-  - id: MLC_4SM
-    en-US: State of previous scan
   - id: MLC_45S
     en-US: ALARM - Sensor conflict
   - id: MLC_3C3
@@ -19,8 +15,6 @@
     en-US: ALARM - Valve failed to open
   - id: MLC_33A
     en-US: ALARM - Movement timeout
-  - id: MLC_5Aj
-    en-US: WARNING - Number of valve cycles reached
   - id: MLC_4zW
     en-US: Error valve state
   - id: MLC_3d7

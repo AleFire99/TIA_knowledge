@@ -3,8 +3,8 @@
   Comment:
     en-US: Converted to SCL
 LibraryVersion:
-  VersionNumber: 0.0.3
+  VersionNumber: 0.0.5
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: reduced movement time
+    en-US: Updated interface

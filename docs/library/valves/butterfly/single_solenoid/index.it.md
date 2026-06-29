@@ -2,17 +2,18 @@
 
 ## Panoramica
 
-La valvola a farfalla SS è una valvola rotativa pneumatica con singolo solenoide. L'eccitazione di `XY` aziona l'attuatore per aprire il disco; la diseccitazione permette alla molla di chiuderlo. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione. Un contatore di cicli attiva un avviso di manutenzione al raggiungimento della soglia configurata.
+`SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide. L'eccitazione di `XY` aziona l'attuatore verso l'apertura; la diseccitazione permette alla molla di riportare il disco in chiusura. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione. La macchina a stati opera su due livelli: uno stato di guasto (`FAULT`) e uno normale (`NORMAL`) con quattro sottostati.
+
+Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: ZSL attivo → NORMAL/CLOSED, ZSH attivo → NORMAL/OPEN, condizione ambigua → FAULT.
 
 ---
 
 ## Componenti principali
 
-- **Corpo valvola** — flangiato con ingresso/uscita, disco montato su albero
 - **Attuatore pneumatico** — singolo effetto, ritorno a molla in chiusura
-- **Elettrovalvola `XY`** — controlla l'aria all'attuatore (eccitata = aperta)
-- **Finecorsa `ZSL`** — TRUE quando il disco è completamente chiuso
-- **Finecorsa `ZSH`** — TRUE quando il disco è completamente aperto
+- **Elettrovalvola `XY`** — controlla l'aria all'attuatore: eccitata = apertura o mantenimento aperto
+- **Finecorsa `ZSL`** — TRUE = disco completamente chiuso
+- **Finecorsa `ZSH`** — TRUE = disco completamente aperto
 
 ---
 
@@ -20,35 +21,56 @@ La valvola a farfalla SS è una valvola rotativa pneumatica con singolo solenoid
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `ZSL` | Ingresso — Bool | Finecorsa: TRUE = valvola completamente chiusa |
-| `ZSH` | Ingresso — Bool | Finecorsa: TRUE = valvola completamente aperta |
-| `XY` | Uscita — Bool | Comando solenoide: TRUE = eccita (apre la valvola) |
+| `DEVICES.ZSL` | Bool | INPUT — Finecorsa posizione chiusa |
+| `DEVICES.ZSH` | Bool | INPUT — Finecorsa posizione aperta |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola attuatore |
+| `CMD.manual_mode` | Bool | COMANDO — TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | COMANDO — Comando apertura in modalità manuale |
+| `CMD.auto` | Bool | COMANDO — Comando apertura dall'automazione (ReadOnly external) |
+| `CMD.interlocked` | Bool | GUARDIA — TRUE = blocca aggiornamento del comando validato (ReadOnly external) |
+| `CMD.ack` | Bool | COMANDO — Conferma allarmi e ripristino da FAULT |
+| `SETTING.actuator_timeout` | Time | Timeout movimento attuatore (default T#2s) |
+| `STATUS.state` | Int | STATO — 0=FAULT, 1=NORMAL |
+| `STATUS.normal_state` | Int | SOTTOSTATO — 1=CLOSED, 2=OPENING, 3=OPEN, 4=CLOSING |
+| `STATUS.is_fault` | Bool | STATO — Blocco in condizione di guasto |
+| `STATUS.is_closed` | Bool | STATO — Valvola ferma in posizione chiusa |
+| `STATUS.is_opening` | Bool | STATO — Attuatore in movimento verso apertura |
+| `STATUS.is_open` | Bool | STATO — Valvola completamente aperta |
+| `STATUS.is_closing` | Bool | STATO — Molla in rientro verso chiusura |
+| `ALARMS.error` | Bool | ALLARME — Uno o più guasti attivi |
 
 ---
 
 ## Funzionamento
 
-Con un **comando di apertura**, `XY` viene eccitato e l'attuatore ruota il disco verso la posizione aperta. La valvola conferma la posizione aperta quando `ZSH = TRUE` e `ZSL = FALSE`.
+Il blocco risolve il comando desiderato ogni scan:
+- Se `manual_mode = TRUE`: `desired_open_command := CMD.manual`
+- Altrimenti: `desired_open_command := CMD.auto`
 
-Con un **comando di chiusura**, `XY` viene diseccitato e la molla riporta il disco in chiusura. La valvola conferma la posizione chiusa quando `ZSL = TRUE` e `ZSH = FALSE`.
+Il comando viene validato solo se `NOT CMD.interlocked`: quando l'interblocco è attivo, `validated_open_command` mantiene l'ultimo valore — la valvola non viene forzata né aperta né chiusa.
 
-In **modalità manuale** (`manual_mode = TRUE`), l'operatore comanda la valvola dall'HMI tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`. Se `interlocked = TRUE`, la valvola mantiene la posizione.
+**CLOSED** — `XY` diseccitata; molla tiene il disco chiuso. Se `validated_open_command = TRUE`, transizione verso OPENING.
 
-Ogni movimento completato (OPENING→OPEN o CLOSING→CLOSED) incrementa `movement_counter`. Al raggiungimento di `maintenance_threshold`, viene generato `ALARMS.warning`. Si azzera con `maintenance_reset = TRUE`.
+**OPENING** — `XY` eccitata; l'attuatore spinge il disco. Quando `ZSH = TRUE AND ZSL = FALSE`, il disco ha raggiunto la posizione aperta → OPEN. Se il timer `actuator_timeout` scade prima, scatta `movement_timeout`.
 
-Tutti gli errori devono essere confermati tramite `ack`. Dopo la conferma, il blocco funzionale rilegge entrambi i sensori per determinare la posizione effettiva.
+**OPEN** — `XY` rimane eccitata per mantenere il disco contro la molla. Se `validated_open_command = FALSE`, transizione verso CLOSING.
+
+**CLOSING** — `XY` diseccitata; la molla riporta il disco. Quando `ZSL = TRUE AND ZSH = FALSE` → CLOSED. Se il timer scade → `movement_timeout`.
+
+Un allarme qualsiasi (`ALARMS.error = TRUE`) porta il blocco in FAULT. `CMD.ack` azzera tutti gli allarmi interni; se le condizioni di guasto sono cessate e i sensori mostrano una posizione valida, il blocco ritorna in NORMAL con lo stato derivato dai finecorsa.
 
 ---
 
 ## Allarmi
 
-| ID | Condizione | Causa |
-|----|------------|-------|
-| SS-E01 | ZSL = TRUE e ZSH = TRUE simultaneamente | Guasto sensore, disallineamento, cortocircuito |
-| SS-E02 | Valvola in stato CLOSED ma ZSL = FALSE | Guasto ZSL, ostruzione meccanica, guasto molla |
-| SS-E03 | Valvola in stato OPEN ma ZSH = FALSE | Guasto ZSH, guasto solenoide, assenza aria |
-| SS-E04 | Movimento non completato entro `actuator_timeout` | Ostruzione meccanica, guasto solenoide, aria insufficiente |
-| SS-W01 | `movement_counter` ≥ `maintenance_threshold` | Intervallo ispezione raggiunto — azzerare con `maintenance_reset` |
+I quattro allarmi interni si sommano in `ALARMS.error`. Tutti si azzerano con `CMD.ack`.
+
+| Allarme | Condizione | Causa tipica |
+|---------|------------|--------------|
+| `sensor_conflict` | `ZSL = TRUE AND ZSH = TRUE` | Cortocircuito, finecorsa fuori sede |
+| `failed_to_close` | NORMAL/CLOSED ma `ZSL = FALSE` | Perdita segnale ZSL, ostruzione meccanica |
+| `failed_to_open` | NORMAL/OPEN ma `ZSH = FALSE` | Perdita segnale ZSH, guasto solenoide, assenza aria |
+| `movement_timeout` | OPENING o CLOSING oltre `actuator_timeout` | Ostruzione, aria insufficiente, solenoide guasto |
 
 ---
 
@@ -56,8 +78,7 @@ Tutti gli errori devono essere confermati tramite `ack`. Dopo la conferma, il bl
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `actuator_timeout` | T#2s | Tempo massimo per raggiungere la posizione target |
-| `maintenance_threshold` | 10000 | Numero di movimenti prima dell'avviso di manutenzione |
+| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING prima di generare `movement_timeout` |
 
 ---
 
@@ -74,14 +95,12 @@ classDiagram
     class CMD {
         +Bool manual_mode
         +Bool manual
-        +Bool ack
-        +Bool maintenance_reset
         +Bool auto
         +Bool interlocked
+        +Bool ack
     }
     class SETTING {
         +Time actuator_timeout
-        +Int maintenance_threshold
     }
     class STATUS {
         +Int state
@@ -94,7 +113,6 @@ classDiagram
     }
     class ALARMS {
         +Bool error
-        +Bool warning
     }
     UDT_SS_Valve *-- DEVICES
     UDT_SS_Valve *-- CMD
@@ -109,42 +127,39 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
-    [*] --> FAULT : conflitto sensori all'avvio
-    NORMAL --> FAULT : allarme
-    FAULT --> NORMAL : ACK + sensori validi
+    [*] --> NORMAL : ZSL XOR ZSH al primo scan
+    [*] --> FAULT : sensori ambigui al primo scan
+
+    NORMAL --> FAULT : ALARMS.error
+    FAULT --> NORMAL : CMD.ack AND NOT error AND sensori validi
 
     state NORMAL {
-        [*] --> CLOSED : ZSL=TRUE, ZSH=FALSE
-        [*] --> OPEN : ZSH=TRUE, ZSL=FALSE
-        CLOSED --> OPENING : comando apertura
-        OPENING --> OPEN : ZSH=TRUE, ZSL=FALSE
-        OPEN --> CLOSING : comando chiusura
-        CLOSING --> CLOSED : ZSL=TRUE, ZSH=FALSE
+        [*] --> CLOSED : ZSL=TRUE all'avvio
+        [*] --> OPEN : ZSH=TRUE all'avvio
+        CLOSED --> OPENING : validated_open_command
+        OPENING --> OPEN : ZSH AND NOT ZSL
+        OPEN --> CLOSING : NOT validated_open_command
+        CLOSING --> CLOSED : ZSL AND NOT ZSH
     }
 ```
 
 ### Tabella stati e uscite
 
-| Stato | `XY` | `ZSL` atteso | `ZSH` atteso | Descrizione |
-|-------|------|-------------|-------------|-------------|
-| CLOSED | FALSE | TRUE | FALSE | Disco chiuso, flusso bloccato |
-| OPENING | TRUE | (in transizione) | (in transizione) | Attuatore ruota disco verso apertura |
-| OPEN | TRUE | FALSE | TRUE | Disco completamente aperto, flusso consentito |
-| CLOSING | FALSE | (in transizione) | (in transizione) | Molla riporta il disco in chiusura |
-| FAULT | — | — | — | Uscite congelate; richiesta conferma operatore |
+| Stato | Sottostato | `XY.CMD.auto` | Descrizione |
+|-------|------------|---------------|-------------|
+| FAULT | — | FALSE | Guasto; attende CMD.ack con sensori validi |
+| NORMAL | CLOSED | FALSE | Disco chiuso; molla in posizione |
+| NORMAL | OPENING | TRUE | Attuatore spinge il disco verso apertura |
+| NORMAL | OPEN | TRUE | Disco aperto; solenoide mantiene contro la molla |
+| NORMAL | CLOSING | FALSE | Molla riporta il disco in chiusura |
 
 ### Tabella transizioni di stato
 
-| Stato attuale | Condizione | Stato successivo | Azione |
-|---------------|------------|-----------------|--------|
-| CLOSED | Comando apertura | OPENING | `XY` → TRUE; avvia timer timeout |
-| OPENING | ZSH=TRUE, ZSL=FALSE | OPEN | Ferma timer; incrementa contatore |
-| OPENING | Timeout scaduto | FAULT | Genera SS-E04 |
-| OPEN | Comando chiusura | CLOSING | `XY` → FALSE; avvia timer timeout |
-| CLOSING | ZSL=TRUE, ZSH=FALSE | CLOSED | Ferma timer; incrementa contatore |
-| CLOSING | Timeout scaduto | FAULT | Genera SS-E04 |
-| CLOSED | ZSL=FALSE | FAULT | Genera SS-E02 |
-| OPEN | ZSH=FALSE | FAULT | Genera SS-E03 |
-| Qualsiasi | ZSL=TRUE E ZSH=TRUE | FAULT | Genera SS-E01 |
-| FAULT | ACK=TRUE, sensori validi | CLOSED o OPEN | Rilegge sensori; azzera allarmi |
+| Stato attuale | Condizione | Stato successivo |
+|---------------|------------|-----------------|
+| NORMAL/CLOSED | `validated_open_command` | NORMAL/OPENING |
+| NORMAL/OPENING | `ZSH AND NOT ZSL` | NORMAL/OPEN |
+| NORMAL/OPEN | `NOT validated_open_command` | NORMAL/CLOSING |
+| NORMAL/CLOSING | `ZSL AND NOT ZSH` | NORMAL/CLOSED |
+| NORMAL (qualsiasi) | `ALARMS.error` | FAULT |
+| FAULT | `CMD.ack AND NOT error AND ZSL XOR ZSH` | NORMAL/CLOSED o NORMAL/OPEN |

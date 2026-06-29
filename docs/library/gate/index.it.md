@@ -58,7 +58,9 @@ Non esiste struttura `ALARMS` separata né stato di guasto — il blocco è un M
 
 ## Parametri
 
-Nessun parametro configurabile in `UDT_Gate_Door`.
+| Parametro | Default | Descrizione |
+|-----------|---------|-------------|
+| `SETTING.door_timeout` | T#3M | Tempo massimo in stato OPEN prima di avviare automaticamente la chiusura |
 
 ---
 
@@ -76,6 +78,9 @@ classDiagram
         +Bool close
         +Bool interlocked
     }
+    class SETTING {
+        +Time door_timeout
+    }
     class STATUS {
         +Int state
         +Bool is_closed
@@ -85,6 +90,7 @@ classDiagram
     }
     UDT_Gate_Door *-- DEVICES
     UDT_Gate_Door *-- CMD
+    UDT_Gate_Door *-- SETTING
     UDT_Gate_Door *-- STATUS
 ```
 
@@ -99,7 +105,7 @@ stateDiagram-v2
 
     CLOSED --> OPENING : CMD.open AND NOT interlocked
     OPENING --> OPEN : NOT ZSL
-    OPEN --> CLOSING : CMD.close
+    OPEN --> CLOSING : CMD.close OR door_timeout scaduto
     CLOSING --> CLOSED : ZSL
 ```
 
@@ -117,6 +123,6 @@ stateDiagram-v2
 | Stato attuale | Condizione | Stato successivo | Azione |
 |---------------|------------|-----------------|--------|
 | CLOSED | `CMD.open` AND NOT `interlocked` | OPENING | `XY.CMD.auto` → TRUE |
-| OPENING | NOT `ZSL` | OPEN | — |
-| OPEN | `CMD.close` | CLOSING | `XY.CMD.auto` → FALSE |
+| OPENING | NOT `ZSL` | OPEN | Avvia door_timer |
+| OPEN | `CMD.close` OR `door_timer.Q` | CLOSING | `XY.CMD.auto` → FALSE |
 | CLOSING | `ZSL` | CLOSED | — |

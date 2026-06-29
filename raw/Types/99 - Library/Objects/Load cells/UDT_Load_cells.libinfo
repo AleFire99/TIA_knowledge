@@ -1,8 +1,10 @@
 ﻿LibraryType:
   Guid: af45b786-fc66-4ed0-899c-c89cf376989a
+  Comment:
+    it-IT: First commit
 LibraryVersion:
-  VersionNumber: 0.2.6
+  VersionNumber: 0.4.7
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    it-IT: Removed redundant tare command
+    en-US: Added flags for loaded finished and unloading finished routines

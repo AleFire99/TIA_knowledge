@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and variables visibility in HMI
 LibraryVersion:
-  VersionNumber: 1.5.0
+  VersionNumber: 1.5.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT with hierarchical structure
+    en-US: Removed movement reset command

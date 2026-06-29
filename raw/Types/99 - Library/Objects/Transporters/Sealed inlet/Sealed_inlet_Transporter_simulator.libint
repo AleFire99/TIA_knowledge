@@ -1,0 +1,15 @@
+﻿DocumentHash:
+  - FileName: Sealed_inlet_Transporter_simulator.s7dcl
+    Hash: ZUKSHkaCiZGK/kqAay/LRn/tLBTk/4nKHz6bUpcsZN8=
+LibraryMetaFileHash: FLYdzLmQsCWBjMT70VSP0nIbFGqx3EwZej+pxQRzVJA=
+LibraryVersion:
+  Guid: 4e102438-2329-4527-9ae1-72d6fea76536
+  DependsOn:
+    - TypeName: UDT_Sealed_inlet_Transporter
+      VersionNumber: 0.2.3
+    - TypeName: SS_Sealed_valve_simulator
+      VersionNumber: 0.0.2
+    - TypeName: DS_valve_simulator
+      VersionNumber: 0.0.6
+    - TypeName: SS_valve_simulator
+      VersionNumber: 0.0.5

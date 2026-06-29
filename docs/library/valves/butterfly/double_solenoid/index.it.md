@@ -2,18 +2,19 @@
 
 ## Panoramica
 
-La valvola a farfalla DS è una valvola rotativa pneumatica con due solenoidi indipendenti. `XYA` aziona l'attuatore in apertura; `XYB` lo aziona in chiusura. Poiché l'attuatore è a doppio effetto (bistabile), entrambi i solenoidi rimangono eccitati nelle rispettive posizioni stabili. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione. Un contatore di movimenti genera un avviso di manutenzione al raggiungimento della soglia configurata.
+`DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti. `XYA` aziona l'attuatore verso l'apertura; `XYB` lo aziona verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a solenoidi diseccitati. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
+
+Al primo ciclo PLC, il simulatore inizializza `ZSL = TRUE`, `ZSH = FALSE` (stato chiuso). Il blocco di controllo legge i sensori per determinare lo stato iniziale: ZSL attivo → NORMAL/CLOSED, ZSH attivo → NORMAL/OPEN, condizione ambigua → FAULT.
 
 ---
 
 ## Componenti principali
 
-- **Corpo valvola** — flangiato con ingresso/uscita, disco montato su albero
-- **Attuatore pneumatico a doppio effetto** — nessun ritorno a molla; mantiene la posizione a solenoidi diseccitati
-- **Elettrovalvola `XYA`** — aziona l'attuatore in apertura (eccitata = apertura/mantenimento aperto)
-- **Elettrovalvola `XYB`** — aziona l'attuatore in chiusura (eccitata = chiusura/mantenimento chiuso)
-- **Finecorsa `ZSL`** — TRUE quando il disco è completamente chiuso
-- **Finecorsa `ZSH`** — TRUE quando il disco è completamente aperto
+- **Attuatore pneumatico a doppio effetto** — bistabile; nessun ritorno a molla
+- **Elettrovalvola `XYA`** — aziona e mantiene l'attuatore in posizione aperta
+- **Elettrovalvola `XYB`** — aziona e mantiene l'attuatore in posizione chiusa
+- **Finecorsa `ZSL`** — TRUE = disco completamente chiuso
+- **Finecorsa `ZSH`** — TRUE = disco completamente aperto
 
 ---
 
@@ -21,36 +22,53 @@ La valvola a farfalla DS è una valvola rotativa pneumatica con due solenoidi in
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `ZSL` | Ingresso — Bool | Finecorsa: TRUE = valvola completamente chiusa |
-| `ZSH` | Ingresso — Bool | Finecorsa: TRUE = valvola completamente aperta |
-| `XYA` | Uscita — Bool | Solenoide apertura: TRUE = aziona/mantiene aperta |
-| `XYB` | Uscita — Bool | Solenoide chiusura: TRUE = aziona/mantiene chiusa |
+| `DEVICES.ZSL` | Bool | INPUT — Finecorsa posizione chiusa |
+| `DEVICES.ZSH` | Bool | INPUT — Finecorsa posizione aperta |
+| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola apertura |
+| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola chiusura |
+| `CMD.manual_mode` | Bool | COMANDO — TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | COMANDO — Comando apertura in modalità manuale |
+| `CMD.auto` | Bool | COMANDO — Comando apertura dall'automazione (ReadOnly external) |
+| `CMD.interlocked` | Bool | GUARDIA — TRUE = blocca aggiornamento del comando validato (ReadOnly external) |
+| `CMD.ack` | Bool | COMANDO — Conferma allarmi e ripristino da FAULT |
+| `SETTING.actuator_timeout` | Time | Timeout movimento attuatore (default T#2s) |
+| `STATUS.state` | Int | STATO — 0=FAULT, 1=NORMAL |
+| `STATUS.normal_state` | Int | SOTTOSTATO — 1=CLOSED, 2=OPENING, 3=OPEN, 4=CLOSING |
+| `STATUS.is_fault` | Bool | STATO — Blocco in condizione di guasto |
+| `STATUS.is_closed` | Bool | STATO — Valvola ferma in posizione chiusa |
+| `STATUS.is_opening` | Bool | STATO — Attuatore in movimento verso apertura |
+| `STATUS.is_open` | Bool | STATO — Valvola completamente aperta |
+| `STATUS.is_closing` | Bool | STATO — Attuatore in movimento verso chiusura |
+| `ALARMS.error` | Bool | ALLARME — Uno o più guasti attivi |
 
 ---
 
 ## Funzionamento
 
-Con un **comando di apertura**, `XYA` viene eccitato e `XYB` diseccitato. L'attuatore ruota il disco verso l'apertura. La valvola conferma quando `ZSH = TRUE` e `ZSL = FALSE`. `XYA` rimane eccitato per mantenere il disco aperto.
+Il blocco risolve il comando desiderato ogni scan esattamente come `SS_valve` (manuale/automatico/interblocco). Il comando validato controlla le transizioni di stato.
 
-Con un **comando di chiusura**, `XYB` viene eccitato e `XYA` diseccitato. L'attuatore ruota il disco verso la chiusura. La valvola conferma quando `ZSL = TRUE` e `ZSH = FALSE`. `XYB` rimane eccitato per mantenere il disco chiuso.
+**CLOSED** — `XYB` eccitata per mantenere il disco in posizione chiusa; `XYA` diseccitata. Se `validated_open_command = TRUE`, transizione verso OPENING.
 
-In **stato di guasto**, entrambi i solenoidi vengono diseccitati. Il disco mantiene l'ultima posizione fisica (attuatore bistabile).
+**OPENING** — `XYA` eccitata; `XYB` diseccitata. L'attuatore spinge il disco verso l'apertura. Quando `ZSH = TRUE AND ZSL = FALSE` → OPEN. Se `actuator_timeout` scade → `movement_timeout`.
 
-In **modalità manuale** (`manual_mode = TRUE`), l'operatore comanda dall'HMI tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`. Se `interlocked = TRUE`, la valvola mantiene la posizione.
+**OPEN** — `XYA` eccitata per mantenere il disco aperto; `XYB` diseccitata. Se `validated_open_command = FALSE`, transizione verso CLOSING.
 
-Ogni movimento completato incrementa `movement_counter`. Si azzera con `maintenance_reset = TRUE`.
+**CLOSING** — `XYB` eccitata; `XYA` diseccitata. L'attuatore porta il disco in chiusura. Quando `ZSL = TRUE AND ZSH = FALSE` → CLOSED. Se il timer scade → `movement_timeout`.
+
+**FAULT** — Entrambi i solenoidi diseccitati; il disco bistabile mantiene l'ultima posizione fisica. `CMD.ack` azzera gli allarmi e, se i sensori mostrano una posizione valida, il blocco ritorna in NORMAL.
 
 ---
 
 ## Allarmi
 
-| ID | Condizione | Causa |
-|----|------------|-------|
-| DS-E01 | ZSL = TRUE e ZSH = TRUE simultaneamente | Guasto sensore, disallineamento, cortocircuito |
-| DS-E02 | Valvola in stato CLOSED ma ZSL = FALSE | Guasto ZSL, ostruzione meccanica |
-| DS-E03 | Valvola in stato OPEN ma ZSH = FALSE | Guasto ZSH, guasto solenoide, assenza aria |
-| DS-E04 | Movimento non completato entro `actuator_timeout` | Ostruzione meccanica, guasto solenoide, aria insufficiente |
-| DS-W01 | `movement_counter` ≥ `maintenance_threshold` | Intervallo ispezione raggiunto — azzerare con `maintenance_reset` |
+Quattro allarmi interni si sommano in `ALARMS.error`. Tutti si azzerano con `CMD.ack`.
+
+| Allarme | Condizione | Causa tipica |
+|---------|------------|--------------|
+| `sensor_conflict` | `ZSL = TRUE AND ZSH = TRUE` | Cortocircuito, finecorsa fuori sede |
+| `failed_to_close` | NORMAL/CLOSED ma `ZSL = FALSE` | Perdita segnale ZSL, ostruzione meccanica |
+| `failed_to_open` | NORMAL/OPEN ma `ZSH = FALSE` | Perdita segnale ZSH, guasto solenoide, assenza aria |
+| `movement_timeout` | OPENING o CLOSING oltre `actuator_timeout` | Ostruzione, aria insufficiente, solenoide guasto |
 
 ---
 
@@ -58,8 +76,7 @@ Ogni movimento completato incrementa `movement_counter`. Si azzera con `maintena
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `actuator_timeout` | T#2s | Tempo massimo per raggiungere la posizione target |
-| `maintenance_threshold` | 10000 | Numero di movimenti prima dell'avviso di manutenzione |
+| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING prima di generare `movement_timeout` |
 
 ---
 
@@ -77,14 +94,12 @@ classDiagram
     class CMD {
         +Bool manual_mode
         +Bool manual
-        +Bool ack
-        +Bool maintenance_reset
         +Bool auto
         +Bool interlocked
+        +Bool ack
     }
     class SETTING {
         +Time actuator_timeout
-        +Int maintenance_threshold
     }
     class STATUS {
         +Int state
@@ -97,7 +112,6 @@ classDiagram
     }
     class ALARMS {
         +Bool error
-        +Bool warning
     }
     UDT_DS_Valve *-- DEVICES
     UDT_DS_Valve *-- CMD
@@ -112,42 +126,39 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL
-    [*] --> FAULT : conflitto sensori all'avvio
-    NORMAL --> FAULT : allarme
-    FAULT --> NORMAL : ACK + sensori validi
+    [*] --> NORMAL : ZSL XOR ZSH al primo scan
+    [*] --> FAULT : sensori ambigui al primo scan
+
+    NORMAL --> FAULT : ALARMS.error
+    FAULT --> NORMAL : CMD.ack AND NOT error AND sensori validi
 
     state NORMAL {
-        [*] --> CLOSED : ZSL=TRUE, ZSH=FALSE
-        [*] --> OPEN : ZSH=TRUE, ZSL=FALSE
-        CLOSED --> OPENING : comando apertura
-        OPENING --> OPEN : ZSH=TRUE, ZSL=FALSE
-        OPEN --> CLOSING : comando chiusura
-        CLOSING --> CLOSED : ZSL=TRUE, ZSH=FALSE
+        [*] --> CLOSED : ZSL=TRUE all'avvio
+        [*] --> OPEN : ZSH=TRUE all'avvio
+        CLOSED --> OPENING : validated_open_command
+        OPENING --> OPEN : ZSH AND NOT ZSL
+        OPEN --> CLOSING : NOT validated_open_command
+        CLOSING --> CLOSED : ZSL AND NOT ZSH
     }
 ```
 
 ### Tabella stati e uscite
 
-| Stato | `XYA` | `XYB` | `ZSL` atteso | `ZSH` atteso | Descrizione |
-|-------|-------|-------|-------------|-------------|-------------|
-| CLOSED | FALSE | TRUE | TRUE | FALSE | Disco chiuso, XYB mantiene posizione |
-| OPENING | TRUE | FALSE | (in transizione) | (in transizione) | XYA aziona il disco in apertura |
-| OPEN | TRUE | FALSE | FALSE | TRUE | Disco completamente aperto, XYA mantiene posizione |
-| CLOSING | FALSE | TRUE | (in transizione) | (in transizione) | XYB aziona il disco in chiusura |
-| FAULT | FALSE | FALSE | — | — | Entrambi diseccitati; disco mantiene ultima posizione |
+| Stato | Sottostato | `XYA.CMD.auto` | `XYB.CMD.auto` | Descrizione |
+|-------|------------|----------------|----------------|-------------|
+| FAULT | — | FALSE | FALSE | Guasto; disco mantiene ultima posizione |
+| NORMAL | CLOSED | FALSE | TRUE | Disco chiuso; XYB mantiene posizione |
+| NORMAL | OPENING | TRUE | FALSE | XYA spinge il disco verso apertura |
+| NORMAL | OPEN | TRUE | FALSE | Disco aperto; XYA mantiene posizione |
+| NORMAL | CLOSING | FALSE | TRUE | XYB riporta il disco in chiusura |
 
 ### Tabella transizioni di stato
 
-| Stato attuale | Condizione | Stato successivo | Azione |
-|---------------|------------|-----------------|--------|
-| CLOSED | Comando apertura | OPENING | `XYA` → TRUE, `XYB` → FALSE; avvia timer timeout |
-| OPENING | ZSH=TRUE, ZSL=FALSE | OPEN | Ferma timer; incrementa contatore |
-| OPENING | Timeout scaduto | FAULT | Genera DS-E04 |
-| OPEN | Comando chiusura | CLOSING | `XYA` → FALSE, `XYB` → TRUE; avvia timer timeout |
-| CLOSING | ZSL=TRUE, ZSH=FALSE | CLOSED | Ferma timer; incrementa contatore |
-| CLOSING | Timeout scaduto | FAULT | Genera DS-E04 |
-| CLOSED | ZSL=FALSE | FAULT | Genera DS-E02 |
-| OPEN | ZSH=FALSE | FAULT | Genera DS-E03 |
-| Qualsiasi | ZSL=TRUE E ZSH=TRUE | FAULT | Genera DS-E01 |
-| FAULT | ACK=TRUE, sensori validi | CLOSED o OPEN | Rilegge sensori; azzera allarmi |
+| Stato attuale | Condizione | Stato successivo |
+|---------------|------------|-----------------|
+| NORMAL/CLOSED | `validated_open_command` | NORMAL/OPENING |
+| NORMAL/OPENING | `ZSH AND NOT ZSL` | NORMAL/OPEN |
+| NORMAL/OPEN | `NOT validated_open_command` | NORMAL/CLOSING |
+| NORMAL/CLOSING | `ZSL AND NOT ZSH` | NORMAL/CLOSED |
+| NORMAL (qualsiasi) | `ALARMS.error` | FAULT |
+| FAULT | `CMD.ack AND NOT error AND ZSL XOR ZSH` | NORMAL/CLOSED o NORMAL/OPEN |

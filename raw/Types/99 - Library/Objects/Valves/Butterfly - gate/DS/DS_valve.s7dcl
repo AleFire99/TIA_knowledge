@@ -34,22 +34,6 @@ FUNCTION_BLOCK "DS_valve"
             S7_Visibility := "Hidden := External"
         }
         movement_timer : TON_TIME;
-    END_VAR
-    VAR RETAIN
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_4AN";
-            S7_Visibility := "Hidden := External"
-        }
-        movement_counter : Int;
-    END_VAR
-    VAR 
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_4SM";
-            S7_Visibility := "Hidden := External"
-        }
-        last_normal_state : Int;
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -79,12 +63,6 @@ FUNCTION_BLOCK "DS_valve"
                 S7_Visibility := "Hidden := External"
             }
             movement_timeout : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_5Aj";
-                S7_Visibility := "Hidden := External"
-            }
-            maintenance : Bool;
         END_STRUCT;
         {
             S7_Access := "ReadOnly := External";
@@ -253,24 +231,5 @@ FUNCTION_BLOCK "DS_valve"
           END_CASE;
         END_REGION
         
-        REGION Movement counter
-          IF (#XV.STATUS.state = #NORMAL AND
-            (#XV.STATUS.normal_state = #CLOSED OR #XV.STATUS.normal_state = #OPEN) AND
-            (#last_normal_state = #OPENING OR #last_normal_state = #CLOSING)) THEN
-            #movement_counter := #movement_counter + 1;
-          END_IF;
-          #last_normal_state := #XV.STATUS.normal_state;
-          
-          IF #movement_counter >= #XV.SETTING.maintenance_threshold THEN
-            #ALARMS.maintenance := TRUE;
-          ELSE
-            #ALARMS.maintenance := FALSE;
-          END_IF;
-          IF #XV.CMD.maintenance_reset THEN
-            #movement_counter := 0;
-            #ALARMS.maintenance := FALSE;
-          END_IF;
-          #XV.ALARMS.warning := #ALARMS.maintenance;
-        END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

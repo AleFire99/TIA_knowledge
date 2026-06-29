@@ -193,19 +193,23 @@ Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 
 | UDT | Controlling FB | VAR_IN_OUT param | Sim FB |
 |-----|----------------|------------------|--------|
-| UDT_SS_Valve | — | — | SS_valve_simulator (XV) |
-| UDT_DS_Valve | — | — | DS_valve_simulator (XV) |
-| UDT_Pinch_Valve | — | — | Pinch_valve_simulator (XV) |
-| UDT_Solenoid_valve | — | — | — |
+| UDT_SS_Valve | SS_valve | XV | SS_valve_simulator (XV) |
+| UDT_DS_Valve | DS_valve | XV | DS_valve_simulator (XV) |
+| UDT_SS_Sealed_Valve | SS_Sealed_valve | XV | SS_Sealed_valve_simulator (XV) |
+| UDT_Pinch_Valve | Pinch_valve | XV | Pinch_valve_simulator (XV) |
+| UDT_Solenoid_valve | Solenoid_valve | XY | — |
 | UDT_Gate_Door | Gate_door | gate_door | — |
 | UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator (DIV) |
 | UDT_PTD_IO | Plug_Type_Diverter | ptd_Diverter | — |
-| UDT_Filter_1_sleeve | — | — | — |
+| UDT_Filter_1_sleeve | Filter_1_sleeve | filter | — |
 | UDT_Filter_2_sleeves | Filter_2_sleeves | filter | — |
-| UDT_Load_cells | Load_cells | scale | — |
-| UDT_Nolvac | — | — | — |
-| UDT_Pipeline | Pipeline | pipeline | — |
+| UDT_Load_cells | Loading + Unloading | scale | — |
+| UDT_Nolvac | Nolvac | VC | — |
+| UDT_An_Pipeline | An_Pipeline | pipeline | — |
+| UDT_Dig_Pipeline | Dig_Pipeline | pipeline | — |
+| UDT_Sealed_inlet_Transporter | Sealed_inlet_Transporter | TR | Sealed_inlet_Transporter_simulator (TR) |
 | UDT_Analogic_signal | — | — | — |
+| UDT_Pavone_IN / UDT_Pavone_OUT | Pavone_DAT_1400 (FC) | dat_IN / dat_OUT | — |
 
 All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are auto-detected by `ingest.py` via name regex. No manual overrides needed.
 

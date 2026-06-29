@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-06-09T06:33:56Z",
+  "generated_at": "2026-06-29T12:21:40Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
@@ -75,7 +75,7 @@
       }
     },
     "UDT_Gate_Door": {
-      "description": "updated stats and added comments",
+      "description": "Added automatic closing timeout",
       "label": "Gate / door",
       "has_out": false,
       "cmd_ack": false,
@@ -108,7 +108,7 @@
       "devices": {}
     },
     "UDT_Load_cells": {
-      "description": "Types / 99 - Library / Objects / Load cells",
+      "description": "Added flags for loaded finished and unloading finished routines",
       "label": "Load cells",
       "has_out": false,
       "cmd_ack": true,
@@ -229,6 +229,23 @@
         }
       }
     },
+    "UDT_SS_Sealed_Valve": {
+      "description": "First version",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "devices": {
+        "XV": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XY_seal": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
+        }
+      }
+    },
     "UDT_Solenoid_valve": {
       "description": "Added same states as other valves",
       "label": "Solenoid valve",
@@ -279,7 +296,7 @@
     },
     "UDT_Load_cells": {
       "ctrl": {
-        "name": "Load_cells",
+        "name": "Unloading",
         "param": "scale"
       },
       "sim": null
@@ -304,6 +321,16 @@
         "param": "pipeline"
       },
       "sim": null
+    },
+    "UDT_Sealed_inlet_Transporter": {
+      "ctrl": {
+        "name": "Sealed_inlet_Transporter",
+        "param": "TR"
+      },
+      "sim": {
+        "name": "Sealed_inlet_Transporter_simulator",
+        "param": "TR"
+      }
     },
     "UDT_DS_Valve": {
       "ctrl": {
@@ -332,6 +359,16 @@
       },
       "sim": {
         "name": "Pinch_valve_simulator",
+        "param": "XV"
+      }
+    },
+    "UDT_SS_Sealed_Valve": {
+      "ctrl": {
+        "name": "SS_Sealed_valve",
+        "param": "XV"
+      },
+      "sim": {
+        "name": "SS_Sealed_valve_simulator",
         "param": "XV"
       }
     },
