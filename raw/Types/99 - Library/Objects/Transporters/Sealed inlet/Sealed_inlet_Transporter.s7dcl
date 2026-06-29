@@ -307,6 +307,7 @@ FUNCTION_BLOCK "Sealed_inlet_Transporter"
                 
               #FAULT:
                 #TR.DEVICES.XV02.CMD.auto := TRUE;   // Vent open - safe passive state
+                #TR.DEVICES.XV04.CMD.auto := TRUE;
                 #TR.DEVICES.WT01.CMD.stop := TRUE;
                 #TR.DEVICES.WT01.CMD.reset := TRUE;
                 #TR.STATUS.is_fault := TRUE;
@@ -337,6 +338,7 @@ FUNCTION_BLOCK "Sealed_inlet_Transporter"
                     
                   #DEPRESSURIZING:
                     #TR.DEVICES.XV02.CMD.auto := TRUE;  // Vent open - safe passive state
+                    #TR.DEVICES.XV04.CMD.auto := TRUE;
                     
                 END_CASE;
                 

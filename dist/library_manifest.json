@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-06-29T12:21:40Z",
+  "generated_at": "2026-06-29T12:46:55Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
@@ -162,6 +162,59 @@
         },
         "PSH": {
           "type": "Bool",
+          "description": ""
+        }
+      }
+    },
+    "UDT_Sealed_inlet_Transporter": {
+      "description": "First version",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": false,
+      "devices": {
+        "XV01": {
+          "type": "UDT_SS_Sealed_Valve",
+          "description": ""
+        },
+        "XV02": {
+          "type": "UDT_DS_Valve",
+          "description": ""
+        },
+        "XV03": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XV04": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XV05": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
+        },
+        "WT01": {
+          "type": "UDT_Load_cells",
+          "description": ""
+        },
+        "LSH": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PSL": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PT01": {
+          "type": "UDT_Analogic_signal",
+          "description": ""
+        },
+        "PT02": {
+          "type": "UDT_Analogic_signal",
           "description": ""
         }
       }

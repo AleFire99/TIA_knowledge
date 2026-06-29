@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 0.2.0
+  VersionNumber: 0.2.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added cleaning state with timer
+    en-US: Open discharge valve during error state
