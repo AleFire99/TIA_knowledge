@@ -130,12 +130,13 @@ In FAULT: XV02 (vent) opens for passive safety; scale stopped and reset. `CMD.ac
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.cleaning_timer` | — | Duration of the CLEANING phase |
-| `SETTING.pressurizing_timeout` | — | Maximum duration of PRESSURIZING phase |
-| `SETTING.depressurizing_timeout` | — | Maximum duration of DEPRESSURIZING phase |
-| `SETTING.pressure_delta` | — | Minimum vessel-to-line overpressure [bar] |
-| `SETTING.vessel_empty_thresh` | — | PT01 threshold for `depressurized` condition [bar] |
-| `SETTING.line_empty_thresh` | — | PT02 threshold for `depressurized` condition [bar] |
+| `SETTING.cleaning_timer` | T#2M | Duration of the CLEANING phase |
+| `SETTING.pressurizing_timeout` | T#1M | Maximum duration of PRESSURIZING phase |
+| `SETTING.depressurizing_timeout` | T#1M | Maximum duration of DEPRESSURIZING phase |
+| `SETTING.pressure_delta` | 0.2 | Minimum vessel-to-line overpressure [bar] |
+| `SETTING.vessel_empty_thresh` | 0.2 | PT01 threshold for `depressurized` condition [bar] |
+| `SETTING.line_empty_thresh` | 0.2 | PT02 threshold for `depressurized` condition [bar] |
+| `SETTING.actuator_timeout` | T#2s | Actuator timeout propagated to all valves XV01–05 |
 
 ---
 
@@ -167,6 +168,7 @@ classDiagram
         +Time cleaning_timer
         +Time pressurizing_timeout
         +Time depressurizing_timeout
+        +Time actuator_timeout
         +Real pressure_delta
         +Real vessel_empty_thresh
         +Real line_empty_thresh

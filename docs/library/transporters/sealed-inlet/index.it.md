@@ -130,12 +130,13 @@ In FAULT: XV02 (sfiato) aperto per sicurezza passiva; bilancia fermata e resetta
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.cleaning_timer` | — | Durata fase CLEANING |
-| `SETTING.pressurizing_timeout` | — | Timeout massimo fase PRESSURIZING |
-| `SETTING.depressurizing_timeout` | — | Timeout massimo fase DEPRESSURIZING |
-| `SETTING.pressure_delta` | — | Sovrapressione minima vessel-linea [bar] |
-| `SETTING.vessel_empty_thresh` | — | Soglia PT01 per `depressurized` [bar] |
-| `SETTING.line_empty_thresh` | — | Soglia PT02 per `depressurized` [bar] |
+| `SETTING.cleaning_timer` | T#2M | Durata fase CLEANING |
+| `SETTING.pressurizing_timeout` | T#1M | Timeout massimo fase PRESSURIZING |
+| `SETTING.depressurizing_timeout` | T#1M | Timeout massimo fase DEPRESSURIZING |
+| `SETTING.pressure_delta` | 0.2 | Sovrapressione minima vessel-linea [bar] |
+| `SETTING.vessel_empty_thresh` | 0.2 | Soglia PT01 per `depressurized` [bar] |
+| `SETTING.line_empty_thresh` | 0.2 | Soglia PT02 per `depressurized` [bar] |
+| `SETTING.actuator_timeout` | T#2s | Timeout propagato a tutte le valvole XV01–05 |
 
 ---
 
@@ -167,6 +168,7 @@ classDiagram
         +Time cleaning_timer
         +Time pressurizing_timeout
         +Time depressurizing_timeout
+        +Time actuator_timeout
         +Real pressure_delta
         +Real vessel_empty_thresh
         +Real line_empty_thresh
