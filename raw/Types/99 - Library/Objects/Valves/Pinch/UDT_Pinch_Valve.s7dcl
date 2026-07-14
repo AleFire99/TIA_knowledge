@@ -4,72 +4,67 @@
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_Pz"
+                S7_MLC := "MLC_58U"
             }
             PSL : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3rZ"
+                S7_MLC := "MLC_3du"
             }
             XY : _.UDT_Solenoid_valve;
         END_STRUCT;
         CMD : STRUCT
-            { S7_MLC := "MLC_5Ad" }
+            { S7_MLC := "MLC_4BU" }
             manual_mode : Bool;
-            { S7_MLC := "MLC_Lu" }
+            { S7_MLC := "MLC_3Am" }
             manual : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_sR"
+                S7_MLC := "MLC_46p"
             }
             auto : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_aN"
-            }
-            interlocked : Bool;
-            { S7_MLC := "MLC_55g" }
+            { S7_MLC := "MLC_4s4" }
             ack : Bool;
         END_STRUCT;
         SETTING : STRUCT
-            { S7_MLC := "MLC_3vR" }
+            { S7_MLC := "MLC_3Gx" }
             actuator_timeout : Time := T#2s;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_hS"
+                S7_MLC := "MLC_N4"
             }
             state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_LH"
+                S7_MLC := "MLC_Mb"
             }
             normal_state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_vp"
+                S7_MLC := "MLC_sQ"
             }
             is_fault : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_47P"
+                S7_MLC := "MLC_3Ky"
             }
             is_closed : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_5A7"
+                S7_MLC := "MLC_cT"
             }
             is_opening : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4uR"
+                S7_MLC := "MLC_53F"
             }
             is_open : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3xb"
+                S7_MLC := "MLC_3zQ"
             }
             is_closing : Bool;
         END_STRUCT;
@@ -77,9 +72,19 @@
         ALARMS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Be"
+                S7_MLC := "MLC_3ch"
             }
-            error : Bool;
+            sensor_mismatch : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_44X"
+            }
+            failed_to_close : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_32d"
+            }
+            failed_to_open : Bool;
         END_STRUCT;
     END_STRUCT;
 END_TYPE

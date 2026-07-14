@@ -1,0 +1,25 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION "Scale_input" : Void
+    VAR_INPUT
+        Min_value : Real;
+        Max_value : Real;
+    END_VAR
+    VAR_IN_OUT
+        analogic_signal : _.UDT_Analogic_signal;
+    END_VAR
+    VAR_TEMP
+        normalized_value : Real;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Normalize and scale
+            #normalized_value := INT_TO_REAL(#analogic_signal.Raw_value) / 27648.0;
+            #analogic_signal.Scaled_value := #normalized_value * (#Max_value - #Min_value) + #Min_value;
+        END_REGION
+    END_NETWORK
+END_FUNCTION

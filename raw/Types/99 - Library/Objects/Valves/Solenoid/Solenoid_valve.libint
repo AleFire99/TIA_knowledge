@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: Solenoid_valve.s7dcl
-    Hash: 3ioxJYYIsLkeXrKVtoX5YRVxz445w9sbFOgwj0voVNY=
+    Hash: 7WBtpepFGi69Hne4+IA6HAuxCwxP+Eg6MA9U0/52pAc=
   - FileName: Solenoid_valve.s7res
-    Hash: U31zI48UDnKl7bbgfIcZfCuz0860Rh9/8y5yN1wDoPM=
-LibraryMetaFileHash: +z3Soz3csOqGb9LBhqrS3H8yhreVlkT5uLlYtCYcfrU=
+    Hash: qibk8pEI9udAhHFdNSg43dWzsOr1r9w/Vm9Dcx6s7V0=
+LibraryMetaFileHash: dLn+bXx/+BXJhzfnwfOxgO5rddq2xBZP+nMsKVPQTyc=
 LibraryVersion:
-  Guid: 845ec216-9cd1-4ec8-8a85-ba8a1faa91a8
+  Guid: c8336a69-4b3c-462f-b920-fa80b814fd1d
   DependsOn:
     - TypeName: UDT_Solenoid_valve
-      VersionNumber: 1.6.0
+      VersionNumber: 2.0.0

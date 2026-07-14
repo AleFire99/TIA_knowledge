@@ -6,7 +6,7 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Sealed_inlet_Transporter_simulator"
-    VAR_INPUT 
+    VAR_INPUT
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -18,10 +18,10 @@ FUNCTION_BLOCK "Sealed_inlet_Transporter_simulator"
         }
         OFF_Delay : Time := T#1s;
     END_VAR
-    VAR_IN_OUT 
+    VAR_IN_OUT
         TR : _.UDT_Sealed_inlet_Transporter;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"

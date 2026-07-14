@@ -3,32 +3,21 @@
     S7_Optimized := "TRUE";
     S7_Version := "0.1"
 }
-FUNCTION_BLOCK "Dig_Pipeline"
-    VAR_IN_OUT 
+FUNCTION "Dig_pipeline" : Void
+    VAR_IN_OUT
         pipeline : _.UDT_Dig_Pipeline;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Initialization
-          #pipeline.STATUS.is_empty := FALSE;
-          #pipeline.STATUS.is_with_material := FALSE;
-          #pipeline.ALARMS.is_clogged := FALSE;
-          #pipeline.ALARMS.is_in_error := FALSE;
+        REGION Alarms
+            #pipeline.ALARMS.sensor_mismatch := NOT #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH;
+            #pipeline.ALARMS.pipeline_clogged := #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH;
         END_REGION
         
-        
-        REGION Lookup table
-          IF NOT #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH THEN
-            #pipeline.STATUS.is_empty := TRUE;
-          ELSIF #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH THEN
-            #pipeline.STATUS.is_with_material := TRUE;
-          ELSIF NOT #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH THEN
-            #pipeline.ALARMS.is_in_error := TRUE;
-          ELSIF #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH THEN
-            #pipeline.ALARMS.is_clogged := TRUE;
-          END_IF;
+        REGION State mapping
+            #pipeline.STATUS.is_empty := NOT #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH;
+            #pipeline.STATUS.is_with_material := #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH;
         END_REGION
-        
     END_NETWORK
-END_FUNCTION_BLOCK
+END_FUNCTION

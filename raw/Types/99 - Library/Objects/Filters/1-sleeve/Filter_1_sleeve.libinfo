@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed filter states with other objects
 LibraryVersion:
-  VersionNumber: 1.2.7
+  VersionNumber: 2.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added simulation capabilities
+    en-US: Updated instances

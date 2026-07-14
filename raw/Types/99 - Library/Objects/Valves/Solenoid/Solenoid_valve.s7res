@@ -1,9 +1,7 @@
 ﻿MultiLingualTexts:
-  - id: MLC_q7
+  - id: MLC_5AJ
     en-US: Actual desired command based on active mode
-  - id: MLC_Vi
-    en-US: Desired command if not interlocked
   - id: MLC_4rF
-    en-US: Open valve state
+    en-US: Solenoid valve energized
   - id: MLC_47m
-    en-US: Closed valve state
+    en-US: Solenoid valve de-energized

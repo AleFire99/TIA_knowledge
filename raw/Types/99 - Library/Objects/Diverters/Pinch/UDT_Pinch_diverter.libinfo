@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 1.4.2
+  VersionNumber: 2.0.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Changed is_fault type
+    en-US: Renamed setting

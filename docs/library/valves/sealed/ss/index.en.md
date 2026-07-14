@@ -1,69 +1,33 @@
-# Sealed Single-Solenoid Butterfly Valve (SS Sealed)
+# Sealed Valve — Single Solenoid (SS Sealed)
 
 ## Overview
 
-`SS_Sealed_valve` wraps `SS_valve` with an additional seal solenoid (`XY_seal`). The seal is energised automatically whenever the valve is in the CLOSED position, ensuring pneumatic sealing at rest. When the valve opens, the seal is de-energised.
+**Tier 3 — composite.** `SS_Sealed_valve` wraps an SS Butterfly Valve (Tier 2) instance, adding a dedicated seal solenoid (`XY_seal`, Tier 1). The seal is energized automatically whenever the internal valve is confirmed `CLOSED`, ensuring pneumatic sealing at rest; it de-energizes as soon as the valve begins to open.
 
-All opening/closing logic and alarm detection is delegated to the internal `SS_valve` instance. The wrapper exposes the same states and alarms via `STATUS` and `ALARMS.error`.
-
----
-
-## Main Components
-
-- **Internal valve `XV`** (`UDT_SS_Valve`) — SS butterfly valve managed by an internal `SS_valve` instance; see [SS Butterfly Valve](../../butterfly/single_solenoid/index.en.md)
-- **Seal solenoid `XY_seal`** (`UDT_Solenoid_valve`) — energised when `XV` is CLOSED; provides sealing during the resting state
+The block delegates all opening/closing logic, alarm detection, and the state machine to the internal `XV` instance; it has no FSM or `ALARMS` of its own — `STATUS` is a direct copy of `XV.STATUS` every scan.
 
 ---
 
-## I/O Signals
+## Composition
+
+| Tag | Type | Role |
+|-----|------|------|
+| `XV` | SS Butterfly Valve (Tier 2) | Main valve — see [SS Butterfly Valve](../../butterfly/single_solenoid/index.en.md) |
+| `XY_seal` | Solenoid Valve (Tier 1) | Seal solenoid — energized ↔ `XV` in `CLOSED` |
+
+---
+
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
 | `DEVICES.XV` | UDT_SS_Valve | Internal SS butterfly valve |
-| `DEVICES.XY_seal` | UDT_Solenoid_valve | Seal solenoid: energised ↔ valve CLOSED |
-| `CMD.manual_mode` | Bool | COMMAND — TRUE = HMI manual mode |
-| `CMD.manual` | Bool | COMMAND — Manual open command |
-| `CMD.auto` | Bool | COMMAND — Automatic open command (ReadOnly external) |
-| `CMD.ack` | Bool | COMMAND — Acknowledge alarms |
-| `SETTING.actuator_timeout` | Time | Actuator timeout propagated to `XV` (default T#2s) |
-| `STATUS.state` | Int | STATE — 0=FAULT, 1=NORMAL (mirror of XV.STATUS.state) |
-| `STATUS.normal_state` | Int | SUB-STATE — 1=CLOSED, 2=OPENING, 3=OPEN, 4=CLOSING |
-| `STATUS.is_fault` | Bool | STATE — Fault |
-| `STATUS.is_closed` | Bool | STATE — Valve closed and sealed |
-| `STATUS.is_opening` | Bool | STATE — Opening |
-| `STATUS.is_open` | Bool | STATE — Open |
-| `STATUS.is_closing` | Bool | STATE — Closing |
-| `ALARMS.error` | Bool | ALARM — Mirror of XV.ALARMS.error |
-
----
-
-## Operating Routine
-
-The wrapper resolves the desired command and writes it to `XV.CMD.auto`:
-- If `manual_mode = TRUE`: `XV.CMD.auto := CMD.manual`
-- Otherwise: `XV.CMD.auto := CMD.auto`
-
-The internal `SS_valve` block executes the full FSM logic and handles movement timeout.
-
-The seal is controlled by a single rule:
-
-```
-XY_seal.CMD.auto := XV.STATUS.is_closed
-```
-
-When the valve is confirmed closed (`is_closed = TRUE`), the seal engages. As soon as the valve begins to open (transition to OPENING), `is_closed` falls to FALSE and the seal releases.
-
-`STATUS` and `ALARMS.error` are direct copies of the corresponding `XV` fields.
-
----
-
-## Alarms
-
-Alarms originate from the internal `SS_valve` instance. See [SS Valve alarms](../../butterfly/single_solenoid/index.en.md#alarms).
-
-| Alarm | Condition |
-|-------|-----------|
-| `ALARMS.error` | Mirror of `XV.ALARMS.error` — sensor_conflict, failed_to_close, failed_to_open, movement_timeout |
+| `DEVICES.XY_seal` | UDT_Solenoid_valve | Seal solenoid |
+| `CMD.manual_mode` | Bool | TRUE = HMI manual mode |
+| `CMD.manual` | Bool | Open command in manual mode |
+| `CMD.auto` | Bool | Open command from automation (ReadOnly external) |
+| `CMD.ack` | Bool | Acknowledges alarms — forwarded to `XV.CMD.ack` |
+| `STATUS.*` | — | Direct copy of `XV.STATUS.*` (state, normal_state, is_fault, is_closed, is_opening, is_open, is_closing) |
 
 ---
 
@@ -71,7 +35,45 @@ Alarms originate from the internal `SS_valve` instance. See [SS Valve alarms](..
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Propagated to `XV.SETTING.actuator_timeout` every scan |
+| `SETTING.actuator_timeout` | T#2s | Forwarded to `XV.SETTING.actuator_timeout` every scan |
+
+---
+
+## Operating Routine
+
+The desired command is resolved by the wrapper and written to `XV.CMD.auto`:
+
+```
+XV.CMD.auto := manual_mode ? manual : auto
+```
+
+The seal follows a single rule:
+
+```
+XY_seal.CMD.auto := XV.STATUS.is_closed
+```
+
+---
+
+## States and Outputs
+
+| State (from `XV`) | `XY_seal` |
+|--------------------|-----------|
+| CLOSED | TRUE (sealed) |
+| OPENING / OPEN / CLOSING | FALSE |
+| FAULT | FALSE |
+
+---
+
+## State Machine
+
+The FSM is entirely managed by the internal `XV` instance — see [SS Butterfly Valve](../../butterfly/single_solenoid/index.en.md#state-machine). This block adds only the seal logic, with no states of its own.
+
+---
+
+## Alarms
+
+No alarms of its own — this block has no `ALARMS` of its own. Alarms remain visible only through the internal instance: see [SS Butterfly Valve alarms](../../butterfly/single_solenoid/index.en.md#alarms).
 
 ---
 
@@ -102,43 +104,10 @@ classDiagram
         +Bool is_open
         +Bool is_closing
     }
-    class ALARMS {
-        +Bool error
-    }
     UDT_SS_Sealed_Valve *-- DEVICES
     UDT_SS_Sealed_Valve *-- CMD
     UDT_SS_Sealed_Valve *-- SETTING
     UDT_SS_Sealed_Valve *-- STATUS
-    UDT_SS_Sealed_Valve *-- ALARMS
 ```
 
----
-
-## State Machine (FSM)
-
-The FSM is fully managed by the internal `SS_valve` instance. The wrapper adds only the seal logic.
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL : valid sensors on first scan
-    [*] --> FAULT : ambiguous sensors on first scan
-
-    NORMAL --> FAULT : ALARMS.error
-    FAULT --> NORMAL : CMD.ack AND NOT error AND valid sensors
-
-    state NORMAL {
-        [*] --> CLOSED
-        CLOSED --> OPENING : validated_open_command
-        OPENING --> OPEN : ZSH AND NOT ZSL
-        OPEN --> CLOSING : NOT validated_open_command
-        CLOSING --> CLOSED : ZSL AND NOT ZSH
-    }
-```
-
-### Seal Logic
-
-| XV State | `XY_seal.CMD.auto` |
-|----------|-------------------|
-| CLOSED | TRUE (sealed) |
-| OPENING / OPEN / CLOSING | FALSE (released) |
-| FAULT | FALSE |
+No `ALARMS` class — unlike other composite devices, this UDT doesn't even mirror one: alarms remain readable only via `DEVICES.XV.ALARMS`.

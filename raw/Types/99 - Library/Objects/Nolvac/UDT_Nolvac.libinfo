@@ -3,8 +3,8 @@
   Comment:
     en-US: First release
 LibraryVersion:
-  VersionNumber: 0.1.5
+  VersionNumber: 2.0.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated valves UDT
+    en-US: Added manual command

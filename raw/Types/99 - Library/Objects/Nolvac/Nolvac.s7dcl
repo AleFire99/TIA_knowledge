@@ -4,108 +4,129 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Nolvac"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         VC : _.UDT_Nolvac;
     END_VAR
-    VAR 
+    VAR
         fb_XV01 : _.SS_valve;
         fb_XY02 : _.Solenoid_valve;
         fb_XY03 : _.Solenoid_valve;
         suction_timer : TON_TIME;
         cleaning_timer : TON_TIME;
     END_VAR
-    VAR CONSTANT 
+    VAR_TEMP
+        desired_command : Bool;
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
         { S7_MLC := "MLC_Vv" }
-        ERROR : Int := 0;
+        FAULT : Int := 0;
+        NORMAL : Int := 1;
         { S7_MLC := "MLC_3dZ" }
         IDLE : Int := 1;
+        ACTIVE : Int := 2;
         { S7_MLC := "MLC_4PG" }
-        CONVEYING : Int := 2;
+        SUCTION : Int := 1;
         { S7_MLC := "MLC_e5" }
-        CLEANING : Int := 3;
+        CLEANING : Int := 2;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Map internal valves
-            
-            #VC.DEVICES.XV01.CMD.ack := #VC.CMD.ack;
-            #VC.DEVICES.XV01.CMD.manual_mode := #VC.CMD.manual_mode;
-            #fb_XV01(#VC.DEVICES.XV01);
-            
-            #fb_XY02(#VC.DEVICES.XY02);
-            #VC.DEVICES.XY02.CMD.manual_mode := #VC.CMD.manual_mode;
-            
-            #fb_XY03(#VC.DEVICES.XY03);
-            #VC.DEVICES.XY03.CMD.manual_mode := #VC.CMD.manual_mode;
+        REGION Determine desired target
+            IF #VC.CMD.manual_mode THEN
+                #desired_command := #VC.CMD.manual;
+            ELSE
+                #desired_command := #VC.CMD.auto;
+            END_IF;
         END_REGION
         
-        REGION Error detection
-            // Valve internal errors (timeouts, etc.)
-            #VC.ALARMS.valve_error := #VC.DEVICES.XV01.ALARMS.error;
+        REGION Map internal valves
+            #VC.DEVICES.XV01.CMD.ack := #VC.CMD.ack;
+            #fb_XV01(#VC.DEVICES.XV01);
+            #fb_XY02(#VC.DEVICES.XY02);
+            #fb_XY03(#VC.DEVICES.XY03);
         END_REGION
         
         REGION Timers
-            #suction_timer(IN := (#VC.STATUS.state = #CONVEYING),
+            #suction_timer(IN := (#VC.STATUS.state = #NORMAL AND #VC.STATUS.normal_state = #ACTIVE AND #VC.STATUS.active_state = #SUCTION),
                            PT := #VC.SETTING.suction_time);
-            
-            #cleaning_timer(IN := (#VC.STATUS.state = #CLEANING),
+            #cleaning_timer(IN := (#VC.STATUS.state = #NORMAL AND #VC.STATUS.normal_state = #ACTIVE AND #VC.STATUS.active_state = #CLEANING),
                             PT := #VC.SETTING.cleaning_time);
         END_REGION
         
+        REGION Alarms
+            #internal_error := #VC.DEVICES.XV01.STATUS.is_fault;
+        END_REGION
         
-        REGION FSM
+        REGION Top FSM
             CASE #VC.STATUS.state OF
-                #IDLE:
-                    IF #VC.ALARMS.valve_error THEN
-                        #VC.STATUS.state := #ERROR;
-                    ELSIF #VC.CMD.auto THEN
-                        #VC.STATUS.state := #CONVEYING;
+                #NORMAL:
+                    IF #internal_error THEN
+                        #VC.STATUS.state := #FAULT;
                     END_IF;
                     
-                #CONVEYING:
-                    IF #VC.ALARMS.valve_error THEN
-                        #VC.STATUS.state := #ERROR;
-                    ELSIF NOT #VC.CMD.auto THEN
-                        #VC.STATUS.state := #IDLE;
-                    ELSIF #suction_timer.Q THEN
-                        #VC.STATUS.state := #CLEANING;
-                    END_IF;
-                    
-                #CLEANING:
-                    IF #VC.ALARMS.valve_error THEN
-                        #VC.STATUS.state := #ERROR;
-                    ELSIF NOT #VC.CMD.auto THEN
-                        #VC.STATUS.state := #IDLE;
-                    ELSIF #cleaning_timer.Q THEN
-                        #VC.STATUS.state := #CONVEYING;
-                    END_IF;
-                    
-                #ERROR:
-                    IF #VC.CMD.ack THEN
-                        #VC.STATUS.state := #IDLE;
-                        // Stay in error if neither condition is met
+                #FAULT:
+                    IF #VC.CMD.ack AND NOT #internal_error THEN
+                        #VC.STATUS.state := #NORMAL;
+                        #VC.STATUS.normal_state := #IDLE;
                     END_IF;
             END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #VC.STATUS.state = #NORMAL THEN
+                CASE #VC.STATUS.normal_state OF
+                    #IDLE:
+                        IF #desired_command THEN
+                            #VC.STATUS.normal_state := #ACTIVE;
+                            #VC.STATUS.active_state := #SUCTION;
+                        END_IF;
+                    #ACTIVE:
+                        IF NOT #desired_command THEN
+                            #VC.STATUS.normal_state := #IDLE;
+                        END_IF;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Active FSM
+            IF #VC.STATUS.state = #NORMAL AND #VC.STATUS.normal_state = #ACTIVE THEN
+                CASE #VC.STATUS.active_state OF
+                    #SUCTION:
+                        IF #suction_timer.Q THEN
+                            #VC.STATUS.active_state := #CLEANING;
+                        END_IF;
+                    #CLEANING:
+                        IF #cleaning_timer.Q THEN
+                            #VC.STATUS.active_state := #SUCTION;
+                        END_IF;
+                END_CASE;
+            END_IF;
         END_REGION
         
         REGION Output mapping
             #VC.DEVICES.XV01.CMD.auto := FALSE;
             #VC.DEVICES.XY02.CMD.auto := FALSE;
             #VC.DEVICES.XY03.CMD.auto := FALSE;
-            #VC.STATUS.is_cleaning := FALSE;
-            #VC.STATUS.is_conveying := FALSE;
             
-            CASE #VC.STATUS.state OF
-                #CONVEYING:
-                    #VC.DEVICES.XY03.CMD.auto := TRUE;
-                    #VC.STATUS.is_conveying := TRUE;
-                    
-                #CLEANING:
-                    #VC.DEVICES.XV01.CMD.auto := TRUE;
-                    #VC.DEVICES.XY02.CMD.auto := TRUE;
-                    #VC.STATUS.is_cleaning := TRUE;
-            END_CASE;
+            IF #VC.STATUS.state = #NORMAL AND #VC.STATUS.normal_state = #ACTIVE THEN
+                CASE #VC.STATUS.active_state OF
+                    #SUCTION:
+                        #VC.DEVICES.XY03.CMD.auto := TRUE;
+                    #CLEANING:
+                        #VC.DEVICES.XV01.CMD.auto := TRUE;
+                        #VC.DEVICES.XY02.CMD.auto := TRUE;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #VC.STATUS.is_idle := (#VC.STATUS.state = #NORMAL) AND (#VC.STATUS.normal_state = #IDLE);
+            #VC.STATUS.is_active := (#VC.STATUS.state = #NORMAL) AND (#VC.STATUS.normal_state = #ACTIVE);
+            #VC.STATUS.is_suction := #VC.STATUS.is_active AND (#VC.STATUS.active_state = #SUCTION);
+            #VC.STATUS.is_cleaning := #VC.STATUS.is_active AND (#VC.STATUS.active_state = #CLEANING);
+            #VC.STATUS.is_fault := (#VC.STATUS.state = #FAULT);
         END_REGION
         
     END_NETWORK

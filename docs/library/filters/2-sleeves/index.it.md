@@ -2,25 +2,28 @@
 
 ## Panoramica
 
-Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due elettrovalvole (`XYA`, `XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Tier 3 — composito.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Valvole a Solenoide (Tier 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
-## Componenti principali
+## Composizione
 
-- **Corpo filtro** — contiene due maniche filtranti (A e B)
-- **Alimentazione aria compressa / accumulatore** — dimensionato per la domanda di impulsi sequenziali
-- **Elettrovalvola `XYA`** — rilascia l'impulso nella manica A
-- **Elettrovalvola `XYB`** — rilascia l'impulso nella manica B
+| Tag | Tipo | Ruolo |
+|-----|------|-------|
+| `XYA` | Valvola a Solenoide (Tier 1) | Impulso manica A |
+| `XYB` | Valvola a Solenoide (Tier 1) | Impulso manica B |
 
 ---
 
-## Segnali I/O
+## Segnali di controllo
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `XYA` | Uscita — Bool | Solenoide A: TRUE = impulso attivo sulla manica A |
-| `XYB` | Uscita — Bool | Solenoide B: TRUE = impulso attivo sulla manica B |
+| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Solenoide impulso manica A |
+| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Solenoide impulso manica B |
+| `CMD.manual_mode` | Bool | TRUE = modalità manuale |
+| `CMD.manual` | Bool | Abilitazione in modalità manuale |
+| `CMD.auto` | Bool | Abilitazione in modalità automatica (ReadOnly external) |
 
 ---
 
@@ -36,13 +39,13 @@ Quando abilitato, il sistema alterna tra le maniche A e B in un ciclo continuo:
 
 La manica attiva è tracciata da `STATUS.active_sleeve` (0 = A, 1 = B). La rimozione del comando di abilitazione in qualsiasi momento riporta il sistema in **IDLE**.
 
-In **modalità manuale** (`manual_mode = TRUE`), l'operatore abilita la pulizia tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`. Se `interlocked = TRUE`, il ciclo di pulizia si mette in pausa.
+In **modalità manuale** (`manual_mode = TRUE`), l'operatore abilita la pulizia tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`.
 
 ---
 
 ## Allarmi
 
-Nessun allarme — nessun sensore di feedback.
+Questo modulo non genera allarmi propri — nessun sensore di feedback disponibile su cui basare una rilevazione di guasto.
 
 ---
 
@@ -68,7 +71,6 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class SETTING {
         +Time pulse_duration
@@ -97,6 +99,7 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
+state FILTER{
     [*] --> IDLE
     IDLE --> ACTIVE : comando abilitazione
     ACTIVE --> IDLE : comando rimosso
@@ -106,6 +109,7 @@ stateDiagram-v2
         PULSING --> WAITING : timer impulso scaduto
         WAITING --> PULSING : timer intervallo scaduto (cambia manica)
     }
+}
 ```
 
 ### Tabella stati e uscite

@@ -2,59 +2,33 @@
 
 ## Overview
 
-The Nolvac is a pneumatic conveying unit operating on a conveying/cleaning cycle. `XY03` activates the suction path to convey material; `XV01` (SS butterfly valve) and `XY02` work together during the cleaning phase to regenerate the internal filter. The `Nolvac` function block manages the complete cycle via parameter `VC : UDT_Nolvac`.
+**Tier 3 — composite.** The Nolvac is a pneumatic conveying unit operating on a suction/cleaning cycle, embedding an SS Butterfly Valve (Tier 2) and two Solenoid Valves (Tier 1). `XY03` activates the suction path to convey material; `XV01` and `XY02` work together during the cleaning phase to regenerate the internal filter.
 
-The cycle alternates two phases — **conveying** (`suction_time`) and **cleaning** (`cleaning_time`) — and restarts automatically as long as `CMD.auto` is active.
-
----
-
-## Main Components
-
-- **Conveying solenoid `XY03`** — activates the suction path for material transport; energised throughout CONVEYING
-- **SS butterfly valve `XV01`** — opens the inlet during cleaning; see [SS Butterfly Valve](../valves/butterfly/single_solenoid/index.en.md)
-- **Cleaning solenoid `XY02`** — supplies compressed air for filter backwash during CLEANING
+The cycle alternates two phases — **suction** (`suction_time`) and **cleaning** (`cleaning_time`) — and restarts automatically as long as the command stays active.
 
 ---
 
-## I/O Signals
+## Composition
+
+| Tag | Type | Role |
+|-----|------|------|
+| `XV01` | SS Butterfly Valve (Tier 2) | Opens the inlet during `CLEANING` — see [SS Butterfly Valve](../valves/butterfly/single_solenoid/index.en.md) |
+| `XY02` | Solenoid Valve (Tier 1) | Filter backwash air during `CLEANING` |
+| `XY03` | Solenoid Valve (Tier 1) | Conveying suction during `SUCTION` |
+
+---
+
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `DEVICES.XV01` | UDT_SS_Valve | SS butterfly valve; open during CLEANING |
-| `DEVICES.XY02` | UDT_Solenoid_valve | Cleaning solenoid; energised during CLEANING |
-| `DEVICES.XY03` | UDT_Solenoid_valve | Conveying solenoid; energised during CONVEYING |
+| `DEVICES.XV01` | UDT_SS_Valve | SS butterfly valve; open during `CLEANING` |
+| `DEVICES.XY02` | UDT_Solenoid_valve | Cleaning solenoid; energized during `CLEANING` |
+| `DEVICES.XY03` | UDT_Solenoid_valve | Suction solenoid; energized during `SUCTION` |
 | `CMD.manual_mode` | Bool | TRUE = HMI manual mode |
-| `CMD.auto` | Bool | Automation command: TRUE = start cycle |
-| `CMD.interlocked` | Bool | Interlock (not currently used in FSM) |
-| `CMD.ack` | Bool | Operator alarm acknowledgement |
-| `STATUS.state` | Int | FSM state: 0=ERROR, 1=IDLE, 2=CONVEYING, 3=CLEANING |
-| `STATUS.is_conveying` | Bool | TRUE during conveying phase |
-| `STATUS.is_cleaning` | Bool | TRUE during filter cleaning phase |
-| `ALARMS.valve_error` | Bool | Fault detected on `XV01` |
-
----
-
-## Operating Routine
-
-The standard operating cycle alternates two phases while `CMD.auto` is active:
-
-**CONVEYING phase** — `XY03` is energised for the duration of `suction_time`. The conveying path is active. At expiry, the system transitions to CLEANING.
-
-**CLEANING phase** — `XV01` opens and `XY02` is energised for the duration of `cleaning_time`. Compressed air regenerates the filter via backwash. At expiry, if `CMD.auto` is still active, the system returns to CONVEYING.
-
-If `CMD.auto` is removed at any point during CONVEYING or CLEANING, the system returns immediately to IDLE, deactivating all outputs.
-
-A fault on `XV01` (`XV01.ALARMS.error`) sets `ALARMS.valve_error = TRUE` and drives the system to ERROR from any state. `CMD.ack` returns the system to IDLE.
-
-`manual_mode` is propagated to `XV01`, `XY02`, and `XY03`, allowing the operator to control each device individually from the HMI.
-
----
-
-## Alarms
-
-| ID | Condition | Cause |
-|----|-----------|-------|
-| NV-E01 | `ALARMS.valve_error` | Fault on `XV01` — see [SS Valve alarms](../valves/butterfly/single_solenoid/index.en.md#alarms) |
+| `CMD.manual` | Bool | Cycle start command in manual mode |
+| `CMD.auto` | Bool | Cycle start command from automation (ReadOnly external) |
+| `CMD.ack` | Bool | Acknowledges alarms and clears FAULT |
 
 ---
 
@@ -62,8 +36,56 @@ A fault on `XV01` (`XV01.ALARMS.error`) sets `ALARMS.valve_error = TRUE` and dri
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.suction_time` | T#30s | Duration of the conveying phase |
+| `SETTING.suction_time` | T#30s | Duration of the suction phase |
 | `SETTING.cleaning_time` | T#30s | Duration of the filter cleaning phase |
+
+---
+
+## States and Outputs
+
+| State | `XV01` | `XY02` | `XY03` | Description |
+|-------|--------|--------|--------|-------------|
+| IDLE | closed | off | off | Standby, waiting for command |
+| ACTIVE / SUCTION | closed | off | energized | Material suction |
+| ACTIVE / CLEANING | open | energized | off | Filter cleaning |
+| FAULT | — | off | off | Fault; awaiting operator acknowledgment |
+
+---
+
+## State Machine
+
+```mermaid
+stateDiagram-v2
+state NOLVAC{
+    [*] --> NORMAL_BEHAVIOUR
+    state NORMAL_BEHAVIOUR {
+        [*] --> IDLE
+        IDLE --> ACTIVE : desired_command
+        state ACTIVE {
+            [*] --> SUCTION
+            SUCTION --> CLEANING : suction_timer expired
+            CLEANING --> SUCTION : cleaning_timer expired
+        }
+        ACTIVE --> IDLE : !desired_command
+    }
+    NORMAL_BEHAVIOUR --> FAULT : internal_error
+    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+}
+```
+
+```Pascal
+internal_error := XV01.STATUS.is_fault;
+```
+
+Removing the command at any point during `ACTIVE` returns immediately to `IDLE`, deactivating all outputs.
+
+---
+
+## Alarms
+
+No alarms of its own — `UDT_Nolvac` has no `ALARMS` struct. The only fault detected is a direct propagation of `XV01.STATUS.is_fault`; solenoids `XY02`/`XY03` have no sensors of their own and cannot raise a fault.
+
+See [SS Butterfly Valve alarms](../valves/butterfly/single_solenoid/index.en.md#alarms) for the actual cause when `internal_error` is TRUE.
 
 ---
 
@@ -79,8 +101,8 @@ classDiagram
     }
     class CMD {
         +Bool manual_mode
+        +Bool manual
         +Bool auto
-        +Bool interlocked
         +Bool ack
     }
     class SETTING {
@@ -89,60 +111,18 @@ classDiagram
     }
     class STATUS {
         +Int state
-        +Bool is_conveying
+        +Int normal_state
+        +Int active_state
+        +Bool is_idle
+        +Bool is_active
+        +Bool is_suction
         +Bool is_cleaning
-    }
-    class ALARMS {
-        +Bool valve_error
+        +Bool is_fault
     }
     UDT_Nolvac *-- DEVICES
     UDT_Nolvac *-- CMD
     UDT_Nolvac *-- SETTING
     UDT_Nolvac *-- STATUS
-    UDT_Nolvac *-- ALARMS
 ```
 
----
-
-## State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-
-    IDLE --> CONVEYING : CMD.auto
-    IDLE --> ERROR : valve_error
-
-    CONVEYING --> IDLE : NOT CMD.auto
-    CONVEYING --> CLEANING : suction_timer expired
-    CONVEYING --> ERROR : valve_error
-
-    CLEANING --> IDLE : NOT CMD.auto
-    CLEANING --> CONVEYING : cleaning_timer expired
-    CLEANING --> ERROR : valve_error
-
-    ERROR --> IDLE : CMD.ack
-```
-
-### State and Output Table
-
-| State | `XV01` | `XY02` | `XY03` | Description |
-|-------|--------|--------|--------|-------------|
-| IDLE | closed | off | off | Waiting for auto command |
-| CONVEYING | closed | off | energised | Conveying active for `suction_time` |
-| CLEANING | open | energised | off | Filter cleaning for `cleaning_time` |
-| ERROR | — | off | off | Valve fault; waiting for operator ACK |
-
-### State Transition Table
-
-| Current State | Condition | Next State | Action |
-|---------------|-----------|------------|--------|
-| IDLE | `CMD.auto` = TRUE | CONVEYING | XY03 → energised; start suction_timer |
-| IDLE | `valve_error` | ERROR | — |
-| CONVEYING | NOT `CMD.auto` | IDLE | All outputs → de-energised |
-| CONVEYING | suction_timer expired | CLEANING | XY03 → off; XV01 opens, XY02 → energised; start cleaning_timer |
-| CONVEYING | `valve_error` | ERROR | All outputs → de-energised |
-| CLEANING | NOT `CMD.auto` | IDLE | All outputs → de-energised |
-| CLEANING | cleaning_timer expired | CONVEYING | XV01 closes, XY02 → off; XY03 → energised; start suction_timer |
-| CLEANING | `valve_error` | ERROR | All outputs → de-energised |
-| ERROR | `CMD.ack` = TRUE | IDLE | Clear alarms; wait for new `CMD.auto` |
+No `ALARMS` class — this UDT has none of its own. `internal_error` is internal to the function block.

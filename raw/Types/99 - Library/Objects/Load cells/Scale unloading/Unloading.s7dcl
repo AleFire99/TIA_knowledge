@@ -5,10 +5,10 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Unloading"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         scale : _.UDT_Load_cells;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -21,100 +21,110 @@ FUNCTION_BLOCK "Unloading"
         }
         unloading_timer : TON_TIME;
     END_VAR
-    VAR CONSTANT 
+    VAR_TEMP
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        FAULT : Int := 0;
         { S7_MLC := "MLC_5AQ" }
         IDLE : Int := 1;
         { S7_MLC := "MLC_4KT" }
-        CONVEYING : Int := 2;
+        UNLOADING : Int := 2;
         { S7_MLC := "MLC_b5" }
         PAUSED : Int := 3;
-        ERROR : Int := 0;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
         REGION Timeout timer
-          #unloading_timer(IN := (#scale.STATUS.UNLOADING.state = #CONVEYING),
-                           PT := #scale.SETTING.unloading_timeout);
+            #unloading_timer(IN := (#scale.STATUS.UNLOADING.state = #UNLOADING),
+                             PT := #scale.SETTING.unloading_timeout);
         END_REGION
         
         REGION Configuration
-          #scale.ALARMS.weight_invalid := (#scale.IN.current_weight < #scale.SETTING.min_weight) OR (#scale.IN.current_weight > #scale.SETTING.max_weight);
+            #scale.ALARMS.weight_invalid := (#scale.IN.current_weight < #scale.SETTING.min_weight) OR (#scale.IN.current_weight > #scale.SETTING.max_weight);
+        END_REGION
+        
+        REGION Alarms
+            #internal_error := #unloading_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
         END_REGION
         
         REGION FSM
-          CASE #scale.STATUS.UNLOADING.state OF
-              
-            #IDLE:
-              IF #scale.CMD.unloading_start AND NOT #scale.ALARMS.weight_invalid THEN
-                #scale.STATUS.UNLOADING.state := #CONVEYING;
-              END_IF;
-              
-            #CONVEYING:
-              IF #unloading_timer.Q THEN
-                #scale.STATUS.UNLOADING.state := #ERROR;
-              ELSIF #scale.CMD.stop OR (#scale.IN.current_weight <= #scale.SETTING.min_weight) OR #scale.IN.plant_error THEN
-                #scale.STATUS.UNLOADING.state := #PAUSED;
-              ELSIF #scale.BATCH.transferred >= #scale.CMD.unloading_setpoint - #scale.SETTING.unloading_tail THEN
-                #scale.STATUS.UNLOADING.state := #IDLE;
-              END_IF;
-              
-            #PAUSED:
-              IF #scale.CMD.unloading_start THEN
-                #scale.STATUS.UNLOADING.state := #CONVEYING;
-              ELSIF #scale.CMD.reset THEN
-                #scale.STATUS.UNLOADING.state := #IDLE;
-              END_IF;
-              
-            #ERROR:
-              IF #scale.CMD.ack THEN
-                #scale.STATUS.UNLOADING.state := #PAUSED;
-              END_IF;
-              
-          END_CASE;
+            CASE #scale.STATUS.UNLOADING.state OF
+                    
+                #IDLE:
+                    IF #scale.CMD.unloading_start AND NOT #scale.ALARMS.weight_invalid THEN
+                        #scale.STATUS.UNLOADING.state := #UNLOADING;
+                    END_IF;
+                    
+                #UNLOADING:
+                    IF #internal_error THEN
+                        #scale.STATUS.UNLOADING.state := #FAULT;
+                    ELSIF #scale.CMD.stop OR (#scale.IN.current_weight <= #scale.SETTING.min_weight) THEN
+                        #scale.STATUS.UNLOADING.state := #PAUSED;
+                    ELSIF #scale.BATCH.transferred >= #scale.CMD.unloading_setpoint - #scale.SETTING.unloading_tail THEN
+                        #scale.STATUS.UNLOADING.state := #IDLE;
+                    END_IF;
+                    
+                #PAUSED:
+                    IF #scale.CMD.unloading_start THEN
+                        #scale.STATUS.UNLOADING.state := #UNLOADING;
+                    ELSIF #scale.CMD.reset THEN
+                        #scale.STATUS.UNLOADING.state := #IDLE;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #scale.CMD.ack THEN
+                        #scale.STATUS.UNLOADING.state := #PAUSED;
+                    END_IF;
+                    
+            END_CASE;
         END_REGION
         
         REGION Entry actions
-          
-          #scale.STATUS.UNLOADING.unloading_finished := FALSE;
-          
-          IF #scale.STATUS.UNLOADING.state <> #prev_state THEN
+            #scale.STATUS.UNLOADING.unloading_finished := FALSE;
             
-            CASE #scale.STATUS.UNLOADING.state OF
+            IF #scale.STATUS.UNLOADING.state <> #prev_state THEN
                 
-              #IDLE:
-                #scale.BATCH.transferred := 0.0;
-                #scale.STATUS.UNLOADING.unloading_finished := TRUE;
+                CASE #scale.STATUS.UNLOADING.state OF
+                        
+                    #IDLE:
+                        #scale.BATCH.transferred := 0.0;
+                        #scale.STATUS.UNLOADING.unloading_finished := TRUE;
+                        
+                    #UNLOADING:
+                        // On first start: conveyed = 0.0, so weight_at_start = current_weight (normal snapshot).
+                        // On resume: conveyed holds the frozen value, so we back-calculate the anchor such that (weight_at_start - current_weight) = previous conveyed immediately.
+                        #scale.BATCH.weight_at_start := #scale.IN.current_weight + #scale.BATCH.transferred;
+                        
+                END_CASE;
                 
-              #CONVEYING:
-                // On first start: conveyed = 0.0, so weight_at_start = current_weight (normal snapshot).
-                // On resume: conveyed holds the frozen value, so we back-calculate the anchor such that (weight_at_start - current_weight) = previous conveyed immediately.
-                #scale.BATCH.weight_at_start := #scale.IN.current_weight + #scale.BATCH.transferred;
-                
-            END_CASE;
-            
-            #prev_state := #scale.STATUS.UNLOADING.state;
-          END_IF;
+                #prev_state := #scale.STATUS.UNLOADING.state;
+            END_IF;
         END_REGION
         
         REGION Conveyed quantity
-          // Computed every scan. Only meaningful during CONVEYING.
-          // Clamped to zero to avoid negative display on sensor drift.
-          // PAUSED / ERROR: no assignment — holds last frozen value.
-          IF #scale.STATUS.UNLOADING.state = #CONVEYING THEN
-            #scale.BATCH.transferred := #scale.BATCH.weight_at_start - #scale.IN.current_weight;
-            IF #scale.BATCH.transferred < 0.0 THEN
-              #scale.BATCH.transferred := 0.0;
+            // Computed every scan. Only meaningful during CONVEYING.
+            // Clamped to zero to avoid negative display on sensor drift.
+            // PAUSED / ERROR: no assignment — holds last frozen value.
+            IF #scale.STATUS.UNLOADING.state = #UNLOADING THEN
+                #scale.BATCH.transferred := #scale.BATCH.weight_at_start - #scale.IN.current_weight;
+                IF #scale.BATCH.transferred < 0.0 THEN
+                    #scale.BATCH.transferred := 0.0;
+                END_IF;
             END_IF;
-          END_IF;
         END_REGION
         
         REGION Mapped outputs
-          // Moore outputs — derived purely from state, reset each scan.
-          #scale.STATUS.UNLOADING.is_unloading := (#scale.STATUS.UNLOADING.state = #CONVEYING);
-          #scale.STATUS.UNLOADING.is_idle := (#scale.STATUS.UNLOADING.state = #IDLE);
-          #scale.STATUS.UNLOADING.is_paused := (#scale.STATUS.UNLOADING.state = #PAUSED);
-          #scale.ALARMS.unloading_timeout := (#scale.STATUS.UNLOADING.state = #ERROR);
+            // Moore outputs — derived purely from state, reset each scan.
+            #scale.STATUS.UNLOADING.is_idle := (#scale.STATUS.UNLOADING.state = #IDLE);
+            #scale.STATUS.UNLOADING.is_unloading := (#scale.STATUS.UNLOADING.state = #UNLOADING);
+            #scale.STATUS.UNLOADING.is_paused := (#scale.STATUS.UNLOADING.state = #PAUSED);
+            #scale.STATUS.UNLOADING.is_fault := (#scale.STATUS.UNLOADING.state = #FAULT);
+        END_REGION
+        
+        REGION Alarms mapping
+            #scale.ALARMS.unloading_timeout := #internal_error;
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

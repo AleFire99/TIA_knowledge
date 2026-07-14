@@ -3,34 +3,28 @@
     S7_Optimized := "TRUE";
     S7_Version := "0.1"
 }
-FUNCTION_BLOCK "An_Pipeline"
-    VAR_IN_OUT 
-        pipeline : _.UDT_Pipeline;
+FUNCTION "An_pipeline" : Void
+    VAR_IN_OUT
+        pipeline : _.UDT_An_Pipeline;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Initialization
-            #pipeline.STATUS.is_empty := FALSE;
-            #pipeline.STATUS.is_pressurised := FALSE;
-            #pipeline.STATUS.is_with_material := FALSE;
-            #pipeline.ALARMS.is_clogged := FALSE;
+        REGION Alarms
+            #pipeline.ALARMS.pipeline_clogged := #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.clogged_thresh;
         END_REGION
         
-        
-        REGION Lookup table
-            IF #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.empty_thresh THEN
-                #pipeline.STATUS.is_empty := TRUE;
-            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.empty_thresh
-                    AND #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.material_thresh THEN
-                #pipeline.STATUS.is_pressurised := TRUE;
-            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.material_thresh
-                    AND #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.clogged_thresh THEN
-                #pipeline.STATUS.is_with_material := TRUE;
-            ELSIF #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.clogged_thresh THEN
-                #pipeline.ALARMS.is_clogged := TRUE;
-            END_IF;
+        REGION State mapping
+            #pipeline.STATUS.is_empty := #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.empty_thresh;
+            
+            #pipeline.STATUS.is_pressurised :=
+            (#pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.empty_thresh)
+            AND (#pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.material_thresh);
+            
+            #pipeline.STATUS.is_with_material :=
+            (#pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.material_thresh)
+            AND (#pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.clogged_thresh);
         END_REGION
         
     END_NETWORK
-END_FUNCTION_BLOCK
+END_FUNCTION

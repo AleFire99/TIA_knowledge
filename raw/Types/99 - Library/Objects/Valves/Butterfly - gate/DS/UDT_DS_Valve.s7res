@@ -1,37 +1,41 @@
 ﻿MultiLingualTexts:
-  - id: MLC_3p5
+  - id: MLC_iN
     en-US: INPUT - Limit switch closed
-  - id: MLC_4Az
+  - id: MLC_4rv
     en-US: INPUT - Limit switch opened
-  - id: MLC_4t2
+  - id: MLC_3pb
     en-US: OUTPUT - Solenoid to open
-  - id: MLC_3QC
+  - id: MLC_45h
     en-US: OUTPUT - Solenoid to close
-  - id: MLC_4Rg
+  - id: MLC_396
     en-US: COMMAND - Active mode
-  - id: MLC_4jX
+  - id: MLC_sU
     en-US: COMMAND - Manual command
-  - id: MLC_PK
+  - id: MLC_4Wf
     en-US: COMMAND - Automatic command
-  - id: MLC_4Vv
-    en-US: COMMAND - 0=enabled/1=interlocked
-  - id: MLC_4eP
+  - id: MLC_3hM
     en-US: COMMAND - Acknowledge all errors
-  - id: MLC_4hD
+  - id: MLC_4WL
     en-US: SETTING - Max time to complete movement
-  - id: MLC_56C
+  - id: MLC_3Vh
     en-US: STATE - 0=fault, 1=normal
-  - id: MLC_3RT
+  - id: MLC_4Xm
     en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
-  - id: MLC_572
+  - id: MLC_3Dp
     en-US: STATUS - Valve in fault state
-  - id: MLC_4xk
+  - id: MLC_4zE
     en-US: STATUS - Valve closed
-  - id: MLC_48s
+  - id: MLC_4s6
     en-US: STATUS - Valve opening
-  - id: MLC_3eN
+  - id: MLC_46t
     en-US: STATUS - Valve open
-  - id: MLC_55Q
+  - id: MLC_Lm
     en-US: STATUS - Valve closing
-  - id: MLC_3A5
-    en-US: ALARM - General error
+  - id: MLC_n3
+    en-US: ALARM - Sensor mismatch
+  - id: MLC_59p
+    en-US: ALARM - Sensor conflict
+  - id: MLC_3hL
+    en-US: ALARM - Failed to close
+  - id: MLC_4uM
+    en-US: ALARM - Failed  to open

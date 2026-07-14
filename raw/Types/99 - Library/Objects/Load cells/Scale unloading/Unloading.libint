@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: Unloading.s7dcl
-    Hash: hADbGq1HJbEXG8EKvrHkx31P1Thngky6M5K9EgLYj+k=
+    Hash: b0X0+AJBxxDcAs4RZ1UzSbze2UxN4CDlI1cUcNEgbQw=
   - FileName: Unloading.s7res
     Hash: Y1qeS/Bao/lEdMGmdFH5IAfPwe9aOLPANUPaURHpul8=
-LibraryMetaFileHash: AQ0DpvG9iMFZ3nTHOayCswP/5zmlIz9ae0K7cDszINQ=
+LibraryMetaFileHash: GMjEDIL7CKQuU+lCQ48tjBf3q0XZ8YJLCd81BavnJMc=
 LibraryVersion:
-  Guid: e8993027-b780-489a-8cf8-9b6d44fad2b6
+  Guid: fc2c27eb-9786-4fb9-988f-67b38bc9af8f
   DependsOn:
     - TypeName: UDT_Load_cells
-      VersionNumber: 0.4.7
+      VersionNumber: 1.0.0

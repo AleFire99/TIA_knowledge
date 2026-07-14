@@ -4,10 +4,10 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Gate_door"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         gate_door : _.UDT_Gate_Door;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -22,9 +22,19 @@ FUNCTION_BLOCK "Gate_door"
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
         }
-        door_timer : TON_TIME;
+        unlock_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        inactivity_timer : TON_TIME;
     END_VAR
-    VAR CONSTANT 
+    VAR_TEMP
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        FAULT : Int := 0;
+        NORMAL : Int := 1;
         CLOSED : Int := 1;
         OPENING : Int := 2;
         OPEN : Int := 3;
@@ -34,77 +44,127 @@ FUNCTION_BLOCK "Gate_door"
     { S7_Language := "SCL" }
     NETWORK
         REGION Initialization
-          // On first scan, determine state from physical sensors
-          IF #first_scan THEN
-            #first_scan := FALSE;
-            IF #gate_door.DEVICES.ZSL THEN
-              #gate_door.STATUS.state := #CLOSED;
-            ELSE
-              #gate_door.STATUS.state := #OPEN;
+            // On first scan, determine state from the physical sensor.
+            // Single combined signal — can only distinguish CLOSED from OPEN, never an intermediate condition.
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                IF #gate_door.DEVICES.ZSL THEN
+                    #gate_door.STATUS.state := #NORMAL;
+                    #gate_door.STATUS.normal_state := #CLOSED;
+                ELSE
+                    #gate_door.STATUS.state := #NORMAL;
+                    #gate_door.STATUS.normal_state := #OPEN;
+                END_IF;
             END_IF;
-          END_IF;
         END_REGION
         
         REGION Map internal valves
-          #fb_XY(#gate_door.DEVICES.XY);
+            #fb_XY(#gate_door.DEVICES.XY);
         END_REGION
         
         REGION Timers
-          
-          #door_timer(IN := (#gate_door.STATUS.state = #OPEN),
-                      PT := #gate_door.SETTING.door_timeout);
+            #unlock_timer(IN := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #OPENING),
+                          PT := #gate_door.SETTING.unlock_timeout);
+            
+            #inactivity_timer(IN := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #OPEN),
+                              PT := #gate_door.SETTING.inactivity_timeout);
         END_REGION
         
-        REGION FSM logic
-          // Moore machine: transitions driven by inputs, outputs assigned in Output mapping region
-          CASE #gate_door.STATUS.state OF
-              
-            #CLOSED:
-              IF #gate_door.CMD.open AND NOT #gate_door.CMD.interlocked THEN
-                // Guard is active-low: interlocked = FALSE means orchestrator permits opening
-                #gate_door.STATUS.state := #OPENING;
-              END_IF;
-              
-            #OPENING:
-              IF NOT #gate_door.DEVICES.ZSL THEN
-                #gate_door.STATUS.state := #OPEN;
-              END_IF;
-              
-            #OPEN:
-              IF #gate_door.CMD.close OR #door_timer.Q THEN
-                #gate_door.STATUS.state := #CLOSING;
-              END_IF;
-              
-            #CLOSING:
-              IF #gate_door.DEVICES.ZSL THEN
-                #gate_door.STATUS.state := #CLOSED;
-              END_IF;
-              
-          END_CASE;
+        REGION Alarms
+            IF #unlock_timer.Q THEN
+                #gate_door.ALARMS.failed_to_unlock := TRUE;
+            END_IF;
+        END_REGION
+        
+        REGION Acknowledgment
+            IF #gate_door.CMD.ack THEN
+                #gate_door.ALARMS.failed_to_unlock := FALSE;
+            END_IF;
+        END_REGION
+        
+        REGION Alarm aggregation
+            #internal_error := #gate_door.ALARMS.failed_to_unlock;
+        END_REGION
+        
+        REGION Top FSM
+            CASE #gate_door.STATUS.state OF
+                #NORMAL:
+                    IF #internal_error THEN
+                        #gate_door.STATUS.state := #FAULT;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #gate_door.CMD.ack AND NOT #internal_error THEN
+                        IF #gate_door.DEVICES.ZSL THEN
+                            #gate_door.STATUS.normal_state := #CLOSED;
+                        ELSE
+                            #gate_door.STATUS.normal_state := #OPEN;
+                        END_IF;
+                        #gate_door.STATUS.state := #NORMAL;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #gate_door.STATUS.state = #NORMAL THEN
+                CASE #gate_door.STATUS.normal_state OF
+                        
+                    #CLOSED:
+                        IF #gate_door.CMD.open AND #gate_door.CMD.safe_to_open THEN
+                            #gate_door.STATUS.normal_state := #OPENING;
+                        END_IF;
+                        
+                    #OPENING:
+                        IF NOT #gate_door.DEVICES.ZSL THEN
+                            #gate_door.STATUS.normal_state := #OPEN;
+                        END_IF;
+                        
+                    #OPEN:
+                        IF #gate_door.CMD.close OR #inactivity_timer.Q THEN
+                            #gate_door.STATUS.normal_state := #CLOSING;
+                        END_IF;
+                        
+                    #CLOSING:
+                        // Door was never actually re-secured (ZSL never returned) — a fresh
+                        // open request is a cancel, not a new permission, so no re-check of
+                        // safe_to_open and no pass through OPENING.
+                        IF #gate_door.CMD.open THEN
+                            #gate_door.STATUS.normal_state := #OPEN;
+                        ELSIF #gate_door.DEVICES.ZSL THEN
+                            #gate_door.STATUS.normal_state := #CLOSED;
+                        END_IF;
+                        
+                END_CASE;
+            END_IF;
         END_REGION
         
         REGION Output mapping
-          #gate_door.DEVICES.XY.CMD.auto := FALSE;
-          #gate_door.STATUS.is_closed := FALSE;
-          #gate_door.STATUS.is_opening := FALSE;
-          #gate_door.STATUS.is_open := FALSE;
-          #gate_door.STATUS.is_closing := FALSE;
-          
-          CASE #gate_door.STATUS.state OF
-            #CLOSED:
-              #gate_door.STATUS.is_closed := TRUE;
-              
-            #OPENING:
-              #gate_door.DEVICES.XY.CMD.auto := TRUE;
-              #gate_door.STATUS.is_opening := TRUE;
-              
-            #OPEN:
-              #gate_door.DEVICES.XY.CMD.auto := TRUE;
-              #gate_door.STATUS.is_open := TRUE;
-              
-            #CLOSING:
-              #gate_door.STATUS.is_closing := TRUE;
-          END_CASE;
+            // Energize-to-unlock: XY = TRUE releases the lock, FALSE engages it.
+            // FAULT deliberately unlocks — a PLC fault should never trap an operator behind a locked door;
+            // the real safety barrier is the electrical interlock upstream of XY, not this FB.
+            #gate_door.DEVICES.XY.CMD.auto := FALSE;
+            
+            CASE #gate_door.STATUS.state OF
+                #FAULT:
+                    #gate_door.DEVICES.XY.CMD.auto := TRUE;
+                    
+                #NORMAL:
+                    CASE #gate_door.STATUS.normal_state OF
+                        #OPENING:
+                            #gate_door.DEVICES.XY.CMD.auto := TRUE;
+                            
+                        #OPEN:
+                            #gate_door.DEVICES.XY.CMD.auto := TRUE;
+                    END_CASE;
+            END_CASE;
+        END_REGION
+        
+        REGION State mapping
+            #gate_door.STATUS.is_closed := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #CLOSED);
+            #gate_door.STATUS.is_opening := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #OPENING);
+            #gate_door.STATUS.is_open := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #OPEN);
+            #gate_door.STATUS.is_closing := (#gate_door.STATUS.state = #NORMAL) AND (#gate_door.STATUS.normal_state = #CLOSING);
+            #gate_door.STATUS.is_fault := (#gate_door.STATUS.state = #FAULT);
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

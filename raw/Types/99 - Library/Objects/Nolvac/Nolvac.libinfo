@@ -3,8 +3,8 @@
   Comment:
     en-US: First release
 LibraryVersion:
-  VersionNumber: 0.1.8
+  VersionNumber: 2.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDTs
+    en-US: Splitted FSM

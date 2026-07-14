@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 1.5.4
+  VersionNumber: 2.1.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added simulation capabilities
+    en-US: Moved internal error after ack to ensure proper behaviour

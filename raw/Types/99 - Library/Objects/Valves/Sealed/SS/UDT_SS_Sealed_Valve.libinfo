@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 0.1.0
+  VersionNumber: 2.0.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Removed interlock command
+    en-US: Removed seal timeout

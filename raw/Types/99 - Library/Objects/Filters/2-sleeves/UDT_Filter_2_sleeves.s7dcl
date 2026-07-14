@@ -4,82 +4,77 @@
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_nW"
+                S7_MLC := "MLC_4SR"
             }
             XYA : _.UDT_Solenoid_valve;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_eG"
+                S7_MLC := "MLC_3Y3"
             }
             XYB : _.UDT_Solenoid_valve;
         END_STRUCT;
         CMD : STRUCT
-            { S7_MLC := "MLC_tV" }
+            { S7_MLC := "MLC_Vq" }
             manual_mode : Bool;
-            { S7_MLC := "MLC_p8" }
+            { S7_MLC := "MLC_3ZL" }
             manual : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_wt"
+                S7_MLC := "MLC_3mA"
             }
             auto : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_Lj"
-            }
-            interlocked : Bool;
         END_STRUCT;
         SETTING : STRUCT
-            { S7_MLC := "MLC_36W" }
+            { S7_MLC := "MLC_4SU" }
             pulse_duration : Time := T#500ms;
-            { S7_MLC := "MLC_4J9" }
+            { S7_MLC := "MLC_3MQ" }
             interval_duration : Time := T#3s;
         END_STRUCT;
         { S7_Access := "ReadOnly := External" }
         STATUS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3vu"
+                S7_MLC := "MLC_4zs"
             }
             state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_32U"
+                S7_MLC := "MLC_43w"
             }
             active_state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3wh"
+                S7_MLC := "MLC_3rT"
             }
             active_sleeve : Int;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_38W"
+                S7_MLC := "MLC_uv"
             }
             is_idle : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_55t"
+                S7_MLC := "MLC_3nX"
             }
             is_active : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4B8"
+                S7_MLC := "MLC_3gW"
             }
             is_pulsing : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4QS"
+                S7_MLC := "MLC_3AV"
             }
             is_waiting : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_ve"
+                S7_MLC := "MLC_4Uw"
             }
             is_sleeve_A : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_34b"
+                S7_MLC := "MLC_4j2"
             }
             is_sleeve_B : Bool;
         END_STRUCT;

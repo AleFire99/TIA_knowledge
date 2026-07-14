@@ -1,16 +1,12 @@
 ﻿MultiLingualTexts:
   - id: MLC_4DF
     en-US: TRUE if first scan, then set to FALSE
-  - id: MLC_Wx
-    en-US: Actual desired command based on active mode
-  - id: MLC_4ha
-    en-US: Desired command if not interlocked
   - id: MLC_MV
     en-US: Movement timer
-  - id: MLC_4nj
-    en-US: ALARM - Sensor mismatch
-  - id: MLC_na
-    en-US: ALARM - Movement timeout
+  - id: MLC_Sn
+    en-US: Actual desired command based on active mode
+  - id: MLC_NH
+    en-US: Aggregated alarm
   - id: MLC_3Xa
     en-US: Error valve state
   - id: MLC_4XD

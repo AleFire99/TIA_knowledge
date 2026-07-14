@@ -1,7 +1,7 @@
 ﻿LibraryType:
   Guid: a4991cac-abd8-44c4-a0af-ef3dc096af9c
 LibraryVersion:
-  VersionNumber: 0.2.11
+  VersionNumber: 1.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:

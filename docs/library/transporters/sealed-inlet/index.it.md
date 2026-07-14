@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-`Sealed_inlet_Transporter` gestisce un ciclo completo di trasporto pneumatico in pressione: carica materiale in un vessel, lo sigilla, lo pressurizza a pressione superiore a quella della linea, convoglia il materiale verso la linea e infine depressurizza il vessel prima di un nuovo ciclo.
+**Tier 3 — composito.** `Sealed_inlet_Transporter` gestisce un ciclo completo di trasporto pneumatico in pressione: carica materiale in un vessel, lo sigilla, lo pressurizza a pressione superiore a quella della linea, convoglia il materiale verso la linea e infine depressurizza il vessel prima di un nuovo ciclo.
 
 Il blocco coordina cinque valvole (`XV01`–`XV05`), un solenoide di pressurizzazione (`XY`), una bilancia (`WT01`) e due trasmettitori di pressione analogici (`PT01` vessel, `PT02` linea). Due pressostati digitali (`PSL`, `LSH`) garantiscono la sicurezza operativa.
 
@@ -10,17 +10,17 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 
 ---
 
-## Componenti principali
+## Composizione
 
-| Dispositivo | Tipo | Ruolo |
-|-------------|------|-------|
-| `XV01` | UDT_SS_Sealed_Valve | Valvola di ingresso; sigillata in riposo |
-| `XV02` | UDT_DS_Valve | Valvola di sfiato (vent); aperta in IDLE, FILLING, FAULT |
-| `XV03` | UDT_SS_Valve | Valvola orifizio; aperta durante FILLING |
-| `XV04` | UDT_SS_Valve | Valvola di scarico; aperta durante PRESSURIZING e CONVEYING |
-| `XV05` | UDT_SS_Valve | Valvola di linea; aperta durante CONVEYING |
-| `XY` | UDT_Solenoid_valve | Solenoide pressurizzazione; eccitato durante PRESSURIZING e CONVEYING |
-| `WT01` | UDT_Load_cells | Bilancia; gestita da `Loading` e `Unloading` interni |
+| Tag | Tipo | Ruolo |
+|-----|------|-------|
+| `XV01` | Valvola Sigillata SS (Tier 3) | Valvola di ingresso; sigillata in riposo |
+| `XV02` | Valvola a Farfalla DS (Tier 3) | Valvola di sfiato (vent); aperta in IDLE, FILLING, FAULT |
+| `XV03` | Valvola a Farfalla SS (Tier 2) | Valvola orifizio; aperta durante FILLING |
+| `XV04` | Valvola a Farfalla SS (Tier 2) | Valvola di scarico; aperta durante PRESSURIZING e CONVEYING |
+| `XV05` | Valvola a Farfalla SS (Tier 2) | Valvola di linea; aperta durante CONVEYING |
+| `XY` | Valvola a Solenoide (Tier 1) | Solenoide pressurizzazione; eccitato durante PRESSURIZING e CONVEYING |
+| `WT01` | Celle di Carico (Tier 3) | Bilancia; gestita da `Loading` e `Unloading` interni — vedere [Celle di Carico](../../load-cells/index.it.md) |
 | `PT01` | UDT_Analogic_signal | Trasmettitore pressione vessel |
 | `PT02` | UDT_Analogic_signal | Trasmettitore pressione linea |
 | `PSL` | Bool | Pressostato sicurezza: TRUE = pressione entro limiti |
@@ -80,7 +80,8 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 |---------|------|-------------|
 | `ALARMS.pressurization_timeout` | Bool | Pressurizzazione non completata entro `pressurizing_timeout` |
 | `ALARMS.depressurization_timeout` | Bool | Depressurizzazione non completata entro `depressurizing_timeout` |
-| `ALARMS.internal_error` | Bool | OR di tutti i guasti interni: valvole, bilancia, PSL, LSH |
+
+`internal_error` (OR di tutti i guasti interni: valvole, bilancia, `PSL`, `LSH`, oltre ai due allarmi sopra) è interno al blocco funzionale — non è un campo dell'UDT.
 
 ---
 
@@ -115,14 +116,14 @@ In FAULT: XV02 (sfiato) aperto per sicurezza passiva; bilancia fermata e resetta
 
 ## Allarmi
 
-| ID | Condizione | Causa |
-|----|------------|-------|
-| TR-E01 | `ALARMS.pressurization_timeout` | Pressione non raggiunta entro il timeout — verificare supply aria, XV04, PT01/02 |
-| TR-E02 | `ALARMS.depressurization_timeout` | Sfiato non completato entro il timeout — verificare XV02, PT01/02 |
-| TR-E03 | `ALARMS.internal_error` (valvola) | Guasto su una valvola interna — vedere allarmi specifici su XV01–05 |
-| TR-E04 | `ALARMS.internal_error` (bilancia) | Timeout Loading o Unloading — verificare bilancia e impianto |
-| TR-E05 | `ALARMS.internal_error` (NOT PSL) | Pressione di sicurezza persa — emergenza |
-| TR-E06 | `ALARMS.internal_error` (LSH) | Livello alto nel vessel — ostruzione o sensore guasto |
+| ID | Condizione specifica |
+|----|----------------------|
+| [`TR-E01`](../index.it.md#allarmi-dei-trasportatori) | `ALARMS.pressurization_timeout` — verificare supply aria, XV04, PT01/02 |
+| [`TR-E02`](../index.it.md#allarmi-dei-trasportatori) | `ALARMS.depressurization_timeout` — verificare XV02, PT01/02 |
+| [`TR-E03`](../index.it.md#allarmi-dei-trasportatori) | Guasto su una valvola interna (`XV01`–`XV05`) — vedere gli [allarmi delle valvole](../../valves/index.it.md#allarmi-delle-valvole) |
+| [`TR-E04`](../index.it.md#allarmi-dei-trasportatori) | Timeout Loading o Unloading su `WT01` — vedere gli [allarmi delle celle di carico](../../load-cells/index.it.md#allarmi-delle-celle-di-carico) |
+| [`TR-E05`](../index.it.md#allarmi-dei-trasportatori) | `NOT PSL` — pressione di sicurezza persa |
+| [`TR-E06`](../index.it.md#allarmi-dei-trasportatori) | `LSH` — livello alto nel vessel |
 
 ---
 
@@ -188,7 +189,6 @@ classDiagram
     class ALARMS {
         +Bool pressurization_timeout
         +Bool depressurization_timeout
-        +Bool internal_error
     }
     class OUT {
         +Bool loading_finished

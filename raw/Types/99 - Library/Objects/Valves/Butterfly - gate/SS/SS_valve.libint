@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: SS_valve.s7dcl
-    Hash: 73qnNaW1cvRJKSnCvAr7ZjqSIWrI5zMVWCdwfLdsXRU=
+    Hash: v1KTwGRK2eIXCMw61XnNcZcjmk23C4/g1zbjIlUg1fw=
   - FileName: SS_valve.s7res
-    Hash: qquucyIlgwD7uZN0Pg8LLGgmjvzf7A3ykv+93HeErhM=
-LibraryMetaFileHash: aMI/uZm439/DRpZKs7q2XhBrEk4SagTx7aVncfPeSBg=
+    Hash: +QY7MzEAFfwGt5zkqRJ7p3+UQLg+AKFMwK/ochaw1e0=
+LibraryMetaFileHash: +E95C7iYdqLNpTBQOHe+tkwnyITqW5Sxvw3vfqh5FtI=
 LibraryVersion:
-  Guid: 36877fc3-29ab-4b99-b58b-2c70873d2c57
+  Guid: b028b500-7e05-4161-b6c7-6e86a4aa6398
   DependsOn:
     - TypeName: UDT_SS_Valve
-      VersionNumber: 1.5.2
+      VersionNumber: 2.0.0
     - TypeName: Solenoid_valve
-      VersionNumber: 1.2.3
+      VersionNumber: 2.0.1

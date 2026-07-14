@@ -1,9 +1,5 @@
 ﻿MultiLingualTexts:
   - id: MLC_dz
     en-US: TRUE if first scan, then set to FALSE
-  - id: MLC_4bT
+  - id: MLC_vE
     en-US: Actual desired command based on active mode
-  - id: MLC_4AJ
-    en-US: ALARM - Internal valve error
-  - id: MLC_5AX
-    en-US: ALARM - valve mismatch

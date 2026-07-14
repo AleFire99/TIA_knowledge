@@ -2,9 +2,21 @@
 
 ## Overview
 
-`UDT_Load_cells` is the shared data structure used by two independent function blocks — `Loading` and `Unloading` — and the optional hardware adapter `Pavone_DAT_1400`. Each block manages its own state machine via the `STATUS.LOADING` and `STATUS.UNLOADING` sub-structs of the same UDT instance.
+**Tier 3 — composite.** `UDT_Load_cells` is the shared data structure used by two independent function blocks — `Loading` and `Unloading` — and the optional hardware adapter `Pavone_DAT_1400`. Each block manages its own state machine via the `STATUS.LOADING` and `STATUS.UNLOADING` sub-structs of the same UDT instance.
 
 `Loading` handles filling a vessel to a target weight. `Unloading` handles emptying with pause and resume support. `Pavone_DAT_1400` is an optional FC that converts raw Pavone DAT 1400 transmitter registers into the `IN` fields expected by the UDT.
+
+---
+
+## Load Cell Alarms
+
+| ID | Class | Title | Condition | Applies to |
+|----|-------|-------|-----------|------------|
+| `LC-W01` | W | Weight out of range | `ALARMS.weight_invalid` — doesn't cause a transition to ERROR, only blocks starting a cycle | Load Cells |
+| `LC-E01` | E | Loading timeout | `ALARMS.loading_timeout` — drives `Loading` to ERROR | Load Cells |
+| `LC-E02` | E | Unloading timeout | `ALARMS.unloading_timeout` — drives `Unloading` to ERROR | Load Cells |
+
+`LC-W01` is a warning (no state transition) because it only blocks entry into `LOADING`/`CONVEYING` from `IDLE` — unlike `LC-E01`/`LC-E02`, genuine errors each with their own transition to `ERROR` on their respective FSM.
 
 ---
 
@@ -122,11 +134,11 @@ Output: `dat_OUT.Command_register := 16#4` if `CMD.tare_request`, otherwise 0.
 
 ## Alarms
 
-| ID | Condition | Cause |
-|----|-----------|-------|
-| LC-A01 | `ALARMS.weight_invalid` | Weight out of scale range — check cells, wiring, transmitter |
-| LC-E01 | `ALARMS.loading_timeout` | Loading cycle exceeded `loading_timeout` — check plant |
-| LC-E02 | `ALARMS.unloading_timeout` | Unloading cycle exceeded `unloading_timeout` — check plant |
+| ID | Device-specific condition |
+|----|----------------------------|
+| [`LC-W01`](#load-cell-alarms) | Weight out of scale range — check cells, wiring, transmitter |
+| [`LC-E01`](#load-cell-alarms) | Loading cycle exceeded `loading_timeout` — check plant |
+| [`LC-E02`](#load-cell-alarms) | Unloading cycle exceeded `unloading_timeout` — check plant |
 
 ---
 

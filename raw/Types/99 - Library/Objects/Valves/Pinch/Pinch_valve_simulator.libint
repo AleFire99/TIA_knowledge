@@ -1,9 +1,9 @@
 ﻿DocumentHash:
   - FileName: Pinch_valve_simulator.s7dcl
-    Hash: M7LBnSjRtK2/yxnwewjHlsCOr9DYnw2iwRsiywp6/eY=
-LibraryMetaFileHash: u/fQgIUQTm8oo0Wze8BuHzrNTz02dE03hfDF9WWJHJw=
+    Hash: /yxcVhgxihwh4G4A9+p/TxVl9mFqjd9Rb5F1BIB/rO8=
+LibraryMetaFileHash: ITVes9X6+Irld/oxGmxYXzeBmBQyNFm1l4YylaFWm6s=
 LibraryVersion:
-  Guid: 428ac8bd-7ddb-410a-b1cb-a55bdda0061c
+  Guid: 9e06a008-bfc0-4e2b-9d0c-b78e4b4f7965
   DependsOn:
     - TypeName: UDT_Pinch_Valve
-      VersionNumber: 1.4.1
+      VersionNumber: 2.0.0

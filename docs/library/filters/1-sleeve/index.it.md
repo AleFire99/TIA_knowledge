@@ -2,27 +2,26 @@
 
 ## Panoramica
 
-Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola elettrovalvola (`XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Tier 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Valvola a Solenoide (Tier 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
-## Componenti principali
+## Composizione
 
-- **Elettrovalvola `XY`** — inietta aria compressa nella manica durante ogni impulso di pulizia
-- **Timer impulso** — determina la durata di ogni singolo impulso (`pulse_duration`)
-- **Timer intervallo** — determina il tempo di attesa tra impulsi successivi (`interval_duration`)
+| Tag | Tipo | Ruolo |
+|-----|------|-------|
+| `XY` | Valvola a Solenoide (Tier 1) | Impulso di pulizia |
 
 ---
 
-## Segnali I/O
+## Segnali di controllo
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
 | `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola impulso pulizia |
 | `CMD.manual_mode` | Bool | COMANDO — TRUE = modalità manuale |
 | `CMD.manual` | Bool | COMANDO — Abilitazione in modalità manuale |
-| `CMD.auto` | Bool | COMANDO — Abilitazione in modalità automatica |
-| `CMD.interlocked` | Bool | GUARDIA — TRUE = comando congelato al valore precedente |
+| `CMD.auto` | Bool | COMANDO — Abilitazione in modalità automatica (ReadOnly external) |
 | `STATUS.state` | Int | STATO — 1=Inattivo, 2=Attivo |
 | `STATUS.active_state` | Int | SOTTO-STATO — 1=Impulso, 2=Attesa |
 | `STATUS.is_idle` | Bool | STATO — Filtro in attesa di abilitazione |
@@ -32,7 +31,7 @@ Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite
 
 ## Funzionamento
 
-**IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di apertura (manuale o automatico) non interblocato, lo stato transita verso ACTIVE con `active_state = WAITING`.
+**IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di apertura (manuale o automatico), lo stato transita verso ACTIVE con `active_state = WAITING`.
 
 **ACTIVE / WAITING** — Il filtro è attivo ma in pausa tra un impulso e l'altro. `XY` è diseccitata. Il timer intervallo (`interval_duration`) è in esecuzione. Alla scadenza, lo stato interno passa a PULSING.
 
@@ -40,13 +39,13 @@ Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite
 
 Il ciclo WAITING → PULSING → WAITING si ripete finché il comando rimane attivo. La disabilitazione del comando in qualsiasi momento riporta il filtro in IDLE.
 
-In **modalità manuale** (`manual_mode = TRUE`), il comando proviene da `CMD.manual`. In **modalità automatica**, da `CMD.auto`. Se `interlocked = TRUE`, il valore del comando validato viene congelato all'ultimo stato: l'interblocco non forza la chiusura, ma impedisce cambiamenti.
+In **modalità manuale** (`manual_mode = TRUE`), il comando proviene da `CMD.manual`. In **modalità automatica**, da `CMD.auto`.
 
 ---
 
 ## Allarmi
 
-`UDT_Filter_1_sleeve` non include una struttura `ALARMS`.
+Questo modulo non genera allarmi propri — `UDT_Filter_1_sleeve` non include una struttura `ALARMS`.
 
 ---
 
@@ -71,7 +70,6 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class SETTING {
         +Time pulse_duration

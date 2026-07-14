@@ -6,10 +6,10 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "SS_Sealed_valve"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         XV : _.UDT_SS_Sealed_Valve;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -25,32 +25,31 @@ FUNCTION_BLOCK "SS_Sealed_valve"
     { S7_Language := "SCL" }
     NETWORK
         REGION Command internal devices
-          REGION Valve
-            #XV.DEVICES.XV.CMD.ack := #XV.CMD.ack;
-            #XV.DEVICES.XV.SETTING.actuator_timeout := #XV.SETTING.actuator_timeout;
-            #fb_XV(#XV.DEVICES.XV);
-          END_REGION
-          
-          REGION Seal
-            #fb_XY(#XV.DEVICES.XY_seal);
-          END_REGION
+            REGION Valve
+                #XV.DEVICES.XV.CMD.ack := #XV.CMD.ack;
+                #XV.DEVICES.XV.SETTING.actuator_timeout := #XV.SETTING.actuator_timeout;
+                #fb_XV(#XV.DEVICES.XV);
+            END_REGION
+            
+            REGION Seal
+                #fb_XY(#XV.DEVICES.XY_seal);
+            END_REGION
         END_REGION
         
         REGION Determine target
-          IF #XV.CMD.manual_mode THEN
-            #XV.DEVICES.XV.CMD.auto := #XV.CMD.manual;
-          ELSE
-            #XV.DEVICES.XV.CMD.auto := #XV.CMD.auto;
-          END_IF;
-        END_REGION
-        
-        REGION Acknowledgment
-          #XV.ALARMS.error := #XV.DEVICES.XV.ALARMS.error;
+            IF #XV.CMD.manual_mode THEN
+                #XV.DEVICES.XV.CMD.auto := #XV.CMD.manual;
+            ELSE
+                #XV.DEVICES.XV.CMD.auto := #XV.CMD.auto;
+            END_IF;
         END_REGION
         
         REGION Output mapping
-          #XV.DEVICES.XY_seal.CMD.auto := #XV.DEVICES.XV.STATUS.is_closed;
-          #XV.STATUS := #XV.DEVICES.XV.STATUS;
+            #XV.DEVICES.XY_seal.CMD.auto := #XV.DEVICES.XV.STATUS.is_closed;
+        END_REGION
+        
+        REGION State mapping
+            #XV.STATUS := #XV.DEVICES.XV.STATUS;
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

@@ -2,7 +2,7 @@
 
 ## Overview
 
-`Sealed_inlet_Transporter` orchestrates a complete pressurised pneumatic conveying cycle: it loads material into a vessel, seals it, pressurises it above line pressure, conveys the material into the process line, then depressurises the vessel before the next cycle.
+**Tier 3 — composite.** `Sealed_inlet_Transporter` orchestrates a complete pressurised pneumatic conveying cycle: it loads material into a vessel, seals it, pressurises it above line pressure, conveys the material into the process line, then depressurises the vessel before the next cycle.
 
 The block coordinates five valves (`XV01`–`XV05`), a pressurisation solenoid (`XY`), a load cell assembly (`WT01`), and two analogue pressure transmitters (`PT01` vessel, `PT02` line). Two digital pressure switches (`PSL`, `LSH`) enforce safety constraints.
 
@@ -10,17 +10,17 @@ The FSM is two-level: `NORMAL`/`FAULT` at the top; `IDLE`→`FILLING`→`CLEANIN
 
 ---
 
-## Main Components
+## Composition
 
-| Device | Type | Role |
-|--------|------|------|
-| `XV01` | UDT_SS_Sealed_Valve | Inlet valve; sealed at rest |
-| `XV02` | UDT_DS_Valve | Vent valve; open in IDLE, FILLING, FAULT |
-| `XV03` | UDT_SS_Valve | Orifice valve; open during FILLING |
-| `XV04` | UDT_SS_Valve | Discharge valve; open during PRESSURIZING and CONVEYING |
-| `XV05` | UDT_SS_Valve | Line valve; open during CONVEYING |
-| `XY` | UDT_Solenoid_valve | Pressurisation solenoid; energised during PRESSURIZING and CONVEYING |
-| `WT01` | UDT_Load_cells | Load cell assembly; driven by internal `Loading` and `Unloading` |
+| Tag | Type | Role |
+|-----|------|------|
+| `XV01` | SS Sealed Valve (Tier 3) | Inlet valve; sealed at rest |
+| `XV02` | DS Butterfly Valve (Tier 3) | Vent valve; open in IDLE, FILLING, FAULT |
+| `XV03` | SS Butterfly Valve (Tier 2) | Orifice valve; open during FILLING |
+| `XV04` | SS Butterfly Valve (Tier 2) | Discharge valve; open during PRESSURIZING and CONVEYING |
+| `XV05` | SS Butterfly Valve (Tier 2) | Line valve; open during CONVEYING |
+| `XY` | Solenoid Valve (Tier 1) | Pressurisation solenoid; energised during PRESSURIZING and CONVEYING |
+| `WT01` | Load Cells (Tier 3) | Load cell assembly; driven by internal `Loading` and `Unloading` — see [Load Cells](../../load-cells/index.en.md) |
 | `PT01` | UDT_Analogic_signal | Vessel pressure transmitter |
 | `PT02` | UDT_Analogic_signal | Line pressure transmitter |
 | `PSL` | Bool | Safety pressure switch: TRUE = pressure within safe limits |
@@ -80,7 +80,8 @@ The FSM is two-level: `NORMAL`/`FAULT` at the top; `IDLE`→`FILLING`→`CLEANIN
 |--------|------|-------------|
 | `ALARMS.pressurization_timeout` | Bool | Pressurisation not completed within `pressurizing_timeout` |
 | `ALARMS.depressurization_timeout` | Bool | Depressurisation not completed within `depressurizing_timeout` |
-| `ALARMS.internal_error` | Bool | OR of all internal faults: valves, load cell, PSL, LSH |
+
+`internal_error` (OR of all internal faults: valves, load cell, PSL, LSH, plus the two alarms above) is internal to the function block — it is not a UDT field.
 
 ---
 
@@ -115,14 +116,14 @@ In FAULT: XV02 (vent) opens for passive safety; scale stopped and reset. `CMD.ac
 
 ## Alarms
 
-| ID | Condition | Cause |
-|----|-----------|-------|
-| TR-E01 | `ALARMS.pressurization_timeout` | Pressure not reached within timeout — check air supply, XV04, PT01/02 |
-| TR-E02 | `ALARMS.depressurization_timeout` | Vent not completed within timeout — check XV02, PT01/02 |
-| TR-E03 | `ALARMS.internal_error` (valve) | Fault on an internal valve — check specific alarms on XV01–05 |
-| TR-E04 | `ALARMS.internal_error` (scale) | Loading or Unloading timeout — check load cells and plant |
-| TR-E05 | `ALARMS.internal_error` (NOT PSL) | Safety pressure lost — emergency condition |
-| TR-E06 | `ALARMS.internal_error` (LSH) | High level in vessel — obstruction or sensor fault |
+| ID | Device-specific condition |
+|----|----------------------------|
+| [`TR-E01`](../index.en.md#transporter-alarms) | `ALARMS.pressurization_timeout` — check air supply, XV04, PT01/02 |
+| [`TR-E02`](../index.en.md#transporter-alarms) | `ALARMS.depressurization_timeout` — check XV02, PT01/02 |
+| [`TR-E03`](../index.en.md#transporter-alarms) | Fault on an internal valve (`XV01`–`XV05`) — see [Valve Alarms](../../valves/index.en.md#valve-alarms) |
+| [`TR-E04`](../index.en.md#transporter-alarms) | Loading or Unloading timeout on `WT01` — see [Load Cell Alarms](../../load-cells/index.en.md#load-cell-alarms) |
+| [`TR-E05`](../index.en.md#transporter-alarms) | `NOT PSL` — safety pressure lost |
+| [`TR-E06`](../index.en.md#transporter-alarms) | `LSH` — high level in vessel |
 
 ---
 
@@ -188,7 +189,6 @@ classDiagram
     class ALARMS {
         +Bool pressurization_timeout
         +Bool depressurization_timeout
-        +Bool internal_error
     }
     class OUT {
         +Bool loading_finished
@@ -236,7 +236,7 @@ stateDiagram-v2
 |-------|------|------|------|------|------|----|------|--------------------|
 | IDLE | — | open | — | — | — | — | — | FALSE |
 | FILLING | open | open | open | — | — | — | Loading | FALSE |
-| CLEANING | — | — | — | — | — | — | — | TRUE |
+| CLEANING | — |open | open  | — | — | — | — | TRUE |
 | SEALING | — | — | — | — | — | — | — | FALSE |
 | PRESSURIZING | — | — | — | open | — | energised | — | FALSE |
 | CONVEYING | — | — | — | open | open | energised | Unloading | FALSE |

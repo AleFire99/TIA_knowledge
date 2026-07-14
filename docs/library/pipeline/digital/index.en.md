@@ -2,7 +2,7 @@
 
 ## Overview
 
-`Dig_Pipeline` determines pipeline state using two digital pressure switches (`PSL` low-set, `PSH` high-set). The logic is a two-input truth table: the four binary combinations of PSL and PSH map to four operating states. State is updated every scan with no hysteresis.
+**FC, stateless.** `Dig_pipeline` determines pipeline state using two digital pressure switches (`PSL` low-set, `PSH` high-set). The logic is a two-input truth table: the four binary combinations map to states and alarms. No `CMD`, no `ack` — with no state to keep, there's nothing to acknowledge.
 
 The low-set switch (`PSL`) trips when pressure exceeds the minimum threshold indicating material presence. The high-set switch (`PSH`) trips at a higher pressure indicating excessive pressure or a blockage. Under normal conditions `PSH` cannot trip without `PSL`.
 
@@ -15,48 +15,54 @@ The low-set switch (`PSL`) trips when pressure exceeds the minimum threshold ind
 
 ---
 
-## I/O Signals
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
 | `DEVICES.PSL` | Bool | Low-set pressure switch: TRUE = pressure ≥ low threshold |
 | `DEVICES.PSH` | Bool | High-set pressure switch: TRUE = pressure ≥ high threshold |
-| `STATUS.is_empty` | Bool | TRUE if PSL=0 and PSH=0 |
-| `STATUS.is_with_material` | Bool | TRUE if PSL=1 and PSH=0 |
-| `ALARMS.is_clogged` | Bool | TRUE if PSL=1 and PSH=1 |
-| `ALARMS.is_in_error` | Bool | TRUE if PSL=0 and PSH=1 (physically impossible state) |
+| `STATUS.is_empty` | Bool | TRUE if `PSL=0` and `PSH=0` |
+| `STATUS.is_with_material` | Bool | TRUE if `PSL=1` and `PSH=0` |
+| `ALARMS.pipeline_clogged` | Bool | TRUE if `PSL=1` and `PSH=1` |
+| `ALARMS.sensor_mismatch` | Bool | TRUE if `PSL=0` and `PSH=1` (physically impossible combination) |
 
 ---
 
-## Operating Routine
+## Decode Table
 
-Every scan the FB clears all flags then evaluates the PSL/PSH combination:
+| `PSL` | `PSH` | Outcome | Category |
+|-------|-------|---------|----------|
+| 0 | 0 | `is_empty` | State |
+| 1 | 0 | `is_with_material` | State |
+| 0 | 1 | `sensor_mismatch` | Alarm (`PL-E02`) |
+| 1 | 1 | `pipeline_clogged` | Alarm (`PL-E01`) |
 
-| PSL | PSH | Active flag | Description |
-|-----|-----|-------------|-------------|
-| 0 | 0 | `STATUS.is_empty` | No pressure detected — pipeline empty |
-| 1 | 0 | `STATUS.is_with_material` | Normal pressure — material present |
-| 1 | 1 | `ALARMS.is_clogged` | Excessive pressure — likely blockage |
-| 0 | 1 | `ALARMS.is_in_error` | Impossible state — sensor or wiring fault |
+`is_empty`/`is_with_material` are normal conditions the process continuously passes through. `pipeline_clogged` isn't a third variant of the same cycle: it physically indicates material has accumulated enough to also engage the high sensor, a condition that should never persist. `sensor_mismatch` flags a physically inconsistent combination (the high sensor can't trip without the low one having already tripped) — a likely fault or wiring error rather than a real process condition.
 
-The PSL=0, PSH=1 combination is physically impossible (PSH requires a pressure already past PSL's threshold): it indicates a hardware fault and activates `is_in_error`.
+---
 
-There is no state machine and no acknowledgement mechanism. All states update directly every scan.
+## Logic
+
+```Pascal
+ALARMS.sensor_mismatch := NOT PSL AND PSH;
+ALARMS.pipeline_clogged := PSL AND PSH;
+
+STATUS.is_empty := NOT PSL AND NOT PSH;
+STATUS.is_with_material := PSL AND NOT PSH;
+```
+
+There's no state machine: evaluation is purely combinatorial and recomputed from scratch every scan, with no hysteresis.
 
 ---
 
 ## Alarms
 
-| ID | Condition | Cause |
-|----|-----------|-------|
-| DP-A01 | `ALARMS.is_clogged` | PSL=1 and PSH=1 — blockage or excessive upstream pressure |
-| DP-E01 | `ALARMS.is_in_error` | PSL=0 and PSH=1 — PSL switch fault, short circuit, or swapped wiring |
+| ID | Device-specific condition |
+|----|----------------------------|
+| [`PL-E01`](../index.en.md#pipeline-alarms) | `PSL AND PSH` |
+| [`PL-E02`](../index.en.md#pipeline-alarms) | `NOT PSL AND PSH` |
 
----
-
-## Settings
-
-No configurable parameters in `UDT_Dig_Pipeline`. Pressure thresholds are determined by the mechanical calibration of the physical pressure switches.
+Being a stateless FC, neither condition automatically feeds into an `internal_error` — this device has no FSM of its own to fault. If the caller wants `pipeline_clogged`/`sensor_mismatch` to contribute to its own fault aggregate, it's the caller's responsibility to include them explicitly (the same pattern the Nolvac uses to embed `XV01.STATUS.is_fault`).
 
 ---
 
@@ -74,23 +80,10 @@ classDiagram
         +Bool is_with_material
     }
     class ALARMS {
-        +Bool is_clogged
-        +Bool is_in_error
+        +Bool pipeline_clogged
+        +Bool sensor_mismatch
     }
     UDT_Dig_Pipeline *-- DEVICES
     UDT_Dig_Pipeline *-- STATUS
     UDT_Dig_Pipeline *-- ALARMS
 ```
-
----
-
-## State Logic
-
-The block implements no FSM. Evaluation is purely combinatorial (truth table):
-
-| PSL | PSH | Active flag | Type |
-|-----|-----|-------------|------|
-| FALSE | FALSE | `STATUS.is_empty` | Normal |
-| TRUE | FALSE | `STATUS.is_with_material` | Normal |
-| TRUE | TRUE | `ALARMS.is_clogged` | Alarm |
-| FALSE | TRUE | `ALARMS.is_in_error` | Hardware error |

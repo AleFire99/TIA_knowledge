@@ -6,28 +6,18 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Solenoid_valve"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         XY : _.UDT_Solenoid_valve;
     END_VAR
-    VAR 
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_q7";
-            S7_Visibility := "Hidden := External"
-        }
+    VAR_TEMP
+        { S7_MLC := "MLC_5AJ" }
         desired_open_command : Bool;
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_Vi";
-            S7_Visibility := "Hidden := External"
-        }
-        validated_open_command : Bool;
     END_VAR
-    VAR CONSTANT 
+    VAR CONSTANT
         { S7_MLC := "MLC_4rF" }
-        OPEN : Int := 3;
+        ENERGIZED : Int := 3;
         { S7_MLC := "MLC_47m" }
-        CLOSED : Int := 1;
+        DE_ENERGIZED : Int := 1;
     END_VAR
 
     { S7_Language := "SCL" }
@@ -38,31 +28,34 @@ FUNCTION_BLOCK "Solenoid_valve"
             ELSE
                 #desired_open_command := #XY.CMD.auto;
             END_IF;
-            // Only update validated command if not interlocked
-            IF NOT #XY.CMD.interlocked THEN
-                #validated_open_command := #desired_open_command;
-            END_IF;
-            // If interlocked, validated_open_command retains its last value
         END_REGION
         
-        REGION State management
-            IF #validated_open_command THEN
-                #XY.STATUS.state := #OPEN;    // Valve open
-            ELSE
-                #XY.STATUS.state := #CLOSED;    // Valve closed
-            END_IF;
+        REGION FSM
+            CASE #XY.STATUS.state OF
+                    
+                #DE_ENERGIZED:
+                    IF #desired_open_command THEN
+                        #XY.STATUS.state := #ENERGIZED;  
+                    END_IF;
+                    
+                #ENERGIZED:
+                    IF NOT #desired_open_command THEN
+                        #XY.STATUS.state := #DE_ENERGIZED; 
+                    END_IF;
+            END_CASE;
         END_REGION
         
         REGION Output mapping
             #XY.out := FALSE;
-            #XY.STATUS.is_closed := TRUE;
-            #XY.STATUS.is_open := FALSE;
             
-            IF #XY.STATUS.state = #OPEN THEN
+            IF #XY.STATUS.state = #ENERGIZED THEN
                 #XY.out := TRUE; // energize solenoid to open and hold
-                #XY.STATUS.is_closed := FALSE;
-                #XY.STATUS.is_open := TRUE;
             END_IF;
+        END_REGION
+        
+        REGION Status mapping
+            #XY.STATUS.is_de_energized := (#XY.STATUS.state = #DE_ENERGIZED);
+            #XY.STATUS.is_energized := (#XY.STATUS.state = #ENERGIZED);
         END_REGION
         
     END_NETWORK

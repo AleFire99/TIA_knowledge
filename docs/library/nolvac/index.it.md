@@ -2,68 +2,90 @@
 
 ## Panoramica
 
-Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia. `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` (valvola a farfalla SS) e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno. Il blocco funzionale `Nolvac` gestisce il ciclo completo tramite il parametro `VC : UDT_Nolvac`.
+**Tier 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Tier 2) e due Valvole a Solenoide (Tier 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
 
-Il ciclo alterna due fasi — **convogliamento** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché `CMD.auto` è attivo.
-
----
-
-## Componenti principali
-
-- **Elettrovalvola convogliamento `XY03`** — attiva la depressione per il trasporto del materiale; eccitata per tutta la fase CONVEYING
-- **Valvola a farfalla SS `XV01`** — apre l'ingresso durante la fase di pulizia; vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.it.md)
-- **Elettrovalvola pulizia `XY02`** — fornisce aria compressa per il retrolavaggio del filtro durante CLEANING
+Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché il comando resta attivo.
 
 ---
 
-## Segnali I/O
+## Composizione
+
+| Tag | Tipo | Ruolo |
+|-----|------|-------|
+| `XV01` | Valvola a Farfalla SS (Tier 2) | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.it.md) |
+| `XY02` | Valvola a Solenoide (Tier 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
+| `XY03` | Valvola a Solenoide (Tier 1) | Depressione di trasporto durante `SUCTION` |
+
+---
+
+## Segnali di controllo
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `DEVICES.XV01` | UDT_SS_Valve | Valvola farfalla SS; aperta durante CLEANING |
-| `DEVICES.XY02` | UDT_Solenoid_valve | Solenoide pulizia; eccitato durante CLEANING |
-| `DEVICES.XY03` | UDT_Solenoid_valve | Solenoide convogliamento; eccitato durante CONVEYING |
+| `DEVICES.XV01` | UDT_SS_Valve | Valvola farfalla SS; aperta durante `CLEANING` |
+| `DEVICES.XY02` | UDT_Solenoid_valve | Solenoide pulizia; eccitato durante `CLEANING` |
+| `DEVICES.XY03` | UDT_Solenoid_valve | Solenoide aspirazione; eccitato durante `SUCTION` |
 | `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
-| `CMD.auto` | Bool | Comando automazione: TRUE = avvia ciclo |
-| `CMD.interlocked` | Bool | Interblocco (attualmente non utilizzato nella FSM) |
-| `CMD.ack` | Bool | Conferma allarme operatore |
-| `STATUS.state` | Int | Stato FSM: 0=ERROR, 1=IDLE, 2=CONVEYING, 3=CLEANING |
-| `STATUS.is_conveying` | Bool | TRUE durante la fase di convogliamento |
-| `STATUS.is_cleaning` | Bool | TRUE durante la fase di pulizia filtro |
-| `ALARMS.valve_error` | Bool | Guasto rilevato su `XV01` |
+| `CMD.manual` | Bool | Comando di avvio ciclo in modalità manuale |
+| `CMD.auto` | Bool | Comando di avvio ciclo dall'automazione (ReadOnly external) |
+| `CMD.ack` | Bool | Conferma allarme e ripristino da FAULT |
 
 ---
 
-## Funzionamento
+## Parametri di regolazione
 
-Il ciclo operativo standard alterna due fasi mentre `CMD.auto` è attivo:
+| Parametro | Default | Descrizione |
+|-----------|---------|-------------|
+| `SETTING.suction_time` | T#30s | Durata della fase di aspirazione |
+| `SETTING.cleaning_time` | T#30s | Durata della fase di pulizia filtro |
 
-**Fase CONVEYING** — `XY03` viene eccitato per la durata `suction_time`. Il percorso di convogliamento è attivo. Al termine, il sistema transisce in CLEANING.
+---
 
-**Fase CLEANING** — `XV01` viene aperta e `XY02` eccitata per la durata `cleaning_time`. L'aria compressa rigenerava il filtro tramite retrolavaggio. Al termine, se `CMD.auto` è ancora attivo, il sistema torna in CONVEYING.
+## Stati e output
 
-Se `CMD.auto` viene rimosso in qualsiasi momento durante CONVEYING o CLEANING, il sistema torna immediatamente a IDLE, disattivando tutte le uscite.
+| Stato | `XV01` | `XY02` | `XY03` | Descrizione |
+|-------|--------|--------|--------|-------------|
+| IDLE | chiusa | spenta | spenta | Standby, in attesa del comando |
+| ACTIVE / SUCTION | chiusa | spenta | eccitata | Aspirazione del materiale |
+| ACTIVE / CLEANING | aperta | eccitata | spenta | Pulizia del filtro |
+| FAULT | — | spenta | spenta | Guasto; attende conferma operatore |
 
-Un guasto su `XV01` (`XV01.ALARMS.error`) imposta `ALARMS.valve_error = TRUE` e porta il sistema in ERROR da qualsiasi stato. `CMD.ack` riporta il sistema a IDLE.
+---
 
-Il `manual_mode` viene propagato a `XV01`, `XY02` e `XY03` permettendo all'operatore di controllare manualmente i dispositivi dall'HMI.
+## Diagramma di stato
+
+```mermaid
+stateDiagram-v2
+state NOLVAC{
+    [*] --> NORMAL_BEHAVIOUR
+    state NORMAL_BEHAVIOUR {
+        [*] --> IDLE
+        IDLE --> ACTIVE : desired_command
+        state ACTIVE {
+            [*] --> SUCTION
+            SUCTION --> CLEANING : suction_timer scaduto
+            CLEANING --> SUCTION : cleaning_timer scaduto
+        }
+        ACTIVE --> IDLE : !desired_command
+    }
+    NORMAL_BEHAVIOUR --> FAULT : internal_error
+    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+}
+```
+
+```Pascal
+internal_error := XV01.STATUS.is_fault;
+```
+
+La rimozione del comando in qualsiasi momento durante `ACTIVE` riporta immediatamente a `IDLE`, disattivando tutte le uscite.
 
 ---
 
 ## Allarmi
 
-| ID | Condizione | Causa |
-|----|------------|-------|
-| NV-E01 | `ALARMS.valve_error` | Guasto su `XV01` — vedere [allarmi valvola SS](../valves/butterfly/single_solenoid/index.it.md#allarmi) |
+Nessun allarme proprio — `UDT_Nolvac` non possiede una struttura `ALARMS`. L'unico guasto rilevato è la propagazione diretta di `XV01.STATUS.is_fault`; le solenoidi `XY02`/`XY03` non hanno sensori propri e non possono generare un guasto.
 
----
-
-## Parametri
-
-| Parametro | Default | Descrizione |
-|-----------|---------|-------------|
-| `SETTING.suction_time` | T#30s | Durata della fase di convogliamento |
-| `SETTING.cleaning_time` | T#30s | Durata della fase di pulizia filtro |
+Vedere gli [allarmi Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.it.md#allarmi) per la causa effettiva quando `internal_error` è TRUE.
 
 ---
 
@@ -79,8 +101,8 @@ classDiagram
     }
     class CMD {
         +Bool manual_mode
+        +Bool manual
         +Bool auto
-        +Bool interlocked
         +Bool ack
     }
     class SETTING {
@@ -89,60 +111,18 @@ classDiagram
     }
     class STATUS {
         +Int state
-        +Bool is_conveying
+        +Int normal_state
+        +Int active_state
+        +Bool is_idle
+        +Bool is_active
+        +Bool is_suction
         +Bool is_cleaning
-    }
-    class ALARMS {
-        +Bool valve_error
+        +Bool is_fault
     }
     UDT_Nolvac *-- DEVICES
     UDT_Nolvac *-- CMD
     UDT_Nolvac *-- SETTING
     UDT_Nolvac *-- STATUS
-    UDT_Nolvac *-- ALARMS
 ```
 
----
-
-## Macchina a stati (FSM)
-
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE
-
-    IDLE --> CONVEYING : CMD.auto
-    IDLE --> ERROR : valve_error
-
-    CONVEYING --> IDLE : NOT CMD.auto
-    CONVEYING --> CLEANING : suction_timer scaduto
-    CONVEYING --> ERROR : valve_error
-
-    CLEANING --> IDLE : NOT CMD.auto
-    CLEANING --> CONVEYING : cleaning_timer scaduto
-    CLEANING --> ERROR : valve_error
-
-    ERROR --> IDLE : CMD.ack
-```
-
-### Tabella stati e uscite
-
-| Stato | `XV01` | `XY02` | `XY03` | Descrizione |
-|-------|--------|--------|--------|-------------|
-| IDLE | chiusa | spenta | spenta | In attesa del comando auto |
-| CONVEYING | chiusa | spenta | eccitata | Convogliamento attivo per `suction_time` |
-| CLEANING | aperta | eccitata | spenta | Pulizia filtro per `cleaning_time` |
-| ERROR | — | spenta | spenta | Guasto valvola; attende conferma operatore |
-
-### Tabella transizioni di stato
-
-| Stato attuale | Condizione | Stato successivo | Azione |
-|---------------|------------|-----------------|--------|
-| IDLE | `CMD.auto` = TRUE | CONVEYING | XY03 → eccitata; avvia suction_timer |
-| IDLE | `valve_error` | ERROR | — |
-| CONVEYING | NOT `CMD.auto` | IDLE | Tutte uscite → diseccitate |
-| CONVEYING | suction_timer scaduto | CLEANING | XY03 → spenta; XV01 apre, XY02 → eccitata; avvia cleaning_timer |
-| CONVEYING | `valve_error` | ERROR | Tutte uscite → diseccitate |
-| CLEANING | NOT `CMD.auto` | IDLE | Tutte uscite → diseccitate |
-| CLEANING | cleaning_timer scaduto | CONVEYING | XV01 chiude, XY02 → spenta; XY03 → eccitata; avvia suction_timer |
-| CLEANING | `valve_error` | ERROR | Tutte uscite → diseccitate |
-| ERROR | `CMD.ack` = TRUE | IDLE | Azzera allarmi; attende nuovo `CMD.auto` |
+Nessuna classe `ALARMS` — questo UDT non ne possiede una propria. `internal_error` è interno al blocco funzionale.

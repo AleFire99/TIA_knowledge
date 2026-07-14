@@ -1,37 +1,32 @@
 ﻿TYPE
     UDT_Solenoid_valve : STRUCT
         CMD : STRUCT
-            { S7_MLC := "MLC_3TQ" }
+            { S7_MLC := "MLC_3Dd" }
             manual_mode : Bool;
-            { S7_MLC := "MLC_3FD" }
+            { S7_MLC := "MLC_jk" }
             manual : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_sx"
+                S7_MLC := "MLC_3hn"
             }
             auto : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Sw"
-            }
-            interlocked : Bool;
         END_STRUCT;
         STATUS : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3pD"
+                S7_MLC := "MLC_56v"
             }
             state : Int := 1;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Lx"
+                S7_MLC := "MLC_3d9"
             }
-            is_open : Bool;
+            is_energized : Bool;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_hT"
+                S7_MLC := "MLC_4ux"
             }
-            is_closed : Bool;
+            is_de_energized : Bool;
         END_STRUCT;
         { S7_MLC := "MLC_4v8" }
         out : Bool;

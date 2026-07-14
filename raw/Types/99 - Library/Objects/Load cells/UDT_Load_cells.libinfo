@@ -3,8 +3,8 @@
   Comment:
     it-IT: First commit
 LibraryVersion:
-  VersionNumber: 0.4.7
+  VersionNumber: 1.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added flags for loaded finished and unloading finished routines
+    en-US: Added layer in loading FSM

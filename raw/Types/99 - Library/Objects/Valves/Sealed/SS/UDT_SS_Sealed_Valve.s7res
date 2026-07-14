@@ -1,29 +1,29 @@
 ﻿MultiLingualTexts:
-  - id: MLC_4A3
+  - id: MLC_g8
+    en-US: OUTPUT - Solenoid command
+  - id: MLC_4aq
     en-US: OUTPUT - Seal solenoid valve command
-  - id: MLC_52S
+  - id: MLC_4aN
     en-US: COMMAND - Active mode
-  - id: MLC_4Af
+  - id: MLC_46c
     en-US: COMMAND - Manual command
-  - id: MLC_VM
+  - id: MLC_SV
     en-US: COMMAND - Automatic command
-  - id: MLC_4Sq
+  - id: MLC_3AM
     en-US: COMMAND - Acknowledge all errors
-  - id: MLC_4Bi
+  - id: MLC_UN
     en-US: SETTING - Max time to complete movement
-  - id: MLC_4PA
+  - id: MLC_LS
     en-US: STATE - 0=fault, 1=normal
-  - id: MLC_4H9
+  - id: MLC_3FB
     en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
-  - id: MLC_4TN
+  - id: MLC_36q
     en-US: STATUS - Valve in fault state
-  - id: MLC_uX
+  - id: MLC_39R
     en-US: STATUS - Valve closed
-  - id: MLC_3F7
+  - id: MLC_3q7
     en-US: STATUS - Valve opening
-  - id: MLC_Qh
+  - id: MLC_443
     en-US: STATUS - Valve open
-  - id: MLC_3Zx
+  - id: MLC_4Zn
     en-US: STATUS - Valve closing
-  - id: MLC_4be
-    en-US: ALARM - General error

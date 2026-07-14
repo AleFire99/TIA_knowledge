@@ -2,9 +2,21 @@
 
 ## Panoramica
 
-`UDT_Load_cells` è la struttura dati condivisa tra due blocchi funzionali indipendenti — `Loading` e `Unloading` — e l'adattatore hardware `Pavone_DAT_1400`. Ogni blocco gestisce la propria macchina a stati tramite i campi `STATUS.LOADING` e `STATUS.UNLOADING` della stessa istanza UDT.
+**Tier 3 — composito.** `UDT_Load_cells` è la struttura dati condivisa tra due blocchi funzionali indipendenti — `Loading` e `Unloading` — e l'adattatore hardware opzionale `Pavone_DAT_1400`. Ogni blocco gestisce la propria macchina a stati tramite i campi `STATUS.LOADING` e `STATUS.UNLOADING` della stessa istanza UDT.
 
 `Loading` gestisce il riempimento di un contenitore a peso. `Unloading` gestisce lo svuotamento con possibilità di pausa e ripresa. `Pavone_DAT_1400` è un FC opzionale che converte i registri raw del trasmettitore Pavone DAT 1400 nei campi `IN` dell'UDT.
+
+---
+
+## Allarmi delle celle di carico
+
+| ID | Classe | Titolo | Condizione | Applicabile a |
+|----|--------|--------|------------|----------------|
+| `LC-W01` | W | Peso fuori scala | `ALARMS.weight_invalid` — non causa una transizione a ERROR, blocca solo l'avvio di un ciclo | Celle di Carico |
+| `LC-E01` | E | Timeout carico | `ALARMS.loading_timeout` — porta `Loading` in ERROR | Celle di Carico |
+| `LC-E02` | E | Timeout scarico | `ALARMS.unloading_timeout` — porta `Unloading` in ERROR | Celle di Carico |
+
+`LC-W01` è un warning (non causa una transizione di stato) perché blocca solo l'ingresso in `LOADING`/`CONVEYING` da `IDLE` — a differenza di `LC-E01`/`LC-E02`, errori veri e propri, ciascuno con la propria transizione a `ERROR` sulla rispettiva FSM.
 
 ---
 
@@ -122,11 +134,11 @@ In output: `dat_OUT.Command_register := 16#4` se `CMD.tare_request`, altrimenti 
 
 ## Allarmi
 
-| ID | Condizione | Causa |
-|----|------------|-------|
-| LC-A01 | `ALARMS.weight_invalid` | Peso fuori scala — verificare celle, cablaggio, trasmettitore |
-| LC-E01 | `ALARMS.loading_timeout` | Ciclo di carico durato oltre `loading_timeout` — verificare l'impianto |
-| LC-E02 | `ALARMS.unloading_timeout` | Ciclo di scarico durato oltre `unloading_timeout` — verificare l'impianto |
+| ID | Condizione specifica |
+|----|----------------------|
+| [`LC-W01`](#allarmi-delle-celle-di-carico) | Peso fuori scala — verificare celle, cablaggio, trasmettitore |
+| [`LC-E01`](#allarmi-delle-celle-di-carico) | Ciclo di carico durato oltre `loading_timeout` — verificare l'impianto |
+| [`LC-E02`](#allarmi-delle-celle-di-carico) | Ciclo di scarico durato oltre `unloading_timeout` — verificare l'impianto |
 
 ---
 

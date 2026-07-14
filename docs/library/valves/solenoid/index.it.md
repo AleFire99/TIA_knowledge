@@ -2,44 +2,58 @@
 
 ## Panoramica
 
-La valvola a solenoide è una valvola on/off a controllo diretto. Una bobina elettromagnetica aziona uno stantuffo per aprire o chiudere la porta della valvola. Non è presente alcun sensore di posizione — lo stato è desunto dal comando. È l'attuatore base usato come sotto-componente in altri moduli della libreria.
+**Tier 1 — atomico.** La valvola a solenoide è l'attuatore pneumatico di base della libreria: una bobina elettromagnetica eccita o diseccita una singola uscita fisica (`out`). Non ha feedback di posizione proprio — il proprio stato (`ENERGIZED`/`DE_ENERGIZED`) riflette solo il comando ricevuto, non una conferma fisica. È il componente più riutilizzato della libreria: ogni valvola di livello superiore (Manicotto, Farfalla SS/DS, Sigillata) ne incorpora una o più istanze come proprio attuatore.
+
+L'arbitraggio `manual_mode`/`manual`/`auto` di questo blocco è lo schema canonico riutilizzato — con la stessa logica, anche se non sempre con lo stesso nome di campo — da ogni dispositivo di questa libreria che incorpora un'istanza di Valvola a Solenoide.
 
 ---
 
-## Componenti principali
-
-- **Corpo valvola** — porte di ingresso e uscita
-- **Bobina elettromagnetica** — muove lo stantuffo all'eccitazione
-- **Stantuffo / otturatore** — chiude o apre la porta
-- **Ritorno a molla** — riporta lo stantuffo in posizione di riposo alla diseccitazione
-
----
-
-## Segnali I/O
+## Segnali di controllo
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `out` | Uscita — Bool | Comando fisico bobina: TRUE = eccitata (aperta) |
+| `CMD.manual_mode` | Bool | TRUE = sorgente comando manuale invece che automatica |
+| `CMD.manual` | Bool | Comando di eccitazione in modalità manuale |
+| `CMD.auto` | Bool | Comando di eccitazione dall'automazione (ReadOnly external) |
+| `out` | Bool | Uscita fisica bobina: TRUE = eccitata |
+
+```
+desired_open_command := manual_mode ? manual : auto
+```
 
 ---
 
-## Funzionamento
+## Parametri di regolazione
 
-Quando il comando di apertura è attivo (`auto = TRUE` o `manual = TRUE` in modalità manuale), la bobina viene eccitata e la valvola si apre. Quando il comando viene rimosso, la molla riporta lo stantuffo e la valvola si chiude.
+Nessun parametro configurabile.
 
-Se `interlocked = TRUE`, il comando validato si blocca all'ultimo valore — la valvola non apre né chiude finché l'interlock non viene rimosso. Non è presente `ack` su questo modulo in quanto non ci sono allarmi.
+---
+
+## Stati e output
+
+| Stato | Valore | `out` | Descrizione |
+|-------|--------|-------|-------------|
+| `DE_ENERGIZED` | 1 | FALSE | Bobina diseccitata |
+| `ENERGIZED` | 3 | TRUE | Bobina eccitata |
+
+---
+
+## Diagramma di stato
+
+```mermaid
+stateDiagram-v2
+state SOLENOID{
+    [*] --> DE_ENERGIZED
+    DE_ENERGIZED --> ENERGIZED : desired_open_command
+    ENERGIZED --> DE_ENERGIZED : !desired_open_command
+}
+```
 
 ---
 
 ## Allarmi
 
-Nessun allarme — nessun sensore di posizione disponibile.
-
----
-
-## Parametri
-
-Nessun parametro configurabile.
+Questo modulo non genera allarmi propri — nessun sensore di posizione disponibile su cui basare una rilevazione di guasto.
 
 ---
 
@@ -52,43 +66,13 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class STATUS {
         +Int state
-        +Bool is_open
-        +Bool is_closed
+        +Bool is_energized
+        +Bool is_de_energized
     }
     UDT_Solenoid_valve *-- CMD
     UDT_Solenoid_valve *-- STATUS
     UDT_Solenoid_valve : +Bool out
 ```
-
----
-
-## Macchina a stati (FSM)
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL
-
-    state NORMAL {
-        [*] --> CLOSED
-        CLOSED --> OPEN : comando apertura
-        OPEN --> CLOSED : comando rimosso
-    }
-```
-
-### Tabella stati e uscite
-
-| Stato | `out` | Descrizione |
-|-------|-------|-------------|
-| CLOSED (1) | FALSE | Valvola chiusa, nessun flusso |
-| OPEN (3) | TRUE | Valvola aperta, flusso consentito |
-
-### Tabella transizioni di stato
-
-| Stato attuale | Condizione | Stato successivo | Azione |
-|---------------|------------|-----------------|--------|
-| CLOSED | validated_open_command = TRUE | OPEN | `out` → TRUE |
-| OPEN | validated_open_command = FALSE | CLOSED | `out` → FALSE |

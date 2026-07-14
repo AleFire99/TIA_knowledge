@@ -1,24 +1,25 @@
-# Valvola a Farfalla — Doppio Solenoide (DS)
+# Valvola a Farfalla — Bisolenoide (DS)
 
 ## Panoramica
 
-`DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti. `XYA` aziona l'attuatore verso l'apertura; `XYB` lo aziona verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a solenoidi diseccitati. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
+**Tier 3 — composito.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti, incorporando due istanze di Valvola a Solenoide (Tier 1). `XYA` aziona l'attuatore verso l'apertura; `XYB` verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a entrambi i solenoidi diseccitati — nessun ritorno a molla. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
 
-Al primo ciclo PLC, il simulatore inizializza `ZSL = TRUE`, `ZSH = FALSE` (stato chiuso). Il blocco di controllo legge i sensori per determinare lo stato iniziale: ZSL attivo → NORMAL/CLOSED, ZSH attivo → NORMAL/OPEN, condizione ambigua → FAULT.
-
----
-
-## Componenti principali
-
-- **Attuatore pneumatico a doppio effetto** — bistabile; nessun ritorno a molla
-- **Elettrovalvola `XYA`** — aziona e mantiene l'attuatore in posizione aperta
-- **Elettrovalvola `XYB`** — aziona e mantiene l'attuatore in posizione chiusa
-- **Finecorsa `ZSL`** — TRUE = disco completamente chiuso
-- **Finecorsa `ZSH`** — TRUE = disco completamente aperto
+Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve`.
 
 ---
 
-## Segnali I/O
+## Composizione
+
+| Tag | Tipo | Ruolo |
+|-----|------|-------|
+| `XYA` | Valvola a Solenoide (Tier 1) | Aziona verso l'apertura |
+| `XYB` | Valvola a Solenoide (Tier 1) | Aziona verso la chiusura |
+
+Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_open_command`) pilota quale dei due solenoidi va eccitato — le due istanze non arbitrano mai in autonomia.
+
+---
+
+## Segnali di controllo
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
@@ -26,57 +27,72 @@ Al primo ciclo PLC, il simulatore inizializza `ZSL = TRUE`, `ZSH = FALSE` (stato
 | `DEVICES.ZSH` | Bool | INPUT — Finecorsa posizione aperta |
 | `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola apertura |
 | `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola chiusura |
-| `CMD.manual_mode` | Bool | COMANDO — TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | COMANDO — Comando apertura in modalità manuale |
-| `CMD.auto` | Bool | COMANDO — Comando apertura dall'automazione (ReadOnly external) |
-| `CMD.interlocked` | Bool | GUARDIA — TRUE = blocca aggiornamento del comando validato (ReadOnly external) |
-| `CMD.ack` | Bool | COMANDO — Conferma allarmi e ripristino da FAULT |
-| `SETTING.actuator_timeout` | Time | Timeout movimento attuatore (default T#2s) |
-| `STATUS.state` | Int | STATO — 0=FAULT, 1=NORMAL |
-| `STATUS.normal_state` | Int | SOTTOSTATO — 1=CLOSED, 2=OPENING, 3=OPEN, 4=CLOSING |
-| `STATUS.is_fault` | Bool | STATO — Blocco in condizione di guasto |
-| `STATUS.is_closed` | Bool | STATO — Valvola ferma in posizione chiusa |
-| `STATUS.is_opening` | Bool | STATO — Attuatore in movimento verso apertura |
-| `STATUS.is_open` | Bool | STATO — Valvola completamente aperta |
-| `STATUS.is_closing` | Bool | STATO — Attuatore in movimento verso chiusura |
-| `ALARMS.error` | Bool | ALLARME — Uno o più guasti attivi |
+| `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | Comando di apertura in modalità manuale |
+| `CMD.auto` | Bool | Comando di apertura dall'automazione (ReadOnly external) |
+| `CMD.ack` | Bool | Conferma allarmi e ripristino da FAULT |
 
 ---
 
-## Funzionamento
+## Parametri di regolazione
 
-Il blocco risolve il comando desiderato ogni scan esattamente come `SS_valve` (manuale/automatico/interblocco). Il comando validato controlla le transizioni di stato.
+| Parametro | Default | Descrizione |
+|-----------|---------|-------------|
+| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING |
 
-**CLOSED** — `XYB` eccitata per mantenere il disco in posizione chiusa; `XYA` diseccitata. Se `validated_open_command = TRUE`, transizione verso OPENING.
+---
 
-**OPENING** — `XYA` eccitata; `XYB` diseccitata. L'attuatore spinge il disco verso l'apertura. Quando `ZSH = TRUE AND ZSL = FALSE` → OPEN. Se `actuator_timeout` scade → `movement_timeout`.
+## Stati e output
 
-**OPEN** — `XYA` eccitata per mantenere il disco aperto; `XYB` diseccitata. Se `validated_open_command = FALSE`, transizione verso CLOSING.
+| Stato | `XYA` | `XYB` | Descrizione |
+|-------|-------|-------|-------------|
+| CLOSED | FALSE | FALSE | Disco chiuso; nessuna eccitazione necessaria (bistabile) |
+| OPENING | TRUE | FALSE | `XYA` spinge il disco verso apertura |
+| OPEN | FALSE | FALSE | Disco aperto; nessuna eccitazione necessaria |
+| CLOSING | FALSE | TRUE | `XYB` riporta il disco in chiusura |
+| FAULT | FALSE | FALSE | Guasto; disco bistabile mantiene l'ultima posizione fisica |
 
-**CLOSING** — `XYB` eccitata; `XYA` diseccitata. L'attuatore porta il disco in chiusura. Quando `ZSL = TRUE AND ZSH = FALSE` → CLOSED. Se il timer scade → `movement_timeout`.
+`XYA`/`XYB` sono eccitati solo durante il movimento (`OPENING`/`CLOSING`) — l'attuatore bistabile non richiede eccitazione di mantenimento in `CLOSED`/`OPEN`.
 
-**FAULT** — Entrambi i solenoidi diseccitati; il disco bistabile mantiene l'ultima posizione fisica. `CMD.ack` azzera gli allarmi e, se i sensori mostrano una posizione valida, il blocco ritorna in NORMAL.
+---
+
+## Diagramma di stato
+
+```mermaid
+stateDiagram-v2
+state DS_VALVE{
+    [*] --> NORMAL : ZSL XOR ZSH al primo scan
+    [*] --> FAULT : sensori ambigui al primo scan
+
+    NORMAL --> FAULT : internal_error
+    FAULT --> NORMAL : ack & !internal_error
+
+    state NORMAL {
+        [*] --> CLOSED : ZSL & !ZSH
+        [*] --> OPEN : ZSH & !ZSL
+
+        CLOSED --> OPENING : desired_open_command
+        OPENING --> OPEN : ZSH & !ZSL
+        OPEN --> CLOSING : !desired_open_command
+        CLOSING --> CLOSED : ZSL & !ZSH
+    }
+}
+```
+
+```Pascal
+internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open;
+```
 
 ---
 
 ## Allarmi
 
-Quattro allarmi interni si sommano in `ALARMS.error`. Tutti si azzerano con `CMD.ack`.
-
-| Allarme | Condizione | Causa tipica |
-|---------|------------|--------------|
-| `sensor_conflict` | `ZSL = TRUE AND ZSH = TRUE` | Cortocircuito, finecorsa fuori sede |
-| `failed_to_close` | NORMAL/CLOSED ma `ZSL = FALSE` | Perdita segnale ZSL, ostruzione meccanica |
-| `failed_to_open` | NORMAL/OPEN ma `ZSH = FALSE` | Perdita segnale ZSH, guasto solenoide, assenza aria |
-| `movement_timeout` | OPENING o CLOSING oltre `actuator_timeout` | Ostruzione, aria insufficiente, solenoide guasto |
-
----
-
-## Parametri
-
-| Parametro | Default | Descrizione |
-|-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING prima di generare `movement_timeout` |
+| ID | Condizione specifica |
+|----|----------------------|
+| [`XV-E01`](../../index.it.md#allarmi-delle-valvole) | Stato stabile corrente non confermato dal finecorsa atteso |
+| [`XV-E02`](../../index.it.md#allarmi-delle-valvole) | `ZSL AND ZSH` contemporaneamente TRUE |
+| [`XV-E03`](../../index.it.md#allarmi-delle-valvole) | `CLOSING` non confermato entro `actuator_timeout` |
+| [`XV-E04`](../../index.it.md#allarmi-delle-valvole) | `OPENING` non confermato entro `actuator_timeout` |
 
 ---
 
@@ -95,7 +111,6 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
         +Bool ack
     }
     class SETTING {
@@ -111,7 +126,10 @@ classDiagram
         +Bool is_closing
     }
     class ALARMS {
-        +Bool error
+        +Bool sensor_mismatch
+        +Bool sensor_conflict
+        +Bool failed_to_close
+        +Bool failed_to_open
     }
     UDT_DS_Valve *-- DEVICES
     UDT_DS_Valve *-- CMD
@@ -120,45 +138,4 @@ classDiagram
     UDT_DS_Valve *-- ALARMS
 ```
 
----
-
-## Macchina a stati (FSM)
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL : ZSL XOR ZSH al primo scan
-    [*] --> FAULT : sensori ambigui al primo scan
-
-    NORMAL --> FAULT : ALARMS.error
-    FAULT --> NORMAL : CMD.ack AND NOT error AND sensori validi
-
-    state NORMAL {
-        [*] --> CLOSED : ZSL=TRUE all'avvio
-        [*] --> OPEN : ZSH=TRUE all'avvio
-        CLOSED --> OPENING : validated_open_command
-        OPENING --> OPEN : ZSH AND NOT ZSL
-        OPEN --> CLOSING : NOT validated_open_command
-        CLOSING --> CLOSED : ZSL AND NOT ZSH
-    }
-```
-
-### Tabella stati e uscite
-
-| Stato | Sottostato | `XYA.CMD.auto` | `XYB.CMD.auto` | Descrizione |
-|-------|------------|----------------|----------------|-------------|
-| FAULT | — | FALSE | FALSE | Guasto; disco mantiene ultima posizione |
-| NORMAL | CLOSED | FALSE | TRUE | Disco chiuso; XYB mantiene posizione |
-| NORMAL | OPENING | TRUE | FALSE | XYA spinge il disco verso apertura |
-| NORMAL | OPEN | TRUE | FALSE | Disco aperto; XYA mantiene posizione |
-| NORMAL | CLOSING | FALSE | TRUE | XYB riporta il disco in chiusura |
-
-### Tabella transizioni di stato
-
-| Stato attuale | Condizione | Stato successivo |
-|---------------|------------|-----------------|
-| NORMAL/CLOSED | `validated_open_command` | NORMAL/OPENING |
-| NORMAL/OPENING | `ZSH AND NOT ZSL` | NORMAL/OPEN |
-| NORMAL/OPEN | `NOT validated_open_command` | NORMAL/CLOSING |
-| NORMAL/CLOSING | `ZSL AND NOT ZSH` | NORMAL/CLOSED |
-| NORMAL (qualsiasi) | `ALARMS.error` | FAULT |
-| FAULT | `CMD.ack AND NOT error AND ZSL XOR ZSH` | NORMAL/CLOSED o NORMAL/OPEN |
+`internal_error` è interno al blocco funzionale, non esposto tramite l'UDT.

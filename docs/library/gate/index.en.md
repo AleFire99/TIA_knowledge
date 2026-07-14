@@ -1,58 +1,31 @@
-# Gate / Door
+# Gate with Electric Lock
 
 ## Overview
 
-`Gate_door` controls a single-acting pneumatic gate. The solenoid (`XY`) drives opening: energised = gate opening or held open; de-energised = spring returns gate to closed position. `ZSL` provides closed-position feedback. The orchestrator controls the gate via `CMD.open` and `CMD.close`; `CMD.interlocked` prevents the CLOSED → OPENING transition when active.
+**Tier 2.** Unlike the rest of the library's devices, the PLC never moves the gate itself. Physical opening is done by the operator by hand; the PLC can only grant or deny permission, by commanding the retaining solenoid (`XY`) to unlock. Closing is analogous — the PLC commands the solenoid to re-lock, but completion depends entirely on the operator physically closing the gate, with no time limit imposed by the logic.
 
-No `ALARMS` struct or fault state exists — the block is a four-state Moore sequencer with no built-in error detection.
-
----
-
-## Main Components
-
-- **Pneumatic actuator** — single-acting, spring-return to closed
-- **Solenoid valve `XY`** — controls air to the actuator: energised = pushes gate open or holds it open
-- **Limit switch `ZSL`** — TRUE = gate physically in closed position
-- **CMD.interlocked** — active-high guard: TRUE = CLOSED → OPENING transition blocked
+**Safety constraint:** the actual safety function (preventing unlock when it isn't safe to open) must be implemented via electrical wiring (e.g. a safety relay or a contact wired in series with the solenoid's supply), not left to PLC logic alone. `CMD.safe_to_open` in this block is a coordination/HMI-level permission, not the safety barrier — the latter must work independently of any program bug or lockup.
 
 ---
 
-## I/O Signals
+## Composition
+
+| Tag | Type | Role |
+|-----|------|------|
+| `XY` | Solenoid Valve (Tier 1) | Retaining solenoid — energize-to-unlock logic |
+
+---
+
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `DEVICES.ZSL` | Bool | INPUT — Closed-position limit switch: TRUE = gate closed |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Actuator solenoid valve |
-| `CMD.open` | Bool | COMMAND — Open request |
-| `CMD.close` | Bool | COMMAND — Close request |
-| `CMD.interlocked` | Bool | GUARD — TRUE = opening blocked by orchestrator |
-| `STATUS.state` | Int | STATE — 1=Closed, 2=Opening, 3=Open, 4=Closing |
-| `STATUS.is_closed` | Bool | STATE — Gate stationary in closed position |
-| `STATUS.is_opening` | Bool | STATE — Actuator moving toward open |
-| `STATUS.is_open` | Bool | STATE — Gate fully open |
-| `STATUS.is_closing` | Bool | STATE — Spring returning gate to closed |
-
----
-
-## Operating Routine
-
-**CLOSED** — Gate is at rest with `ZSL = TRUE`. Solenoid de-energised. `CMD.open` with `NOT CMD.interlocked` transitions to OPENING. If `interlocked = TRUE`, the command is ignored.
-
-**OPENING** — Solenoid energises (`XY.CMD.auto = TRUE`) and the actuator pushes the gate toward the open position. When `ZSL` falls to FALSE, the gate has left the closed position → transitions to OPEN.
-
-**OPEN** — Solenoid remains energised to hold the gate open against the return spring. `CMD.close` transitions to CLOSING.
-
-**CLOSING** — Solenoid de-energises (`XY.CMD.auto = FALSE`); the spring returns the gate to closed. When `ZSL` rises to TRUE, the gate has reached the closed position → transitions to CLOSED.
-
-**Initialisation** — On first PLC scan, state is derived from `ZSL`: TRUE → CLOSED, FALSE → OPEN.
-
-`CMD.interlocked` only blocks the CLOSED → OPENING transition. A gate already open or in motion is not affected.
-
----
-
-## Alarms
-
-`UDT_Gate_Door` has no `ALARMS` struct. Solenoid faults are visible via `DEVICES.XY.ALARMS` (see [Solenoid valve](../../valves/solenoid/index.en.md#alarms)).
+| `DEVICES.ZSL` | Bool | INPUT — Gate physically closed **and** solenoid actively engaged (combined signal: the PLC cannot distinguish "closed but unlocked" from "open") |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Retaining solenoid (energized = unlocked) |
+| `CMD.open` | Bool | Operator request to unlock/open |
+| `CMD.close` | Bool | Operator request to re-lock early, before the inactivity timer expires |
+| `CMD.safe_to_open` | Bool | Coordination-level permission (ReadOnly external) — necessary but not sufficient, see safety constraint above |
+| `CMD.ack` | Bool | Acknowledges alarms and clears FAULT |
 
 ---
 
@@ -60,7 +33,63 @@ No `ALARMS` struct or fault state exists — the block is a four-state Moore seq
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.door_timeout` | T#3M | Maximum time in OPEN state before automatic closing is triggered |
+| `SETTING.unlock_timeout` | T#5s | Maximum time allowed for unlock confirmation |
+| `SETTING.inactivity_timeout` | T#3M | Maximum time open before automatic re-locking |
+
+---
+
+## States and Outputs
+
+| State | `XY` | Description |
+|-------|------|-------------|
+| CLOSED | FALSE | Gate closed and locked, confirmed by `ZSL` |
+| OPENING | TRUE | Unlock commanded, not yet confirmed |
+| OPEN | TRUE | Unlock confirmed — physical position beyond this point is known only to the operator |
+| CLOSING | FALSE | Re-lock commanded, waiting for the operator to physically close it — no deadline, this is normal waiting |
+| FAULT | TRUE | Fault — deliberately unlocks (see below) |
+
+---
+
+## State Machine
+
+```mermaid
+stateDiagram-v2
+state GATE_DOOR {
+    [*] --> NORMAL_BEHAVIOUR
+    state NORMAL_BEHAVIOUR {
+        [*] --> CLOSED : ZSL
+        [*] --> OPEN : !ZSL
+
+        CLOSED --> OPENING : CMD.open & CMD.safe_to_open
+        OPENING --> OPEN : !ZSL
+        OPEN --> CLOSING : CMD.close | inactivity_timer expired
+        CLOSING --> OPEN : CMD.open
+        CLOSING --> CLOSED : ZSL
+    }
+    NORMAL_BEHAVIOUR --> FAULT : internal_error
+    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+}
+```
+
+```Pascal
+internal_error := failed_to_unlock;
+```
+
+`CMD.open` during `CLOSING` goes straight back to `OPEN`, without passing through `OPENING` or re-checking `CMD.safe_to_open` — the gate was never actually re-secured (`ZSL` never returned TRUE), so no new permission is being granted, only an incomplete re-lock being cancelled.
+
+On return from `FAULT`, the entry guard re-evaluates the same `ZSL` sensor — same mechanism as the first scan. With only one combined signal, recovery can only distinguish `CLOSED` from `OPEN`, never an intermediate condition.
+
+In `FAULT`, `XY` is deliberately energized (unlocked): a PLC fault must never trap an operator behind a locked door. The real safety barrier is the electrical interlock upstream of `XY`, not this function block.
+
+---
+
+## Alarms
+
+| ID | Class | Title | Condition |
+|----|-------|-------|-----------|
+| `GD-E01` | E | Failed to unlock | `CMD.open` accepted (state `OPENING`), `ZSL` not released within `unlock_timeout` |
+
+No timeout alarm on re-locking (`CLOSING`): the indefinite wait is normal behavior, not a fault, since completion depends on the operator's physical action, not the PLC.
 
 ---
 
@@ -76,53 +105,30 @@ classDiagram
     class CMD {
         +Bool open
         +Bool close
-        +Bool interlocked
+        +Bool ack
+        +Bool safe_to_open
     }
     class SETTING {
-        +Time door_timeout
+        +Time unlock_timeout
+        +Time inactivity_timeout
     }
     class STATUS {
         +Int state
+        +Int normal_state
         +Bool is_closed
         +Bool is_opening
         +Bool is_open
         +Bool is_closing
+        +Bool is_fault
+    }
+    class ALARMS {
+        +Bool failed_to_unlock
     }
     UDT_Gate_Door *-- DEVICES
     UDT_Gate_Door *-- CMD
     UDT_Gate_Door *-- SETTING
     UDT_Gate_Door *-- STATUS
+    UDT_Gate_Door *-- ALARMS
 ```
 
----
-
-## State Machine (FSM)
-
-```mermaid
-stateDiagram-v2
-    [*] --> CLOSED : ZSL=TRUE at startup
-    [*] --> OPEN : ZSL=FALSE at startup
-
-    CLOSED --> OPENING : CMD.open AND NOT interlocked
-    OPENING --> OPEN : NOT ZSL
-    OPEN --> CLOSING : CMD.close OR door_timeout expired
-    CLOSING --> CLOSED : ZSL
-```
-
-### State and Output Table
-
-| State | Value | XY.CMD.auto | Description |
-|-------|-------|-------------|-------------|
-| CLOSED | 1 | FALSE | Gate closed, spring at rest |
-| OPENING | 2 | TRUE | Actuator pushing gate toward open |
-| OPEN | 3 | TRUE | Gate fully open, solenoid holding against spring |
-| CLOSING | 4 | FALSE | Spring returning gate to closed position |
-
-### State Transition Table
-
-| Current state | Condition | Next state | Action |
-|---------------|-----------|------------|--------|
-| CLOSED | `CMD.open` AND NOT `interlocked` | OPENING | `XY.CMD.auto` → TRUE |
-| OPENING | NOT `ZSL` | OPEN | Start door_timer |
-| OPEN | `CMD.close` OR `door_timer.Q` | CLOSING | `XY.CMD.auto` → FALSE |
-| CLOSING | `ZSL` | CLOSED | — |
+`internal_error` is internal to the function block, not exposed via the UDT.

@@ -2,25 +2,28 @@
 
 ## Overview
 
-The 2-sleeve filter cleaner drives alternating compressed air pulses through two solenoid valves (`XYA`, `XYB`) to clean a dual-sleeve filter. The sleeves are pulsed in sequence — never simultaneously — to minimize pressure drop on the accumulator and ensure effective cleaning of each sleeve. There is no position feedback — the system is open-loop.
+**Tier 3 — composite.** The 2-sleeve filter cleaner drives alternating compressed air pulses through two Solenoid Valves (Tier 1, `XYA`/`XYB`) to clean a dual-sleeve filter. The sleeves are pulsed in sequence — never simultaneously — to minimize pressure drop on the accumulator and ensure effective cleaning of each sleeve. There is no position feedback — the system is open-loop.
 
 ---
 
-## Main Components
+## Composition
 
-- **Filter housing** — contains two filter sleeves (A and B)
-- **Compressed air supply / accumulator** — sized for sequential pulse demand
-- **Solenoid valve `XYA`** — releases pulse into sleeve A
-- **Solenoid valve `XYB`** — releases pulse into sleeve B
+| Tag | Type | Role |
+|-----|------|------|
+| `XYA` | Solenoid Valve (Tier 1) | Pulse into sleeve A |
+| `XYB` | Solenoid Valve (Tier 1) | Pulse into sleeve B |
 
 ---
 
-## I/O Signals
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `XYA` | Output — Bool | Solenoid A: TRUE = pulse active on sleeve A |
-| `XYB` | Output — Bool | Solenoid B: TRUE = pulse active on sleeve B |
+| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Sleeve A pulse solenoid |
+| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Sleeve B pulse solenoid |
+| `CMD.manual_mode` | Bool | TRUE = manual mode |
+| `CMD.manual` | Bool | Enable in manual mode |
+| `CMD.auto` | Bool | Enable in automatic mode (ReadOnly external) |
 
 ---
 
@@ -36,13 +39,13 @@ When enabled, the system alternates between sleeves A and B in a continuous loop
 
 The active sleeve is tracked by `STATUS.active_sleeve` (0 = A, 1 = B). Removing the enable command at any point returns the system to **IDLE**.
 
-In **manual mode** (`manual_mode = TRUE`), the operator enables cleaning via `manual`. In **automatic mode**, the command comes from the process via `auto`. If `interlocked = TRUE`, the cleaning cycle pauses.
+In **manual mode** (`manual_mode = TRUE`), the operator enables cleaning via `manual`. In **automatic mode**, the command comes from the process via `auto`.
 
 ---
 
 ## Alarms
 
-No alarms — no feedback sensors.
+This module raises no alarms of its own — no feedback sensor is available to base a fault detection on.
 
 ---
 
@@ -68,7 +71,6 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class SETTING {
         +Time pulse_duration
@@ -97,6 +99,7 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
+state FILTER{
     [*] --> IDLE
     IDLE --> ACTIVE : enable command
     ACTIVE --> IDLE : command removed
@@ -106,6 +109,7 @@ stateDiagram-v2
         PULSING --> WAITING : pulse timer done
         WAITING --> PULSING : interval timer done (toggles sleeve)
     }
+}
 ```
 
 ### State and Output Table

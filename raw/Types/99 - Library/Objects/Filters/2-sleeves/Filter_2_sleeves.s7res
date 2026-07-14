@@ -1,18 +1,16 @@
 ﻿MultiLingualTexts:
   - id: MLC_Lq
     en-US: Indicate if first scan for initialization
-  - id: MLC_Te
-    en-US: Actual desired command based on active mode
-  - id: MLC_3Yk
-    en-US: Desired command if not interlocked
   - id: MLC_4NA
     en-US: Timer for pulse active
   - id: MLC_3J3
     en-US: Timer between pulses
-  - id: MLC_3Ms
+  - id: MLC_4q7
     en-US: Solenoid valve A instance
-  - id: MLC_m5
+  - id: MLC_Lh
     en-US: Solenoid valve B instance
+  - id: MLC_49H
+    en-US: Actual desired command based on active mode
   - id: MLC_3JD
     en-US: Filter in idle state
   - id: MLC_3mE

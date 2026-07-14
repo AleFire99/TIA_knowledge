@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: cdb3957d-4be2-4820-adb8-5072e5fbc629
+  Comment:
+    en-US: Converted in ladder and introduced UDT in inout
+LibraryVersion:
+  VersionNumber: 2.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Converted in ladder and introduced UDT in inout

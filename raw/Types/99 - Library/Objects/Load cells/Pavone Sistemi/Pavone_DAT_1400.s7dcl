@@ -4,19 +4,19 @@
     S7_Version := "0.1"
 }
 FUNCTION "Pavone_DAT_1400" : Void
-    VAR_INPUT 
+    VAR_INPUT
         dat_IN : _.UDT_Pavone_IN;
     END_VAR
-    VAR_OUTPUT 
+    VAR_OUTPUT
         dat_OUT : _.UDT_Pavone_OUT;
     END_VAR
-    VAR_IN_OUT 
+    VAR_IN_OUT
         scale : _.UDT_Load_cells;
     END_VAR
-    VAR_TEMP 
+    VAR_TEMP
         magnitude : Real;
     END_VAR
-    VAR CONSTANT 
+    VAR CONSTANT
         ZERO_CALIBRATION : Word := 16#4;
     END_VAR
 

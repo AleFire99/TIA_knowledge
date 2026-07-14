@@ -6,28 +6,16 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "Filter_1_sleeve"
-    VAR_IN_OUT 
+    VAR_IN_OUT
         filter : _.UDT_Filter_1_sleeve;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_MLC := "MLC_3CN";
             S7_Visibility := "Hidden := External"
         }
         first_scan : Bool;
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_3Ni";
-            S7_Visibility := "Hidden := External"
-        }
-        desired_open_command : Bool;
-        {
-            S7_Access := "ReadOnly := External";
-            S7_MLC := "MLC_427";
-            S7_Visibility := "Hidden := External"
-        }
-        validated_open_command : Bool;
         {
             S7_Access := "ReadOnly := External";
             S7_MLC := "MLC_3jV";
@@ -46,7 +34,11 @@ FUNCTION_BLOCK "Filter_1_sleeve"
         }
         fb_XY : _.Solenoid_valve;
     END_VAR
-    VAR CONSTANT 
+    VAR_TEMP
+        { S7_MLC := "MLC_3mZ" }
+        desired_command : Bool;
+    END_VAR
+    VAR CONSTANT
         { S7_MLC := "MLC_3wq" }
         IDLE : Int := 1;
         { S7_MLC := "MLC_4FL" }
@@ -73,12 +65,9 @@ FUNCTION_BLOCK "Filter_1_sleeve"
         
         REGION Determine desired target
             IF #filter.CMD.manual_mode THEN
-                #desired_open_command := #filter.CMD.manual;
+                #desired_command := #filter.CMD.manual;
             ELSE
-                #desired_open_command := #filter.CMD.auto;
-            END_IF;
-            IF NOT #filter.CMD.interlocked THEN
-                #validated_open_command := #desired_open_command;
+                #desired_command := #filter.CMD.auto;
             END_IF;
         END_REGION
         
@@ -90,22 +79,22 @@ FUNCTION_BLOCK "Filter_1_sleeve"
                          PT := #filter.SETTING.pulse_duration);
         END_REGION
         
-        REGION FSM logic
+        REGION Top FSM
             CASE #filter.STATUS.state OF
                 #IDLE:
-                    IF #desired_open_command THEN
+                    IF #desired_command THEN
                         #filter.STATUS.state := #ACTIVE;
                         #filter.STATUS.active_state := #WAITING;
                     END_IF;
                     
                 #ACTIVE:
-                    IF NOT #desired_open_command THEN
+                    IF NOT #desired_command THEN
                         #filter.STATUS.state := #IDLE;
                     END_IF;
             END_CASE;
         END_REGION
         
-        REGION Sub FSM logic
+        REGION Active state FSM
             IF #filter.STATUS.state = #ACTIVE THEN
                 CASE #filter.STATUS.active_state OF
                     #WAITING:
@@ -123,19 +112,20 @@ FUNCTION_BLOCK "Filter_1_sleeve"
         
         REGION Output mapping
             #filter.DEVICES.XY.CMD.auto := FALSE;
-            #filter.STATUS.is_idle := FALSE;
-            #filter.STATUS.is_active := FALSE;
             
-            CASE #filter.STATUS.state OF
-                #IDLE:
-                    #filter.STATUS.is_idle := TRUE;
-                    
-                #ACTIVE:
-                    #filter.STATUS.is_active := TRUE;
-                    IF #filter.STATUS.active_state = #PULSING THEN
+            IF #filter.STATUS.state = #ACTIVE THEN
+                CASE #filter.STATUS.active_state OF
+                    #PULSING:
                         #filter.DEVICES.XY.CMD.auto := TRUE;
-                    END_IF;
-            END_CASE;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #filter.STATUS.is_idle := #filter.STATUS.state = #IDLE;
+            #filter.STATUS.is_active := #filter.STATUS.state = #ACTIVE;
+            #filter.STATUS.is_pulsing := (#filter.STATUS.state = #ACTIVE) AND (#filter.STATUS.active_state = #PULSING);
+            #filter.STATUS.is_waiting := (#filter.STATUS.state = #ACTIVE) AND (#filter.STATUS.active_state = #WAITING);
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

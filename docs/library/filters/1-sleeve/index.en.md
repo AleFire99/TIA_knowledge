@@ -2,27 +2,26 @@
 
 ## Overview
 
-The 1-sleeve filter cleaner drives periodic compressed air pulses through a single solenoid valve (`XY`) to dislodge accumulated dust from a filter sleeve. When enabled, the cycle always begins with a waiting interval (`interval_duration`) before the first pulse, then alternates waiting and pulsing indefinitely. There is no position feedback — the system is open-loop.
+**Tier 2.** The 1-sleeve filter cleaner drives periodic compressed air pulses through a single Solenoid Valve (Tier 1, `XY`) to dislodge accumulated dust from a filter sleeve. When enabled, the cycle always begins with a waiting interval (`interval_duration`) before the first pulse, then alternates waiting and pulsing indefinitely. There is no position feedback — the system is open-loop.
 
 ---
 
-## Main Components
+## Composition
 
-- **Solenoid valve `XY`** — injects compressed air into the sleeve during each cleaning pulse
-- **Pulse timer** — sets the duration of each individual pulse (`pulse_duration`)
-- **Interval timer** — sets the rest time between successive pulses (`interval_duration`)
+| Tag | Type | Role |
+|-----|------|------|
+| `XY` | Solenoid Valve (Tier 1) | Cleaning pulse |
 
 ---
 
-## I/O Signals
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
 | `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Cleaning pulse solenoid |
 | `CMD.manual_mode` | Bool | COMMAND — TRUE = manual mode |
 | `CMD.manual` | Bool | COMMAND — Enable in manual mode |
-| `CMD.auto` | Bool | COMMAND — Enable in automatic mode |
-| `CMD.interlocked` | Bool | GUARD — TRUE = validated command frozen at last value |
+| `CMD.auto` | Bool | COMMAND — Enable in automatic mode (ReadOnly external) |
 | `STATUS.state` | Int | STATE — 1=Idle, 2=Active |
 | `STATUS.active_state` | Int | SUB-STATE — 1=Pulsing, 2=Waiting |
 | `STATUS.is_idle` | Bool | STATE — Filter waiting for enable command |
@@ -32,7 +31,7 @@ The 1-sleeve filter cleaner drives periodic compressed air pulses through a sing
 
 ## Operating Routine
 
-**IDLE** — Filter inactive. `XY` de-energised. When an enable command arrives (manual or auto) and not interlocked, state transitions to ACTIVE with `active_state = WAITING`.
+**IDLE** — Filter inactive. `XY` de-energised. When an enable command arrives (manual or auto), state transitions to ACTIVE with `active_state = WAITING`.
 
 **ACTIVE / WAITING** — Filter active but resting between pulses. `XY` de-energised. Interval timer (`interval_duration`) running. When the timer expires, internal state transitions to PULSING.
 
@@ -40,13 +39,13 @@ The 1-sleeve filter cleaner drives periodic compressed air pulses through a sing
 
 The WAITING → PULSING → WAITING cycle repeats as long as the enable command remains active. Removing the enable command at any point returns the filter to IDLE.
 
-In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. In **automatic mode**, from `CMD.auto`. If `interlocked = TRUE`, the validated command is frozen at its last value — interlock does not force closure, but prevents changes.
+In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. In **automatic mode**, from `CMD.auto`.
 
 ---
 
 ## Alarms
 
-`UDT_Filter_1_sleeve` has no `ALARMS` struct.
+This module raises no alarms of its own — `UDT_Filter_1_sleeve` has no `ALARMS` struct.
 
 ---
 
@@ -71,7 +70,6 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class SETTING {
         +Time pulse_duration

@@ -2,44 +2,58 @@
 
 ## Overview
 
-The solenoid valve is a directly controlled on/off valve. An electromagnetic coil drives a plunger to open or close the valve port. There is no position feedback — the valve state is assumed from the command. It is the base actuator used as a sub-component inside other library modules.
+**Tier 1 — atomic.** The solenoid valve is the library's base pneumatic actuator: an electromagnetic coil energizes or de-energizes a single physical output (`out`). It has no position feedback of its own — its state (`ENERGIZED`/`DE_ENERGIZED`) reflects only the command received, not a physical confirmation. It's the library's most reused component: every higher-level valve (Pinch, Butterfly SS/DS, Sealed) embeds one or more instances as its own actuator.
+
+This block's `manual_mode`/`manual`/`auto` arbitration is the canonical pattern reused — with the same logic, though not always the same field name — by every device in this library that embeds a Solenoid Valve instance.
 
 ---
 
-## Main Components
-
-- **Valve body** — inlet and outlet ports
-- **Electromagnetic coil** — moves the plunger on energization
-- **Plunger / poppet** — seals or opens the port
-- **Spring return** — returns plunger to rest position when de-energized
-
----
-
-## I/O Signals
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `out` | Output — Bool | Physical coil command: TRUE = energized (open) |
+| `CMD.manual_mode` | Bool | TRUE = manual command source instead of automatic |
+| `CMD.manual` | Bool | Energize command in manual mode |
+| `CMD.auto` | Bool | Energize command from automation (ReadOnly external) |
+| `out` | Bool | Physical coil output: TRUE = energized |
 
----
-
-## Operating Routine
-
-When commanded open (`auto = TRUE` or `manual = TRUE` in manual mode), the coil is energized and the valve opens. When the command is removed, the spring returns the plunger and the valve closes.
-
-If `interlocked = TRUE`, the validated command freezes at its last value — the valve neither opens nor closes until the interlock is released. There is no `ack` on this module as there are no alarms.
-
----
-
-## Alarms
-
-No alarms — no position feedback available.
+```
+desired_open_command := manual_mode ? manual : auto
+```
 
 ---
 
 ## Settings
 
 No configurable settings.
+
+---
+
+## States and Outputs
+
+| State | Value | `out` | Description |
+|-------|-------|-------|-------------|
+| `DE_ENERGIZED` | 1 | FALSE | Coil de-energized |
+| `ENERGIZED` | 3 | TRUE | Coil energized |
+
+---
+
+## State Machine
+
+```mermaid
+stateDiagram-v2
+state SOLENOID{
+    [*] --> DE_ENERGIZED
+    DE_ENERGIZED --> ENERGIZED : desired_open_command
+    ENERGIZED --> DE_ENERGIZED : !desired_open_command
+}
+```
+
+---
+
+## Alarms
+
+This module raises no alarms of its own — no position sensor is available to base a fault detection on.
 
 ---
 
@@ -52,43 +66,13 @@ classDiagram
         +Bool manual_mode
         +Bool manual
         +Bool auto
-        +Bool interlocked
     }
     class STATUS {
         +Int state
-        +Bool is_open
-        +Bool is_closed
+        +Bool is_energized
+        +Bool is_de_energized
     }
     UDT_Solenoid_valve *-- CMD
     UDT_Solenoid_valve *-- STATUS
     UDT_Solenoid_valve : +Bool out
 ```
-
----
-
-## State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL
-
-    state NORMAL {
-        [*] --> CLOSED
-        CLOSED --> OPEN : open command
-        OPEN --> CLOSED : command removed
-    }
-```
-
-### State and Output Table
-
-| State | `out` | Description |
-|-------|-------|-------------|
-| CLOSED (1) | FALSE | Valve closed, no flow |
-| OPEN (3) | TRUE | Valve open, flow permitted |
-
-### State Transition Table
-
-| Current State | Condition | Next State | Action |
-|---------------|-----------|------------|--------|
-| CLOSED | validated_open_command = TRUE | OPEN | `out` → TRUE |
-| OPEN | validated_open_command = FALSE | CLOSED | `out` → FALSE |

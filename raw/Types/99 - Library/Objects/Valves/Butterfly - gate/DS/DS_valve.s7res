@@ -1,20 +1,10 @@
 ﻿MultiLingualTexts:
   - id: MLC_3pQ
     en-US: TRUE if first scan, then set to FALSE
-  - id: MLC_3LX
-    en-US: Actual desired command based on active mode
-  - id: MLC_59m
-    en-US: Desired command if not interlocked
   - id: MLC_3EU
     en-US: Movement timer
-  - id: MLC_45S
-    en-US: ALARM - Sensor conflict
-  - id: MLC_3C3
-    en-US: ALARM - Valve failed to close
-  - id: MLC_3xv
-    en-US: ALARM - Valve failed to open
-  - id: MLC_33A
-    en-US: ALARM - Movement timeout
+  - id: MLC_3Tk
+    en-US: Actual desired command based on active mode
   - id: MLC_4zW
     en-US: Error valve state
   - id: MLC_3d7

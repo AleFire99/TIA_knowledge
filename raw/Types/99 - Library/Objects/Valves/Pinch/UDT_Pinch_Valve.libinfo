@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 1.4.1
+  VersionNumber: 2.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT with hierarchical FSM
+    en-US: Removed interlock, splited alarms into booleans

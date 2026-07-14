@@ -6,7 +6,7 @@
     S7_Version := "0.1"
 }
 FUNCTION_BLOCK "SS_Sealed_valve_simulator"
-    VAR_INPUT 
+    VAR_INPUT
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -18,10 +18,10 @@ FUNCTION_BLOCK "SS_Sealed_valve_simulator"
         }
         OFF_Delay : Time := T#1s;
     END_VAR
-    VAR_IN_OUT 
+    VAR_IN_OUT
         XV : _.UDT_SS_Sealed_Valve;
     END_VAR
-    VAR 
+    VAR
         {
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
@@ -31,7 +31,7 @@ FUNCTION_BLOCK "SS_Sealed_valve_simulator"
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Base valve simulation
+        REGION Internal valve simulation
           #fb_sim(ON_Delay := #ON_Delay,
                   OFF_Delay := #OFF_Delay,
                   XV := #XV.DEVICES.XV);

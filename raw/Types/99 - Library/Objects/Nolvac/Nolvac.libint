@@ -1,15 +1,15 @@
 ﻿DocumentHash:
   - FileName: Nolvac.s7dcl
-    Hash: 5AOdeVkS+8vDLhrTO4640lg/j/sCYI07ZdilpUcp+ME=
+    Hash: S44zecVRybmOkX4zbtDTtgnWnGBUUW2PuA6sf6YtAqc=
   - FileName: Nolvac.s7res
     Hash: 6WOM+fVwd0p7ADgzKMjqEw1LngEvcs4932L3gDMVgN8=
-LibraryMetaFileHash: PqKaG0mMD5Vibf92r80I6hmPpJeFXFsDmLncvukQRWo=
+LibraryMetaFileHash: mUUUdnqdS/6vDL3Q5XMirbWgN3eLWAGW9mcvs82FP1Q=
 LibraryVersion:
-  Guid: e1ccb481-69f5-4de4-86ed-814df9188f4a
+  Guid: 7f3b8d71-9128-40fb-9b75-6d149c6dfe38
   DependsOn:
     - TypeName: UDT_Nolvac
-      VersionNumber: 0.1.5
-    - TypeName: SS_valve
-      VersionNumber: 1.5.6
+      VersionNumber: 2.0.1
     - TypeName: Solenoid_valve
-      VersionNumber: 1.2.3
+      VersionNumber: 2.0.1
+    - TypeName: SS_valve
+      VersionNumber: 2.1.1

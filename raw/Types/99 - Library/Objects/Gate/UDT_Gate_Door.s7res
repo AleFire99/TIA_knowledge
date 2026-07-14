@@ -1,23 +1,31 @@
 ﻿MultiLingualTexts:
-  - id: MLC_4hJ
+  - id: MLC_5AJ
     en-US: INPUT - Gate closed and locked
-  - id: MLC_56T
+  - id: MLC_45J
     en-US: OUTPUT - Command
-  - id: MLC_3Lb
+  - id: MLC_kx
     en-US: COMMAND - Open command
-  - id: MLC_4dL
+  - id: MLC_3fC
     en-US: COMMAND - Close command
-  - id: MLC_4um
-    en-US: COMMAND - 0=enabled/1=interlocked
-  - id: MLC_3Ya
+  - id: MLC_43g
+    en-US: COMMAND - Acknowledge alarms
+  - id: MLC_tX
+    en-US: COMMAND - 0=interlocked, 1=enabled
+  - id: MLC_3Qd
+    en-US: SETTING - Alarm if no open feedback with time
+  - id: MLC_tB
     en-US: SETTING - Door auto locked when timer is expired
-  - id: MLC_4xE
-    en-US: STATE -  1=Closed, 2=Opening, 3=Open, 4=Closing
-  - id: MLC_Qy
+  - id: MLC_4AW
+    en-US: STATE -  0=Fault, 1=Normal
+  - id: MLC_zT
+    en-US: STATE - 1=Closed, 2=Opening, 3=Open, 4=Closing
+  - id: MLC_W4
     en-US: STATUS - Door is closed and locked
-  - id: MLC_4iB
+  - id: MLC_4aU
     en-US: STATUS - Door is opening
-  - id: MLC_4Tg
+  - id: MLC_53G
     en-US: STATUS - Door is open
-  - id: MLC_Ly
+  - id: MLC_pY
     en-US: STATUS - Door is closing
+  - id: MLC_3Y7
+    en-US: ALARM - Failed to unlock

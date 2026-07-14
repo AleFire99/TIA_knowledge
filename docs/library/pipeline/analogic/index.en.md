@@ -2,53 +2,26 @@
 
 ## Overview
 
-`An_Pipeline` derives the pipeline state from an analogue pressure transmitter reading (`PT.Scaled_value`). The logic is a lookup table: the PT value is compared sequentially against three configurable thresholds and the corresponding state flag is set. Exactly one flag is TRUE at any time.
-
-Four states cover the full operating range: empty pipeline, pressurised (air, no material), with material, clogged.
+**FC, stateless.** `An_pipeline` derives the pipeline's state from the analog pressure transmitter reading (`PT.Scaled_value`). Conversion from raw count to a scaled engineering value happens upstream, not in this block. The logic is a lookup table: the PT value is compared against three configurable thresholds. No `CMD`, no `ack` — with no state to keep, there's nothing to acknowledge.
 
 ---
 
 ## Main Components
 
-- **Pressure transmitter `PT`** (`UDT_Analogic_signal`) — analogue pressure reading; exposes `PT.Scaled_value` in engineering units (typically bar)
+- **Pressure transmitter `PT`** (`UDT_Analogic_signal`) — scaled pipeline pressure reading
 - **Three configurable thresholds** — define the boundaries between the four states
 
 ---
 
-## I/O Signals
+## Control Signals
 
 | Signal | Type | Description |
 |--------|------|-------------|
-| `DEVICES.PT.Scaled_value` | Real | Pressure reading in engineering units |
-| `STATUS.is_empty` | Bool | TRUE if PT < `empty_thresh` |
-| `STATUS.is_pressurised` | Bool | TRUE if `empty_thresh` ≤ PT < `material_thresh` |
-| `STATUS.is_with_material` | Bool | TRUE if `material_thresh` ≤ PT < `clogged_thresh` |
-| `ALARMS.is_clogged` | Bool | TRUE if PT ≥ `clogged_thresh` |
-
----
-
-## Operating Routine
-
-Every PLC scan, the FB clears all flags then evaluates `PT.Scaled_value` against the thresholds in priority order:
-
-```
-IF PT < empty_thresh       → is_empty := TRUE
-ELSIF PT < material_thresh → is_pressurised := TRUE
-ELSIF PT < clogged_thresh  → is_with_material := TRUE
-ELSE                       → is_clogged := TRUE
-```
-
-No state machine exists — the current state is a direct, instantaneous function of PT with no hysteresis.
-
-`is_clogged` is placed in the `ALARMS` struct because it indicates an abnormal condition requiring intervention: excessive pressure suggests a blockage or an upstream valve is closed.
-
----
-
-## Alarms
-
-| ID | Condition | Cause |
-|----|-----------|-------|
-| PL-A01 | `ALARMS.is_clogged` | PT ≥ `clogged_thresh` — excessive pressure, blockage or upstream valve closed |
+| `DEVICES.PT.Scaled_value` | Real | Pressure reading, already scaled to engineering units |
+| `STATUS.is_empty` | Bool | TRUE if `PT < empty_thresh` |
+| `STATUS.is_pressurised` | Bool | TRUE if `empty_thresh ≤ PT < material_thresh` |
+| `STATUS.is_with_material` | Bool | TRUE if `material_thresh ≤ PT < clogged_thresh` |
+| `ALARMS.pipeline_clogged` | Bool | TRUE if `PT ≥ clogged_thresh` |
 
 ---
 
@@ -58,9 +31,31 @@ No state machine exists — the current state is a direct, instantaneous functio
 |-----------|---------|-------------|
 | `SETTING.empty_thresh` | 0.1 | Lower threshold: below → pipeline empty |
 | `SETTING.material_thresh` | 0.4 | Material threshold: above → material present |
-| `SETTING.clogged_thresh` | 0.8 | Clog threshold: above → abnormal pressure |
+| `SETTING.clogged_thresh` | 0.8 | Obstruction threshold: above → abnormal pressure |
 
-Calibrate with actual commissioning data for the system.
+---
+
+## Logic
+
+```Pascal
+STATUS.is_empty := PT.Scaled_value < empty_thresh;
+STATUS.is_pressurised := (PT.Scaled_value >= empty_thresh) AND (PT.Scaled_value < material_thresh);
+STATUS.is_with_material := (PT.Scaled_value >= material_thresh) AND (PT.Scaled_value < clogged_thresh);
+
+ALARMS.pipeline_clogged := PT.Scaled_value >= clogged_thresh;
+```
+
+The first three conditions are normal phases the process continuously passes through. `pipeline_clogged` isn't a fourth band of the same kind — it represents an abnormal physical condition that should never persist. There's no state machine: evaluation is purely combinatorial and recomputed from scratch every scan, with no hysteresis.
+
+---
+
+## Alarms
+
+| ID | Device-specific condition |
+|----|----------------------------|
+| [`PL-E01`](../index.en.md#pipeline-alarms) | `PT.Scaled_value ≥ clogged_thresh` |
+
+Not applicable: `PL-E02` (sensor mismatch) — a single continuous measurement has no second independent value it can contradict.
 
 ---
 
@@ -83,23 +78,10 @@ classDiagram
         +Bool is_with_material
     }
     class ALARMS {
-        +Bool is_clogged
+        +Bool pipeline_clogged
     }
     UDT_An_Pipeline *-- DEVICES
     UDT_An_Pipeline *-- SETTING
     UDT_An_Pipeline *-- STATUS
     UDT_An_Pipeline *-- ALARMS
 ```
-
----
-
-## State Logic
-
-The block implements no FSM. Evaluation is purely combinatorial:
-
-| PT condition | Active flag | Description |
-|--------------|-------------|-------------|
-| `PT < 0.1` | `STATUS.is_empty` | Empty pipeline, no pressure |
-| `0.1 ≤ PT < 0.4` | `STATUS.is_pressurised` | Pipeline pressurised, no material |
-| `0.4 ≤ PT < 0.8` | `STATUS.is_with_material` | Material present in pipeline |
-| `PT ≥ 0.8` | `ALARMS.is_clogged` | Abnormal pressure — possible blockage |

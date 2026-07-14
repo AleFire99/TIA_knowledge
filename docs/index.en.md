@@ -7,7 +7,7 @@ Technical documentation for the AleFire TIA Portal V20 global library.
 | Category | Description |
 |----------|-------------|
 | [Valves](library/valves/index.md) | Butterfly (SS/DS), pinch, solenoid valves |
-| [Diverters](library/diverters/index.md) | Pinch-type and plug-type diverters |
+| [Diverters](library/diverters/index.md) | Pinch-type diverters |
 | [Filters](library/filters/index.md) | 1-sleeve and 2-sleeve filters |
 | [Gate](library/gate/index.md) | Pneumatic gate/door |
 | [Nolvac](library/nolvac/index.md) | Nolvac unit |

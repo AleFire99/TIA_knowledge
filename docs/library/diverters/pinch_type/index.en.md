@@ -2,49 +2,33 @@
 
 ## Overview
 
-The pinch diverter routes material flow between two lines (A and B) using two internally managed pinch valves (`XVA`, `XVB`). Only one line is open at a time. The command `TRUE` selects Route B; `FALSE` selects Route A. No direct physical sensors — routing state is derived from the sub-valve position feedback.
+**Tier 3 — composite.** The pinch diverter routes material flow between two lines (A and B), embedding two Pinch Valve (Tier 2) instances, `XVA` and `XVB`. Only one line is open at a time. The diverter has no sensors of its own — routing state is derived entirely from the two sub-valves' position feedback.
 
 ---
 
-## Main Components
+## Composition
 
-- **Two flexible tubes** — Line A and Line B flow paths
-- **Two pinch valve sub-assemblies** (`XVA`, `XVB`) — each with pneumatic actuator, solenoid, and pressure switch
-- See [Pinch Valve](../../valves/pinch/index.en.md) for sub-valve detail
+| Tag | Type | Role |
+|-----|------|------|
+| `XVA` | Pinch Valve (Tier 2) | Toward path A |
+| `XVB` | Pinch Valve (Tier 2) | Toward path B |
 
----
-
-## I/O Signals
-
-Signals are accessed through the sub-valve UDTs (`XVA` and `XVB`). There are no signals at the diverter level beyond sub-valve passthrough.
-
-| Signal | Location | Description |
-|--------|----------|-------------|
-| `XVA.DEVICES.PSL` | Sub-valve A | Pressure switch: TRUE = line A tube pinched (closed) |
-| `XVA.DEVICES.XY.out` | Sub-valve A | Solenoid output for line A |
-| `XVB.DEVICES.PSL` | Sub-valve B | Pressure switch: TRUE = line B tube pinched (closed) |
-| `XVB.DEVICES.XY.out` | Sub-valve B | Solenoid output for line B |
+A single manual/automatic decision (`manual_mode`/`manual`/`auto`, resolved into `desired_route_B`: FALSE = route A, TRUE = route B) determines which valve opens; the other is always commanded closed — the two instances never arbitrate independently. See [Pinch Valve](../../valves/pinch/index.en.md) for sub-valve detail.
 
 ---
 
-## Operating Routine
+## Control Signals
 
-In **Route A**, valve A is open (tube A free, flow permitted) and valve B is closed (tube B pinched). In **Route B**, the states are reversed.
+| Signal | Type | Description |
+|--------|------|-------------|
+| `DEVICES.XVA` | UDT_Pinch_Valve | Sub-valve toward path A |
+| `DEVICES.XVB` | UDT_Pinch_Valve | Sub-valve toward path B |
+| `CMD.manual_mode` | Bool | TRUE = HMI manual mode |
+| `CMD.manual` | Bool | Route selection in manual mode (TRUE = route B) |
+| `CMD.auto` | Bool | Route selection from automation (ReadOnly external) |
+| `CMD.ack` | Bool | Acknowledges alarms — forwarded to both sub-valves |
 
-When a route change is commanded, both sub-valves transition simultaneously — one opens while the other closes. The diverter confirms the new route only when the completing sub-valve has reached its target position.
-
-In **manual mode** (`manual_mode = TRUE`), the operator selects the route from HMI via `manual` (TRUE = Route B). In **automatic mode**, the selection comes from the process via `auto`. If `interlocked = TRUE`, the diverter holds its current route.
-
-Faults from either sub-valve propagate to the diverter's `ALARMS.error`. Confirm with `ack`, which is forwarded to both sub-valves.
-
----
-
-## Alarms
-
-| ID | Condition | Cause |
-|----|-----------|-------|
-| PD-E01 | Sub-valve error (XVA or XVB) | See [Pinch Valve alarms](../../valves/pinch/index.en.md#alarms) |
-| PD-E02 | Route state doesn't match sub-valve positions | Sub-valve fault, mechanical issue, sensor problem |
+`CMD.ack` is forwarded to both `XVA.CMD.ack` and `XVB.CMD.ack` every scan.
 
 ---
 
@@ -52,7 +36,61 @@ Faults from either sub-valve propagate to the diverter's `ALARMS.error`. Confirm
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `timeout_ms` | T#2s | Actuator timeout forwarded to both sub-valves |
+| `SETTING.actuator_timeout` | T#2s | Forwarded to `XVA.SETTING.actuator_timeout` and `XVB.SETTING.actuator_timeout` |
+
+---
+
+## States and Outputs
+
+| State | `XVA` (commanded) | `XVB` (commanded) | Description |
+|-------|---------------------|---------------------|-------------|
+| ROUTE_A | open | closed | Route A established |
+| A_TO_B | closed | open | Transitioning from A to B |
+| ROUTE_B | closed | open | Route B established |
+| B_TO_A | open | closed | Transitioning from B to A |
+| FAULT | closed | closed | Fault; neither valve gets an explicit open command (fail-safe) |
+
+---
+
+## State Machine
+
+```mermaid
+stateDiagram-v2
+state DIVERTER{
+    [*] --> NORMAL : XVA open, XVB closed (or vice versa) on first scan
+    [*] --> FAULT : ambiguous positions on first scan
+
+    NORMAL --> FAULT : internal_error
+    FAULT --> NORMAL : ack & !internal_error
+
+    state NORMAL {
+        [*] --> ROUTE_A : XVA.is_open
+        [*] --> ROUTE_B : XVB.is_open
+
+        ROUTE_A --> A_TO_B : desired_route_B
+        A_TO_B --> ROUTE_B : XVA.is_closed & XVB.is_open
+
+        ROUTE_B --> B_TO_A : !desired_route_B
+        B_TO_A --> ROUTE_A : XVA.is_open & XVB.is_closed
+    }
+}
+```
+
+```Pascal
+internal_error := valve_mismatch OR XVA.is_fault OR XVB.is_fault;
+```
+
+On return from `FAULT`, the block re-reads both sub-valves' state to determine the stable route — the same mechanism used on the first scan.
+
+---
+
+## Alarms
+
+| ID | Device-specific condition |
+|----|----------------------------|
+| [`DIV-E01`](../index.en.md#diverter-alarms) | Current stable state (`ROUTE_A`/`ROUTE_B`) not confirmed by `XVA.STATUS.is_open`/`XVB.STATUS.is_open` |
+
+A fault on `XVA` or `XVB` feeds into `internal_error` (drives `FAULT`) but doesn't raise its own ID at this level — see [Pinch Valve alarms](../../valves/pinch/index.en.md#alarms).
 
 ---
 
@@ -68,24 +106,23 @@ classDiagram
     class CMD {
         +Bool manual_mode
         +Bool manual
-        +Bool ack
         +Bool auto
-        +Bool interlocked
+        +Bool ack
     }
     class SETTING {
-        +Time timeout_ms
+        +Time actuator_timeout
     }
     class STATUS {
         +Int state
         +Int normal_state
-        +Bool is_fault
         +Bool is_in_A
         +Bool is_moving_to_B
         +Bool is_in_B
         +Bool is_moving_to_A
+        +Bool is_fault
     }
     class ALARMS {
-        +Bool error
+        +Bool valve_mismatch
     }
     UDT_Pinch_diverter *-- DEVICES
     UDT_Pinch_diverter *-- CMD
@@ -94,46 +131,4 @@ classDiagram
     UDT_Pinch_diverter *-- ALARMS
 ```
 
----
-
-## State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> NORMAL
-    [*] --> FAULT : ambiguous valve positions on start
-    NORMAL --> FAULT : alarm
-    FAULT --> NORMAL : ACK + valid valve positions
-
-    state NORMAL {
-        [*] --> ROUTE_A : XVA open, XVB closed
-        [*] --> ROUTE_B : XVB open, XVA closed
-        ROUTE_A --> A_TO_B : route B command
-        A_TO_B --> ROUTE_B : XVA closed AND XVB open
-        ROUTE_B --> B_TO_A : route A command
-        B_TO_A --> ROUTE_A : XVA open AND XVB closed
-    }
-```
-
-### State and Output Table
-
-| State | XVA command | XVB command | Description |
-|-------|------------|------------|-------------|
-| ROUTE_A | open (auto=TRUE) | closed (auto=FALSE) | Flow through line A |
-| A_TO_B | closed (auto=FALSE) | open (auto=TRUE) | XVA closing, XVB opening |
-| ROUTE_B | closed (auto=FALSE) | open (auto=TRUE) | Flow through line B |
-| B_TO_A | open (auto=TRUE) | closed (auto=FALSE) | XVB closing, XVA opening |
-| FAULT | — | — | Sub-valve outputs frozen; operator ACK required |
-
-### State Transition Table
-
-| Current State | Condition | Next State | Action |
-|---------------|-----------|------------|--------|
-| ROUTE_A | route B command | A_TO_B | XVA.auto → FALSE; XVB.auto → TRUE |
-| A_TO_B | XVA.is_closed AND XVB.is_open | ROUTE_B | — |
-| A_TO_B | Sub-valve alarm | FAULT | Raise PD-E01 |
-| ROUTE_B | route A command | B_TO_A | XVB.auto → FALSE; XVA.auto → TRUE |
-| B_TO_A | XVA.is_open AND XVB.is_closed | ROUTE_A | — |
-| B_TO_A | Sub-valve alarm | FAULT | Raise PD-E01 |
-| ROUTE_A or ROUTE_B | Position mismatch | FAULT | Raise PD-E02 |
-| FAULT | ACK=TRUE, valid positions | ROUTE_A or ROUTE_B | Re-read sub-valve states; clear alarms |
+`internal_error` is internal to the function block, not exposed via the UDT.

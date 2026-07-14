@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and variables visibility in HMI
 LibraryVersion:
-  VersionNumber: 1.5.6
+  VersionNumber: 2.1.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Removed movement counter
+    en-US: Moved internal error
