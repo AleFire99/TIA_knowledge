@@ -1,4 +1,4 @@
-# Trasportatore a Ingresso Sigillato (Sealed Inlet Transporter)
+# Propulsore a Ingresso Sigillato (Sealed Inlet Transporter)
 
 ## Panoramica
 
@@ -118,12 +118,12 @@ In FAULT: XV02 (sfiato) aperto per sicurezza passiva; bilancia fermata e resetta
 
 | ID | Condizione specifica |
 |----|----------------------|
-| [`TR-E01`](../index.md#allarmi-dei-trasportatori) | `ALARMS.pressurization_timeout` — verificare supply aria, XV04, PT01/02 |
-| [`TR-E02`](../index.md#allarmi-dei-trasportatori) | `ALARMS.depressurization_timeout` — verificare XV02, PT01/02 |
-| [`TR-E03`](../index.md#allarmi-dei-trasportatori) | Guasto su una valvola interna (`XV01`–`XV05`) — vedere gli [allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole) |
-| [`TR-E04`](../index.md#allarmi-dei-trasportatori) | Timeout Loading o Unloading su `WT01` — vedere gli [allarmi delle celle di carico](../../load-cells/index.md#allarmi-delle-celle-di-carico) |
-| [`TR-E05`](../index.md#allarmi-dei-trasportatori) | `NOT PSL` — pressione di sicurezza persa |
-| [`TR-E06`](../index.md#allarmi-dei-trasportatori) | `LSH` — livello alto nel vessel |
+| [`TR-E01`](../index.md#allarmi-dei-propulsori) | `ALARMS.pressurization_timeout` — verificare supply aria, XV04, PT01/02 |
+| [`TR-E02`](../index.md#allarmi-dei-propulsori) | `ALARMS.depressurization_timeout` — verificare XV02, PT01/02 |
+| [`TR-E03`](../index.md#allarmi-dei-propulsori) | Guasto su una valvola interna (`XV01`–`XV05`) — vedere gli [allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole) |
+| [`TR-E04`](../index.md#allarmi-dei-propulsori) | Timeout Loading o Unloading su `WT01` — vedere gli [allarmi delle celle di carico](../../load-cells/index.md#allarmi-delle-celle-di-carico) |
+| [`TR-E05`](../index.md#allarmi-dei-propulsori) | `NOT PSL` — pressione di sicurezza persa |
+| [`TR-E06`](../index.md#allarmi-dei-propulsori) | `LSH` — livello alto nel vessel |
 
 ---
 

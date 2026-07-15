@@ -6,16 +6,6 @@ I moduli sono raggruppati per tipo. Ogni pagina modulo descrive: panoramica, com
 
 ---
 
-## Deviatori
-
-Deviano il materiale convogliato tra due o più percorsi di scarico tramite un meccanismo attuato pneumaticamente.
-
-| Modulo | Descrizione |
-|--------|-------------|
-| [Deviatore a Manicotto](diverters/pinch_type/index.md) | Doppia valvola a manicotto che devia il materiale tra due percorsi |
-
----
-
 ## Valvole
 
 Valvole controllate pneumaticamente per isolamento, attuazione e controllo di processo.
@@ -24,39 +14,19 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 |--------|-------------|
 | [Elettrovalvola](valves/solenoid/index.md) | Valvola on/off semplice; nessun feedback |
 | [Valvola a Manicotto](valves/pinch/index.md) | Comprime un tubo flessibile per chiudersi; pressostato conferma la posizione |
-| [Valvola a Farfalla — Solenoide Singolo](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; feedback posizione via ZSL/ZSH |
+| [Valvola a Farfalla — Singolo Solenoide](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; feedback posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; feedback posizione via ZSL/ZSH |
-| [Valvola Sigillata — Solenoide Singolo](valves/sealed/ss/index.md) | Valvola SS + elettrovalvola di tenuta dedicata |
+| [Valvola Sigillata — Singolo Solenoide](valves/sealed/ss/index.md) | Valvola SS + elettrovalvola di tenuta dedicata |
 
 ---
 
-## Portello
+## Portelli
 
 Blocco elettrico per un portello ad apertura manuale — il PLC concede solo il permesso di sblocco, non movimenta nulla.
 
 | Modulo | Descrizione |
 |--------|-------------|
 | [Portello con Blocco Elettrico](gate/index.md) | Sblocco/blocco elettrovalvola su richiesta operatore; nessun movimento comandato dal PLC |
-
----
-
-## Nolvac
-
-Unità di convogliamento pneumatico a ciclo aspirazione/pulizia.
-
-| Modulo | Descrizione |
-|--------|-------------|
-| [Nolvac](nolvac/index.md) | Cicli alternati di aspirazione materiale e pulizia filtro |
-
----
-
-## Trasportatori
-
-Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e scarico pressurizzato.
-
-| Modulo | Descrizione |
-|--------|-------------|
-| [Trasportatore Ingresso Sigillato](transporters/sealed-inlet/index.md) | Ciclo carico → sigillatura → pressurizzazione → convogliamento → depressurizzazione |
 
 ---
 
@@ -71,13 +41,44 @@ Sistemi di pulizia a impulsi d'aria compressa per maniche filtranti.
 
 ---
 
-## Celle di Carico
+## Deviatori
 
-Sistema di pesatura con trasmettitore DAT 1400 via PROFINET. Strato di configurazione operatore + FSM di ciclo trasporto.
+Deviano il materiale convogliato tra due o più percorsi di scarico tramite un meccanismo attuato pneumaticamente.
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Celle di Carico](load-cells/index.md) | Pesatura batch con DAT 1400 PROFINET; tara, validazione setpoint, conteggio conveyed |
+| [Deviatore a Manicotto](diverters/pinch_type/index.md) | Doppia valvola a manicotto che devia il materiale tra due percorsi |
+
+---
+
+## Nolvac
+
+Unità di convogliamento pneumatico a ciclo aspirazione/pulizia.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Nolvac](nolvac/index.md) | Cicli alternati di aspirazione materiale e pulizia filtro |
+
+---
+
+## Celle di Carico
+
+Sistema di pesatura basato su un'unica struttura dati condivisa, con la logica di ciclo separata dal trasmettitore fisico tramite un'interfaccia intercambiabile.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Ciclo di Carico e Scarico](load-cells/loading-unloading/index.md) | Riempimento e svuotamento a peso; timeout, pausa/ripresa |
+| [Interfaccia Pavone DAT 1400](load-cells/pavone-dat-1400/index.md) | Adatta il trasmettitore Pavone Sistemi DAT 1400 ai campi IN condivisi |
+
+---
+
+## Propulsori
+
+Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e scarico pressurizzato.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Propulsore Ingresso Sigillato](transporters/sealed-inlet/index.md) | Ciclo carico → sigillatura → pressurizzazione → convogliamento → depressurizzazione |
 
 ---
 
@@ -87,4 +88,5 @@ Derivazione dello stato di pressione dalla lettura di un trasmettitore PT o di d
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Supervisione Pipeline](pipeline/index.md) | Varianti analogica (PT) e digitale (PSL/PSH); stati vuota/pressurizzata/con materiale + allarme intasamento |
+| [Pipeline Analogica](pipeline/analogic/index.md) | Stato pressione da trasmettitore PT; 3 soglie configurabili, nessuna isteresi attualmente (possibile estensione futura) |
+| [Pipeline Digitale](pipeline/digital/index.md) | Stato pressione da 2 pressostati (PSL/PSH); allarme intasamento e disallineamento sensori |

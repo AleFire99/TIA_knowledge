@@ -15,26 +15,30 @@ nav = [
           { "Sigillata SS" = "library/valves/sealed/ss/index.md" },
           { "Elettrovalvola" = "library/valves/solenoid/index.md" },
       ] },
-      { "Deviatori" = [
-          { "Panoramica" = "library/diverters/index.md" },
-          { "A Manicotto" = "library/diverters/pinch_type/index.md" },
-      ] },
+      { "Portelli" = "library/gate/index.md" },
       { "Filtri" = [
           { "Panoramica" = "library/filters/index.md" },
           { "1 Manica" = "library/filters/1-sleeve/index.md" },
           { "2 Maniche" = "library/filters/2-sleeves/index.md" },
       ] },
-      { "Portello" = "library/gate/index.md" },
-      { "Celle di Carico" = "library/load-cells/index.md" },
+      { "Deviatori" = [
+          { "Panoramica" = "library/diverters/index.md" },
+          { "A Manicotto" = "library/diverters/pinch_type/index.md" },
+      ] },
       { "Nolvac" = "library/nolvac/index.md" },
+      { "Celle di Carico" = [
+          { "Panoramica" = "library/load-cells/index.md" },
+          { "Ciclo di Carico e Scarico" = "library/load-cells/loading-unloading/index.md" },
+          { "Interfaccia Pavone DAT 1400" = "library/load-cells/pavone-dat-1400/index.md" },
+      ] },
+      { "Propulsori" = [
+          { "Panoramica" = "library/transporters/index.md" },
+          { "Propulsore Ingresso Sigillato" = "library/transporters/sealed-inlet/index.md" },
+      ] },
       { "Tubazione" = [
           { "Panoramica" = "library/pipeline/index.md" },
           { "Analogica" = "library/pipeline/analogic/index.md" },
           { "Digitale" = "library/pipeline/digital/index.md" },
-      ] },
-      { "Trasportatori" = [
-          { "Panoramica" = "library/transporters/index.md" },
-          { "Trasportatore Ingresso Sigillato" = "library/transporters/sealed-inlet/index.md" },
       ] },
   ] },
 ]

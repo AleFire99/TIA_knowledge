@@ -268,6 +268,90 @@ All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are aut
 
 ---
 
+## Documentation Conventions & Rationale (IT tree)
+
+This wiki is maintained by AI sessions with no memory of *why* past decisions were made —
+only what's written here. Every rule below carries its rationale so a future session can
+extend the pattern correctly instead of guessing or accidentally reverting it.
+
+### Category ordering (`docs/it/library/index.md` + `zensical.it.toml` nav)
+
+Categories are ordered by **valve-nesting depth**, not alphabetically or by device count:
+
+1. **Valvole** first — the only category with no external dependency (it *is* the Tier
+   1–3 valve family other categories build on).
+2. Categories embedding only atomic **Tier-1 Elettrovalvola** instances: **Portelli** (1×)
+   → **Filtri** (1–2×).
+3. Categories embedding **Tier-2+ valve types**: **Deviatori** (2× Manicotto, Tier 2) →
+   **Nolvac** (Farfalla SS Tier 2 + 2× Elettrovalvola).
+4. **Celle di Carico** — Tier 3, but independent of Valvole (own device family: a core UDT
+   plus swappable transmitter interfaces). Introduced here because the next item depends on it.
+5. **Propulsori** last among nested categories — the deepest composite, nesting multiple
+   valve tiers (Sigillata SS, Farfalla DS, 3× Farfalla SS, Elettrovalvola) *and* a full
+   Celle di Carico instance. Needs both prior chains already introduced.
+6. **Pipeline** absolute last — not a Tier at all (stateless FC), no nesting, no dependency
+   on anything else. A different logical domain (sensor-state derivation, not valve
+   actuation), so it sits outside the nesting chain entirely.
+
+**Adding a new category:** identify what Tier-1+ components it embeds and whether it
+depends on another composite category (the way Propulsori depends on Celle di Carico).
+Insert it at the point where all of its dependencies are already introduced. If it has no
+valve dependency at all, place it by its own logical domain (near Pipeline if it's a
+similarly standalone, non-actuation category).
+
+Keep `zensical.it.toml`'s nav order in sync with this page order — they must match.
+
+### Terminology (Italian)
+
+| Use | Not | Why |
+|-----|-----|-----|
+| Elettrovalvola | "Valvola a Solenoide" / bare "Solenoide" (as a component name) | Correct, standard Italian term for a solenoid valve; the old wording was an inconsistent mix across pages |
+| (Valvola) a Manicotto | (Valvola) a Pizzico | "Manicotto" is the correct term for pinch-type valves/diverters in this library's domain |
+| Singolo Solenoide / Doppio Solenoide | Solenoide Singolo / Solenoide Doppio | Consistent word order between the two variant names |
+| macchina a stati / avviso | FSM / warning | No anglicisms in Italian prose — plain Italian terms exist and read cleaner in a Karpathy-style wiki |
+
+Not in scope for anglicism cleanup: `Tier`, `FB`, `FC`, `UDT` — established Siemens/TIA
+Portal block-type nomenclature used consistently across the whole library, not casual
+English loanwords.
+
+### Branding
+
+Wiki-facing text (site_name, home page, page titles) says **"NTE Process"**, never
+"AleFire" — AleFire is the author's personal name, not the company. Scoped to *wiki
+content only*: the actual TIA Portal global library asset
+(`library/AleFire-Library_V21/*.al21`), `config.toml`, `config.py`, `pyproject.toml`,
+`.gitignore`, and this file's own repo-layout/asset-path references keep the real
+`AleFire-Library` name — that's the actual Siemens artifact name, tracked in git and
+consumed by tia-automation; renaming it is a separate, much riskier change and out of scope.
+
+### Theme toggle icons
+
+Sun icon = switch to light mode, moon icon = switch to dark mode (icon represents the
+*target* mode). This is the inverse of Material-for-MkDocs' historical default (icon =
+current mode) — changed because it reads more intuitively.
+
+### When to split a module into multiple pages
+
+Default: one page per module, with a single "Composizione" table (Tag | Tipo | Ruolo)
+listing embedded component instances by tag — this covers most modules, including ones
+with several internal roles (e.g. Nolvac, Propulsori), as long as they're all built on
+one core UDT.
+
+Split into a category-overview page plus separate detail sub-pages **only when genuinely
+distinct UDTs are involved** — e.g. Pipeline (`UDT_An_Pipeline` vs `UDT_Dig_Pipeline`) or
+Celle di Carico (`UDT_Load_cells` vs `UDT_Pavone_IN`/`UDT_Pavone_OUT`). Don't split just
+because a module has functionally distinct roles (adapter vs. logic) if they still share
+one UDT — that was tried for Celle di Carico and reverted once it became clear the real
+line was the UDT boundary, not the role.
+
+For an interface/adapter split specifically (a swappable hardware-facing UDT+FC pair vs. a
+stable core-logic UDT): the point of the split is to document the decoupling itself — the
+core UDT and its FBs never change when the physical device does, only the interface UDT+FC
+pair does. Say this explicitly in the category-overview page's intro, don't just present
+two sub-pages side by side with no explanation of why they're separate.
+
+---
+
 ## Git Flow
 
 | Branch | From | Merge into | Purpose |
