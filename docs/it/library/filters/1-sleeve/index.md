@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Tier 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Livello 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Livello 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Elettrovalvola (Tier 1) | Impulso di pulizia |
+| `XY` | Elettrovalvola (Livello 1) | Impulso di pulizia |
 
 ---
 

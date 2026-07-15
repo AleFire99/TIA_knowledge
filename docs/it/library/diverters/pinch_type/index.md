@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** Il deviatore a manicotto indirizza il flusso di materiale tra due linee (A e B) incorporando due istanze di Valvola a Manicotto (Tier 2), `XVA` e `XVB`. Solo una linea è aperta alla volta. Non ci sono sensori fisici propri del deviatore — lo stato di instradamento è interamente derivato dal feedback di posizione delle due sotto-valvole.
+**Livello 3 — composito.** Il deviatore a manicotto indirizza il flusso di materiale tra due linee (A e B) incorporando due istanze di Valvola a Manicotto (Livello 2), `XVA` e `XVB`. Solo una linea è aperta alla volta. Non ci sono sensori fisici propri del deviatore — lo stato di instradamento è interamente derivato dal feedback di posizione delle due sotto-valvole.
 
 ---
 
@@ -10,8 +10,8 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XVA` | Valvola a Manicotto (Tier 2) | Verso il percorso A |
-| `XVB` | Valvola a Manicotto (Tier 2) | Verso il percorso B |
+| `XVA` | Valvola a Manicotto (Livello 2) | Verso il percorso A |
+| `XVB` | Valvola a Manicotto (Livello 2) | Verso il percorso B |
 
 Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_route_B`: FALSE = instradamento su A, TRUE = instradamento su B) stabilisce quale valvola va aperta; l'altra è sempre comandata chiusa — le due istanze non arbitrano mai in autonomia. Vedere [Valvola a Manicotto](../../valves/pinch/index.md) per il dettaglio delle sotto-valvole.
 

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Elettrovalvole (Tier 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Livello 2.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Elettrovalvole (Livello 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
@@ -10,8 +10,8 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XYA` | Elettrovalvola (Tier 1) | Impulso manica A |
-| `XYB` | Elettrovalvola (Tier 1) | Impulso manica B |
+| `XYA` | Elettrovalvola (Livello 1) | Impulso manica A |
+| `XYB` | Elettrovalvola (Livello 1) | Impulso manica B |
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Tier 2) e due Elettrovalvole (Tier 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
+**Livello 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Livello 2) e due Elettrovalvole (Livello 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
 
 Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché il comando resta attivo.
 
@@ -12,9 +12,9 @@ Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`c
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XV01` | Valvola a Farfalla SS (Tier 2) | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md) |
-| `XY02` | Elettrovalvola (Tier 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
-| `XY03` | Elettrovalvola (Tier 1) | Depressione di trasporto durante `SUCTION` |
+| `XV01` | Valvola a Farfalla SS (Livello 2) | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md) |
+| `XY02` | Elettrovalvola (Livello 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
+| `XY03` | Elettrovalvola (Livello 1) | Depressione di trasporto durante `SUCTION` |
 
 ---
 

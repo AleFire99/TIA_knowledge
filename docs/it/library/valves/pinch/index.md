@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile. L'eccitazione dell'elettrovalvola interna (`XY`) aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. Un pressostato (`PSL`) conferma la posizione chiusa — è l'unico sensore di posizione del dispositivo. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa.
+**Livello 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile. L'eccitazione dell'elettrovalvola interna (`XY`) aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. Un pressostato (`PSL`) conferma la posizione chiusa — è l'unico sensore di posizione del dispositivo. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa.
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Elettrovalvola (Tier 1) | Attuatore — eccitato = chiuso |
+| `XY` | Elettrovalvola (Livello 1) | Attuatore — eccitato = chiuso |
 
 L'arbitraggio manuale/automatico (`manual_mode`/`manual`/`auto`) segue lo stesso schema descritto in [Elettrovalvola](../solenoid/index.md).
 
@@ -87,7 +87,7 @@ Al rientro da `FAULT`, il blocco rilegge `PSL` per determinare lo stato stabile 
 | [`XV-E03`](../index.md#allarmi-delle-valvole) | `CLOSING` non confermato entro `actuator_timeout` |
 | [`XV-E04`](../index.md#allarmi-delle-valvole) | `OPENING` non confermato entro `actuator_timeout` |
 
-Non applicabile: `XV-E02` (conflitto sensori) — il Manicotto ha un solo sensore di posizione.
+Non applicabile: `XV-E02` (conflitto sensori) — la valvola a manicotto ha un solo sensore di posizione.
 
 ---
 

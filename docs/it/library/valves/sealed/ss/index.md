@@ -1,8 +1,8 @@
-# Valvola Sigillata — Monosolenoide (SS Sealed)
+# Valvola Sigillata — Singolo Solenoide (SS Sealed)
 
 ## Panoramica
 
-**Tier 3 — composito.** `SS_Sealed_valve` avvolge un'istanza di Valvola a Farfalla SS (Tier 2) aggiungendo un'elettrovalvola di sigillo dedicata (`XY_seal`, Tier 1). Il sigillo viene eccitato automaticamente quando la valvola interna è confermata `CLOSED`, garantendo tenuta pneumatica in stato di riposo; si diseccita non appena la valvola inizia ad aprirsi.
+**Livello 3 — composito.** `SS_Sealed_valve` avvolge un'istanza di Valvola a Farfalla SS (Livello 2, monostabile — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md)) aggiungendo un'elettrovalvola di sigillo dedicata (`XY_seal`, Livello 1). Il sigillo viene eccitato automaticamente quando la valvola interna è confermata `CLOSED`, garantendo tenuta pneumatica in stato di riposo; si diseccita non appena la valvola inizia ad aprirsi.
 
 Il blocco delega interamente la logica di apertura/chiusura, il rilevamento allarmi e la macchina a stati all'istanza interna `XV`; non possiede una propria FSM né un proprio `ALARMS` — `STATUS` è una copia diretta di `XV.STATUS` ad ogni scan.
 
@@ -12,8 +12,8 @@ Il blocco delega interamente la logica di apertura/chiusura, il rilevamento alla
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XV` | Valvola a Farfalla SS (Tier 2) | Valvola principale — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md) |
-| `XY_seal` | Elettrovalvola (Tier 1) | Elettrovalvola di tenuta — eccitata ↔ `XV` in `CLOSED` |
+| `XV` | Valvola a Farfalla SS (Livello 2) | Valvola principale — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md) |
+| `XY_seal` | Elettrovalvola (Livello 1) | Elettrovalvola di tenuta — eccitata ↔ `XV` in `CLOSED` |
 
 ---
 

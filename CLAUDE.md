@@ -274,32 +274,70 @@ This wiki is maintained by AI sessions with no memory of *why* past decisions we
 only what's written here. Every rule below carries its rationale so a future session can
 extend the pattern correctly instead of guessing or accidentally reverting it.
 
+### Livello classification
+
+`Livello` (formerly called "Tier" — renamed, see Terminology below) is a **strict
+recursive depth**, not a complexity score: `Livello = 1 + the highest Livello among any
+embedded sub-component`; a module that embeds nothing is Livello 1. No cap — a module
+embedding something already at Livello 3 is Livello 4, not Livello 3. Embedding **2+
+instances of the same lower livello does not by itself bump the livello** — that's an
+instance count worth a line of prose, not a depth increase (the Doppio Solenoide butterfly
+valve and the 2-sleeve filter both only embed Livello-1 Elettrovalvola, 2× each, so both
+stay Livello 2, same as their single-instance siblings).
+
+"Composito" as a qualifier word is reserved for Livello ≥3 (embeds something that is
+itself non-atomic). Livello 2 modules get no adjective. "Atomico" is reserved for genuine
+zero-sub-component leaves (Elettrovalvola) — a module can be Livello 1 without being
+"atomico" if it has no embedded sub-instances but still carries real internal complexity
+(Celle di Carico's core has two independent state machines sharing one UDT, no embedding
+at all, and is Livello 1 — but the Panoramica says so explicitly instead of calling it
+atomic).
+
+Current values, for reference when adding a new module:
+
+| Module | Livello | Why |
+|---|---|---|
+| Elettrovalvola | 1 | Embeds nothing — genuinely atomic |
+| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Portello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
+| Deviatore a Manicotto, Valvola Sigillata SS, Nolvac | 3 | Embed at least one Livello-2 component |
+| Celle di Carico core (Ciclo di Carico e Scarico) | 1 | Embeds nothing, but two independent FSMs share one UDT — Livello 1 without being "atomico" |
+| Propulsore Ingresso Sigillato | 4 | Embeds Valvola Sigillata SS (Livello 3) |
+| Interfaccia Pavone DAT 1400, Pipeline Analogica/Digitale | not classified | FC, stateless — Livello only applies to stateful FBs with their own state machine |
+
 ### Category ordering (`docs/it/library/index.md` + `zensical.it.toml` nav)
 
 Categories are ordered by **valve-nesting depth**, not alphabetically or by device count:
 
-1. **Valvole** first — the only category with no external dependency (it *is* the Tier
+1. **Valvole** first — the only category with no external dependency (it *is* the Livello
    1–3 valve family other categories build on).
-2. Categories embedding only atomic **Tier-1 Elettrovalvola** instances: **Portelli** (1×)
+2. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Portelli** (1×)
    → **Filtri** (1–2×).
-3. Categories embedding **Tier-2+ valve types**: **Deviatori** (2× Manicotto, Tier 2) →
-   **Nolvac** (Farfalla SS Tier 2 + 2× Elettrovalvola).
-4. **Celle di Carico** — Tier 3, but independent of Valvole (own device family: a core UDT
-   plus swappable transmitter interfaces). Introduced here because the next item depends on it.
-5. **Propulsori** last among nested categories — the deepest composite, nesting multiple
-   valve tiers (Sigillata SS, Farfalla DS, 3× Farfalla SS, Elettrovalvola) *and* a full
-   Celle di Carico instance. Needs both prior chains already introduced.
-6. **Pipeline** absolute last — not a Tier at all (stateless FC), no nesting, no dependency
-   on anything else. A different logical domain (sensor-state derivation, not valve
-   actuation), so it sits outside the nesting chain entirely.
+3. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
+   **Nolvac** (Farfalla SS Livello 2 + 2× Elettrovalvola).
+4. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
+   classification below), but independent of Valvole regardless (own device family: a core
+   UDT plus swappable transmitter interfaces). Introduced here because the next item
+   depends on it, not because of its own livello number.
+5. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
+   multiple valve livelli (Sigillata SS at Livello 3, Farfalla SS at Livello 2, Elettrovalvola
+   at Livello 1) *and* a full Celle di Carico instance. Needs both prior chains already introduced.
+6. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, no
+   dependency on anything else. A different logical domain (sensor-state derivation, not
+   valve actuation), so it sits outside the nesting chain entirely.
 
-**Adding a new category:** identify what Tier-1+ components it embeds and whether it
+**Adding a new category:** identify what Livello-1+ components it embeds and whether it
 depends on another composite category (the way Propulsori depends on Celle di Carico).
 Insert it at the point where all of its dependencies are already introduced. If it has no
 valve dependency at all, place it by its own logical domain (near Pipeline if it's a
 similarly standalone, non-actuation category).
 
 Keep `zensical.it.toml`'s nav order in sync with this page order — they must match.
+
+**Within** a category's nav sub-items (after "Panoramica", which always stays first), order
+by ascending Livello — e.g. Valvole goes Elettrovalvola (1) → A Manicotto/Singolo
+Solenoide/Doppio Solenoide (2) → Sigillata SS (3). Unclassified items (Pipeline's FC
+variants, Celle di Carico's interface page) keep their existing relative position — there's
+no Livello to sort them by.
 
 ### Terminology (Italian)
 
@@ -309,10 +347,11 @@ Keep `zensical.it.toml`'s nav order in sync with this page order — they must m
 | (Valvola) a Manicotto | (Valvola) a Pizzico | "Manicotto" is the correct term for pinch-type valves/diverters in this library's domain |
 | Singolo Solenoide / Doppio Solenoide | Solenoide Singolo / Solenoide Doppio | Consistent word order between the two variant names |
 | macchina a stati / avviso | FSM / warning | No anglicisms in Italian prose — plain Italian terms exist and read cleaner in a Karpathy-style wiki |
+| Livello | Tier | Same reasoning as FSM/warning — unlike `FB`/`FC`/`UDT`, "Tier" isn't real Siemens/TIA Portal vocabulary, it's a classification this wiki invented, so it doesn't get a pass on the anglicism rule |
 
-Not in scope for anglicism cleanup: `Tier`, `FB`, `FC`, `UDT` — established Siemens/TIA
-Portal block-type nomenclature used consistently across the whole library, not casual
-English loanwords.
+Not in scope for anglicism cleanup: `FB`, `FC`, `UDT` — established Siemens/TIA Portal
+block-type nomenclature used consistently across the whole library, not casual English
+loanwords.
 
 ### Branding
 

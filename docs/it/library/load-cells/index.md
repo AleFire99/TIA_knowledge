@@ -4,11 +4,11 @@ Il sistema di pesatura è costruito attorno a `UDT_Load_cells`, che raccoglie tu
 
 ## Allarmi delle celle di carico
 
-| ID | Classe | Titolo | Condizione | Applicabile a |
-|----|--------|--------|------------|----------------|
-| `LC-W01` | W | Peso fuori scala | `ALARMS.weight_invalid` — non causa una transizione a ERROR, blocca solo l'avvio di un ciclo | Celle di Carico |
-| `LC-E01` | E | Timeout carico | `ALARMS.loading_timeout` — porta `Loading` in ERROR | Celle di Carico |
-| `LC-E02` | E | Timeout scarico | `ALARMS.unloading_timeout` — porta `Unloading` in ERROR | Celle di Carico |
+| ID | Titolo | Condizione | Applicabile a |
+|----|--------|------------|----------------|
+| `LC-W01` | Peso fuori scala | `ALARMS.weight_invalid` — non causa una transizione a ERROR, blocca solo l'avvio di un ciclo | Celle di Carico |
+| `LC-E01` | Timeout carico | `ALARMS.loading_timeout` — porta `Loading` in ERROR | Celle di Carico |
+| `LC-E02` | Timeout scarico | `ALARMS.unloading_timeout` — porta `Unloading` in ERROR | Celle di Carico |
 
 `LC-W01` è un avviso (non causa una transizione di stato) perché blocca solo l'ingresso in `LOADING`/`CONVEYING` da `IDLE` — a differenza di `LC-E01`/`LC-E02`, errori veri e propri, ciascuno con la propria transizione a `ERROR` nella rispettiva macchina a stati.
 

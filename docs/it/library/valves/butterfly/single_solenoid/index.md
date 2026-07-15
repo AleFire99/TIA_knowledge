@@ -1,8 +1,8 @@
-# Valvola a Farfalla — Monosolenoide (SS)
+# Valvola a Farfalla — Singolo Solenoide (SS)
 
 ## Panoramica
 
-**Tier 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide. L'eccitazione di `XY` aziona l'attuatore verso l'apertura; la diseccitazione permette alla molla di riportare il disco in chiusura. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
+**Livello 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide. L'attuatore è monostabile: l'eccitazione di `XY` lo spinge verso l'apertura, mentre la molla riporta il disco nell'unica posizione di riposo (chiuso) non appena `XY` si diseccita. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
 
 Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, condizione ambigua → FAULT.
 
@@ -12,7 +12,7 @@ Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato inizi
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Elettrovalvola (Tier 1) | Attuatore — eccitato durante l'apertura e mantenuto eccitato in OPEN contro la molla |
+| `XY` | Elettrovalvola (Livello 1) | Attuatore — eccitato durante l'apertura e mantenuto eccitato in OPEN contro la molla |
 
 Arbitraggio manuale/automatico come in [Elettrovalvola](../../solenoid/index.md).
 

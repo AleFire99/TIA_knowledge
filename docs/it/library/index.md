@@ -6,7 +6,7 @@ I moduli sono raggruppati per tipo. Ogni pagina modulo descrive: panoramica, com
 
 ---
 
-## Valvole
+## [Valvole](valves/index.md)
 
 Valvole controllate pneumaticamente per isolamento, attuazione e controllo di processo.
 
@@ -30,7 +30,7 @@ Blocco elettrico per un portello ad apertura manuale — il PLC concede solo il 
 
 ---
 
-## Filtri
+## [Filtri](filters/index.md)
 
 Sistemi di pulizia a impulsi d'aria compressa per maniche filtranti.
 
@@ -41,7 +41,7 @@ Sistemi di pulizia a impulsi d'aria compressa per maniche filtranti.
 
 ---
 
-## Deviatori
+## [Deviatori](diverters/index.md)
 
 Deviano il materiale convogliato tra due o più percorsi di scarico tramite un meccanismo attuato pneumaticamente.
 
@@ -61,7 +61,7 @@ Unità di convogliamento pneumatico a ciclo aspirazione/pulizia.
 
 ---
 
-## Celle di Carico
+## [Celle di Carico](load-cells/index.md)
 
 Sistema di pesatura basato su un'unica struttura dati condivisa, con la logica di ciclo separata dal trasmettitore fisico tramite un'interfaccia intercambiabile.
 
@@ -72,7 +72,7 @@ Sistema di pesatura basato su un'unica struttura dati condivisa, con la logica d
 
 ---
 
-## Propulsori
+## [Propulsori](transporters/index.md)
 
 Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e scarico pressurizzato.
 
@@ -82,7 +82,7 @@ Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e 
 
 ---
 
-## Pipeline
+## [Pipeline](pipeline/index.md)
 
 Derivazione dello stato di pressione dalla lettura di un trasmettitore PT o di due pressostati digitali. Nessuna FSM — stato funzione diretta e istantanea della lettura corrente, senza isteresi.
 
