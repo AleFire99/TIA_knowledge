@@ -2,9 +2,11 @@
 
 Libreria moduli NTE Process. Ogni modulo è un blocco funzionale PLC autonomo con I/O, allarmi e parametri definiti.
 
-I moduli sono raggruppati per tipo. Ogni pagina modulo descrive: panoramica, componenti, segnali I/O, funzionamento, allarmi, parametri, struttura dati e macchina a stati.
+I moduli sono raggruppati per tipo. Ogni pagina modulo descrive: panoramica, componenti, segnali I/O, funzionamento, allarmi, parametri, struttura dati e diagramma di stato.
 
 Il comando `manual_mode`/`manual`/`auto` si risolve solo al livello più esterno esposto a HMI/DCS; i componenti annidati (es. elettrovalvole interne) ricevono soltanto l'`auto` già risolto dal blocco che li incorpora — non arbitrano in autonomia.
+
+Ogni timer di libreria segue lo stesso schema: è un TON il cui `IN` è legato esclusivamente allo stato (o sotto-stato) in cui deve essere attivo — si avvia entrando in quello stato e si resetta automaticamente uscendone, senza altre condizioni. Per questo la tabella Timer di ogni pagina modulo elenca solo `Timer | Stato in cui è attivo | Soglia (parametro)`: la condizione di reset non è mai un'informazione a parte, è sempre "si esce da quello stato".
 
 ---
 

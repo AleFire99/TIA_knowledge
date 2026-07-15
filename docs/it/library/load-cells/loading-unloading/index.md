@@ -8,7 +8,9 @@ Il campo `IN` di questa struttura (`current_weight`, `scale_error`, `plant_error
 
 ---
 
-## Struttura dati
+## Interfaccia
+
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -72,9 +74,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). `IN` è scritto dall'interfaccia trasmettitore collegata (es. [Interfaccia Pavone DAT 1400](../pavone-dat-1400/index.md)), non da DCS/HMI direttamente.
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -107,9 +107,7 @@ classDiagram
 | `ALARMS.loading_timeout` | Bool | OUT | Rispecchia `internal_error` di Loading (timeout carico, guasto trasmettitore o errore di impianto) |
 | `ALARMS.unloading_timeout` | Bool | OUT | Rispecchia `internal_error` di Unloading (timeout scarico, guasto trasmettitore o errore di impianto) |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -122,17 +120,19 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
 
-### FB Loading
+### Funzionamento
+
+#### FB Loading
 
 **NORMAL/IDLE** — Attende `CMD.loading_start` con peso valido (`NOT weight_invalid`). All'ingresso in IDLE: `BATCH.transferred := 0`, impulso `loading_finished`.
 
 **NORMAL/LOADING** — Calcola ogni scan: `BATCH.transferred := current_weight − weight_at_start` (clampato a 0). Torna a IDLE quando `CMD.stop OR (current_weight ≥ loading_setpoint − loading_tail)`. `weight_at_start` viene acquisito all'ingresso in LOADING.
 
-**FAULT** — Si entra da NORMAL quando `internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error` ([`LC-E01`](../index.md#allarmi-delle-celle-di-carico) — ciclo di carico durato oltre `loading_timeout`, o guasto trasmettitore/impianto durante LOADING). `CMD.ack AND NOT internal_error` riporta a NORMAL, ripartendo da IDLE.
+**FAULT** — Si entra da NORMAL quando `internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error`. `CMD.ack AND NOT internal_error` riporta a NORMAL, ripartendo da IDLE.
 
-### FB Unloading
+#### FB Unloading
 
 **IDLE** — Attende `CMD.unloading_start` con peso valido. All'ingresso in IDLE: `BATCH.transferred := 0`, impulso `unloading_finished`.
 
@@ -142,17 +142,17 @@ Alla ripresa (PAUSED → UNLOADING): `weight_at_start := current_weight + transf
 
 **PAUSED** — `BATCH.transferred` congelato. `CMD.unloading_start` riprende (→ UNLOADING); `CMD.reset` torna a IDLE.
 
-**FAULT** — `internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error` ([`LC-E02`](../index.md#allarmi-delle-celle-di-carico) — ciclo di scarico durato oltre `unloading_timeout`, o guasto trasmettitore/impianto durante UNLOADING). `CMD.ack` passa a PAUSED (non direttamente a IDLE).
+**FAULT** — `internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error`. `CMD.ack` passa a PAUSED (non direttamente a IDLE).
 
-### Peso fuori scala
+### Allarmi
 
-[`LC-W01`](../index.md#allarmi-delle-celle-di-carico) (`weight_invalid`) è condiviso da Loading e Unloading — impedisce l'avvio di un nuovo ciclo in entrambi i blocchi. In caso di allarme, verificare celle, cablaggio e trasmettitore.
+- [`LC-W01`](../index.md#allarmi-delle-celle-di-carico) — `weight_invalid`, condiviso da Loading e Unloading; impedisce l'avvio di un nuovo ciclo in entrambi i blocchi. Verificare celle, cablaggio e trasmettitore
+- [`LC-E01`](../index.md#allarmi-delle-celle-di-carico) — ciclo di carico durato oltre `loading_timeout`, o guasto trasmettitore/impianto durante LOADING
+- [`LC-E02`](../index.md#allarmi-delle-celle-di-carico) — ciclo di scarico durato oltre `unloading_timeout`, o guasto trasmettitore/impianto durante UNLOADING
 
----
+### Diagrammi di stato
 
-## Macchine a stati
-
-### Loading
+#### Loading
 
 ```mermaid
 stateDiagram-v2
@@ -176,7 +176,7 @@ state LOADING_FB{
 | NORMAL/IDLE | In attesa; `transferred=0` all'ingresso |
 | NORMAL/LOADING | Carico attivo; `transferred` aggiornato ogni scan |
 
-### Unloading
+#### Unloading
 
 ```mermaid
 stateDiagram-v2
@@ -199,3 +199,17 @@ state UNLOADING_FB{
 | IDLE | In attesa; `transferred=0` all'ingresso |
 | UNLOADING | Scarico attivo; `transferred` aggiornato ogni scan |
 | PAUSED | Batch sospeso; `transferred` congelato |
+
+### Timer
+
+#### Loading
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `loading_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
+
+#### Unloading
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `unloading_timer` | UNLOADING | `SETTING.unloading_timeout` |

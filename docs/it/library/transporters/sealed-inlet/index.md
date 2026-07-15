@@ -10,7 +10,9 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Direzione | Ruolo |
 |-----|------|-----------|-------|
@@ -28,9 +30,7 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 
 `XV01`–`XV05` e `WT01` sono IN/OUT: il propulsore scrive il loro `CMD` (auto/ack, e per `WT01` anche stop/reset/loading_start/unloading_start) e rilegge il loro `STATUS`/`ALARMS`/`BATCH` per la propria FSM e `internal_error`. `XY` è OUT-only, come ogni Elettrovalvola comandata senza lettura del proprio stato. `PT01`/`PT02`/`PSL`/`LSH` sono sensori puri, nessun `CMD` da scrivere.
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -95,9 +95,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -120,9 +118,7 @@ classDiagram
 | `OUT.filter_cleaner_command` | Bool | OUT | TRUE durante CLEANING — abilita il sistema di pulizia filtro esterno |
 | `OUT.last_transferred` | Real | OUT | Quantità convogliata nell'ultimo ciclo CONVEYING [kg] |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -136,16 +132,18 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
 
-### Condizioni derivate (ogni scan)
+### Funzionamento
+
+#### Condizioni derivate (ogni scan)
 
 - **`all_loading_closed`** — XV01, XV02, XV03 tutti confermati chiusi (prerequisito per SEALING → PRESSURIZING)
 - **`pressure_gate_met`** — `PT01 ≥ PT02 + pressure_delta` (vessel abbastanza sovrapressurizzato rispetto alla linea)
 - **`depressurized`** — `PT01 ≤ vessel_empty_thresh AND PT02 ≤ line_empty_thresh`
 - **`internal_error`** — guasto su XV01/02/03/04/05, timeout bilancia, `NOT PSL` (pressione di sicurezza persa), `LSH` (livello alto), `ALARMS.pressurization_timeout` o `ALARMS.depressurization_timeout`
 
-### Sequenza di carico
+#### Sequenza di carico
 
 1. **IDLE** → `CMD.start_loading` → **FILLING**: XV01 (ingresso), XV02 (sfiato), XV03 (orifizio) aperti; il FB `Loading` gestisce la bilancia.
 2. **FILLING** → bilancia raggiunge il setpoint (`loading_finished`) → **CLEANING**: filtro di ingresso rigenerato per `cleaning_timer`.
@@ -155,21 +153,24 @@ classDiagram
 6. **CONVEYING** → bilancia svuotata (`unloading_finished`), scarico messo in pausa (`WT01.STATUS.UNLOADING.is_paused`) o `CMD.stop` → **DEPRESSURIZING**: XV02 (sfiato) aperto per scaricare la pressione.
 7. **DEPRESSURIZING** → `depressurized` → **IDLE**: `OUT.conveying_done` impulso 1-scan.
 
-### Sequenza di convogliamento diretto
+#### Sequenza di convogliamento diretto
 
 `CMD.start_convey` in IDLE porta direttamente a SEALING (saltando FILLING e CLEANING) per convogliare materiale già presente nel vessel.
 
-### Comportamento in FAULT
+#### Comportamento in FAULT
 
 In FAULT: XV02 (sfiato) **e** XV04 (scarico) aperti per sicurezza passiva; bilancia fermata e resettata. `CMD.ack` con `NOT internal_error` riporta a NORMAL/IDLE.
 
 ### Allarmi
 
-[`TR-E01`](../index.md#allarmi-dei-propulsori) (`ALARMS.pressurization_timeout`, latchato dal timer e cancellato solo da `CMD.ack`) — verificare supply aria, XV04, PT01/02. [`TR-E02`](../index.md#allarmi-dei-propulsori) (`ALARMS.depressurization_timeout`, stesso comportamento di latch) — verificare XV02, PT01/02. [`TR-E03`](../index.md#allarmi-dei-propulsori) — guasto su una valvola interna (`XV01`–`XV05`), vedere gli [allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole). [`TR-E04`](../index.md#allarmi-dei-propulsori) — timeout Loading o Unloading su `WT01`, vedere gli [allarmi delle celle di carico](../../load-cells/index.md#allarmi-delle-celle-di-carico). [`TR-E05`](../index.md#allarmi-dei-propulsori) — `NOT PSL`, pressione di sicurezza persa. [`TR-E06`](../index.md#allarmi-dei-propulsori) — `LSH`, livello alto nel vessel.
+- [`TR-E01`](../index.md#allarmi-dei-propulsori) — `ALARMS.pressurization_timeout`, latchato dal timer e cancellato solo da `CMD.ack`; verificare supply aria, XV04, PT01/02
+- [`TR-E02`](../index.md#allarmi-dei-propulsori) — `ALARMS.depressurization_timeout`, stesso comportamento di latch; verificare XV02, PT01/02
+- [`TR-E03`](../index.md#allarmi-dei-propulsori) — guasto su una valvola interna (`XV01`–`XV05`); vedere gli [allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole)
+- [`TR-E04`](../index.md#allarmi-dei-propulsori) — timeout Loading o Unloading su `WT01`; vedere gli [allarmi delle celle di carico](../../load-cells/index.md#allarmi-delle-celle-di-carico)
+- [`TR-E05`](../index.md#allarmi-dei-propulsori) — `NOT PSL`, pressione di sicurezza persa
+- [`TR-E06`](../index.md#allarmi-dei-propulsori) — `LSH`, livello alto nel vessel
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -203,5 +204,15 @@ stateDiagram-v2
 | CONVEYING | — | — | — | aperta | aperta | eccitato | Unloading | FALSE |
 | DEPRESSURIZING | — | aperta | — | — | — | — | — | FALSE |
 | FAULT | — | aperta | — | aperta | — | — | stop+reset | FALSE |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `filter_cleaning_timer` | NORMAL/CLEANING | `SETTING.cleaning_timer` (nome del parametro invariato, non `cleaning_time`) |
+| `pressurizing_timer` | NORMAL/PRESSURIZING | `SETTING.pressurizing_timeout` |
+| `depressurizing_timer` | NORMAL/DEPRESSURIZING | `SETTING.depressurizing_timeout` |
+
+Nota: la variabile interna `filter_cleaning_timer` e il parametro `SETTING.cleaning_timer` hanno nomi diversi — non confonderli con la fase CLEANING stessa.
 
 Le valvole non elencate per uno stato sono chiuse (CMD.auto = FALSE). XV01–05 e XY hanno il proprio controller sub-FB sempre in esecuzione; il wrapper scrive solo `CMD.auto`.

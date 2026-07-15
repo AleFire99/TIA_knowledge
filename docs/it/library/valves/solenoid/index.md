@@ -8,7 +8,9 @@ Nessun parametro configurabile. Non genera allarmi propri — nessun sensore di 
 
 ---
 
-## Struttura dati
+## Interfaccia
+
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -30,20 +32,20 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
 | `CMD.manual_mode` | Bool | IN | TRUE = sorgente comando manuale invece che automatica |
 | `CMD.manual` | Bool | IN | Comando di eccitazione in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di eccitazione dall'automazione — scritto dal blocco chiamante, letto da questo blocco |
+| `CMD.auto` | Bool | IN | Comando di eccitazione in modalità automatica — scritto dal blocco chiamante, letto da questo blocco |
 | `out` | Bool | OUT | Uscita fisica bobina: TRUE = eccitata |
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 Il comando desiderato è risolto ad ogni scan:
 
@@ -53,9 +55,7 @@ desired_command := manual_mode ? manual : auto
 
 `out` segue `desired_command` senza ritardo — non c'è conferma fisica da attendere, quindi la transizione di stato è immediata.
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2

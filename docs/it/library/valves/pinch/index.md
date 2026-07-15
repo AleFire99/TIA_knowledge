@@ -2,21 +2,21 @@
 
 ## Panoramica
 
-**Livello 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile. L'eccitazione dell'elettrovalvola interna (`XY`) aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. Un pressostato (`PSL`) conferma la posizione chiusa — è l'unico sensore di posizione del dispositivo. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa.
+**Livello 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile, tramite un'elettrovalvola interna (`XY`) come attuatore e un pressostato (`PSL`) come unico sensore di posizione.
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XY` | Elettrovalvola (Livello 1) | Attuatore — eccitato = chiuso |
 
-L'arbitraggio manuale/automatico (`manual_mode`/`manual`/`auto`) segue lo stesso schema descritto in [Elettrovalvola](../solenoid/index.md).
+L'arbitraggio manuale/automatico (`manual_mode`/`manual`/`auto`) segue lo schema comune descritto in [Libreria — Panoramica](../../index.md).
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -57,9 +57,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -67,12 +65,10 @@ classDiagram
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola attuatore — comandata, il proprio stato non viene riletto da questo blocco |
 | `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | IN | Comando di chiusura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di chiusura dall'automazione |
+| `CMD.auto` | Bool | IN | Comando di chiusura in modalità automatica |
 | `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -80,7 +76,11 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
+
+L'eccitazione di `XY` aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa. `PSL` conferma la posizione chiusa.
 
 Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../solenoid/index.md):
 
@@ -92,11 +92,16 @@ La valvola a manicotto risolve l'arbitraggio manuale/automatico al proprio livel
 
 Al rientro da `FAULT`, il blocco rilegge `PSL` per determinare lo stato stabile (`CLOSED` se TRUE, altrimenti `OPEN`) — stesso meccanismo del primo scan.
 
-[`XV-E01`](../index.md#allarmi-delle-valvole) scatta quando lo stato stabile corrente (`CLOSED`/`OPEN`) non è confermato da `PSL`; [`XV-E03`](../index.md#allarmi-delle-valvole)/[`XV-E04`](../index.md#allarmi-delle-valvole) scattano se `CLOSING`/`OPENING` non si completano entro `actuator_timeout`. Non applicabile: `XV-E02` (conflitto sensori) — la valvola a manicotto ha un solo sensore di posizione.
+In `FAULT`, `XY` viene deliberatamente diseccitata (tubo aperto), indipendentemente da come era comandata prima del guasto: lasciare il tubo schiacciato a tempo indefinito ne accelererebbe l'usura del materiale.
 
----
+### Allarmi
 
-## Macchina a stati
+- [`XV-E01`](../index.md#allarmi-delle-valvole) — stato stabile corrente (`CLOSED`/`OPEN`) non confermato da `PSL`
+- [`XV-E03`](../index.md#allarmi-delle-valvole) — `CLOSING` non completato entro `actuator_timeout`
+- [`XV-E04`](../index.md#allarmi-delle-valvole) — `OPENING` non completato entro `actuator_timeout`
+- Non applicabile: `XV-E02` (conflitto sensori) — la valvola a manicotto ha un solo sensore di posizione
+
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -128,4 +133,10 @@ internal_error := sensor_mismatch OR failed_to_close OR failed_to_open;
 | OPENING | FALSE | Attuatore rilascia il tubo |
 | OPEN | FALSE | Tubo libero, flusso consentito |
 | CLOSING | TRUE | Attuatore schiaccia il tubo |
-| FAULT | — | Uscite congelate; richiede conferma operatore |
+| FAULT | FALSE | `XY` deliberatamente diseccitata (tubo aperto) — evita di lasciare il tubo schiacciato durante il guasto, prevenendo l'usura del materiale; richiede conferma operatore |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `movement_timer` | `OPENING` o `CLOSING` (in `NORMAL`) | `SETTING.actuator_timeout` |

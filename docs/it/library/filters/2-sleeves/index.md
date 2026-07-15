@@ -8,16 +8,16 @@ Nessun allarme proprio — nessun sensore di feedback disponibile su cui basare 
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XYA` | Elettrovalvola (Livello 1) | Impulso manica A |
 | `XYB` | Elettrovalvola (Livello 1) | Impulso manica B |
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -54,9 +54,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -66,9 +64,7 @@ classDiagram
 | `CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
 | `CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -77,7 +73,9 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 Quando abilitato, il sistema alterna tra le maniche A e B in un ciclo continuo:
 
@@ -91,9 +89,7 @@ La manica attiva è tracciata da `STATUS.is_sleeve_A`/`is_sleeve_B`. La rimozion
 
 In **modalità manuale** (`manual_mode = TRUE`), l'operatore abilita la pulizia tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`.
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -116,3 +112,10 @@ state FILTER{
 | ACTIVE / PULSING (manica A) | TRUE | FALSE | Impulso d'aria nella manica A |
 | ACTIVE / PULSING (manica B) | FALSE | TRUE | Impulso d'aria nella manica B |
 | ACTIVE / WAITING | FALSE | FALSE | Intervallo tra impulsi |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |
+| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |

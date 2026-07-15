@@ -8,7 +8,9 @@ Il blocco delega interamente la logica di apertura/chiusura, il rilevamento alla
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Direzione | Ruolo |
 |-----|------|-----------|-------|
@@ -17,9 +19,7 @@ Il blocco delega interamente la logica di apertura/chiusura, il rilevamento alla
 
 `XV` è IN/OUT: il wrapper scrive `XV.CMD.ack`/`CMD.auto`/`SETTING.actuator_timeout` e rilegge `XV.STATUS` a specchio. `XY_seal` è OUT-only: comandata da `XV.STATUS.is_closed`, il proprio stato non viene mai riletto.
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -54,9 +54,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). Nessuna classe `ALARMS` — a differenza di altri dispositivi compositi, questo UDT non ne ha nemmeno una a specchio: gli allarmi restano leggibili solo su `DEVICES.XV.ALARMS`.
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -64,12 +62,10 @@ classDiagram
 | `DEVICES.XY_seal` | UDT_Solenoid_valve | OUT | Elettrovalvola di sigillo |
 | `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di apertura dall'automazione |
+| `CMD.auto` | Bool | IN | Comando di apertura in modalità automatica |
 | `CMD.ack` | Bool | IN | Conferma allarmi — inoltrato a `XV.CMD.ack` |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -77,7 +73,9 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 Il comando desiderato è risolto dal wrapper e scritto in `XV.CMD.auto`:
 
@@ -91,13 +89,13 @@ Il sigillo segue una singola regola:
 XY_seal.CMD.auto := XV.STATUS.is_closed
 ```
 
+### Allarmi
+
 Nessun allarme proprio — questo blocco non possiede un proprio `ALARMS`. Gli allarmi restano visibili esclusivamente tramite l'istanza interna `XV`: vedere [Allarmi delle valvole](../../index.md#allarmi-delle-valvole).
 
----
+### Diagramma di stato
 
-## Macchina a stati
-
-La FSM è interamente gestita dall'istanza interna `XV` — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md#macchina-a-stati). Questo blocco aggiunge solo la logica del sigillo, senza stati propri.
+La FSM è interamente gestita dall'istanza interna `XV` — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md#diagramma-di-stato). Questo blocco aggiunge solo la logica del sigillo, senza stati propri.
 
 | Stato (da `XV`) | `XY_seal` |
 |------------------|-----------|

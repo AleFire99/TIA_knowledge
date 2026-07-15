@@ -6,7 +6,9 @@
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Direzione | Ruolo |
 |-----|------|-----------|-------|
@@ -15,9 +17,7 @@
 
 Entrambe sono IN/OUT: il deviatore scrive `CMD.auto`/`CMD.ack`/`SETTING.actuator_timeout` su ciascuna e rilegge `STATUS.is_open`/`is_closed`/`is_fault` per determinare il proprio stato. Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_route_B`: FALSE = instradamento su A, TRUE = instradamento su B) stabilisce quale valvola va aperta; l'altra è sempre comandata chiusa — le due istanze non arbitrano mai in autonomia. Vedere [Valvola a Manicotto](../../valves/pinch/index.md) per il dettaglio delle sotto-valvole.
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -56,9 +56,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -66,14 +64,12 @@ classDiagram
 | `DEVICES.XVB` | UDT_Pinch_Valve | IN/OUT | Sotto-valvola verso il percorso B |
 | `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | IN | Selezione percorso in modalità manuale (TRUE = percorso B) |
-| `CMD.auto` | Bool | IN | Selezione percorso dall'automazione |
+| `CMD.auto` | Bool | IN | Selezione percorso in modalità automatica |
 | `CMD.ack` | Bool | IN | Conferma allarmi — inoltrato a entrambe le sotto-valvole |
 
 `CMD.ack` viene propagato sia a `XVA.CMD.ack` sia a `XVB.CMD.ack` ad ogni scan.
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -81,15 +77,18 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
 
-[`DIV-E01`](../index.md#allarmi-dei-deviatori) scatta quando lo stato stabile corrente (`ROUTE_A`/`ROUTE_B`) non è confermato da `XVA.STATUS.is_open`/`XVB.STATUS.is_open`. Il guasto di `XVA` o `XVB` concorre a `internal_error` (transizione a `FAULT`) ma non genera un proprio ID a questo livello — vedere [Allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole).
+### Funzionamento
 
 Al rientro da `FAULT`, il blocco rilegge lo stato delle due sotto-valvole per determinare il percorso stabile — stesso meccanismo del primo scan.
 
----
+### Allarmi
 
-## Macchina a stati
+- [`DIV-E01`](../index.md#allarmi-dei-deviatori) — stato stabile corrente (`ROUTE_A`/`ROUTE_B`) non confermato da `XVA.STATUS.is_open`/`XVB.STATUS.is_open`
+- Il guasto di `XVA` o `XVB` concorre a `internal_error` (transizione a `FAULT`) ma non genera un proprio ID a questo livello — vedere [Allarmi delle valvole](../../valves/index.md#allarmi-delle-valvole)
+
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2

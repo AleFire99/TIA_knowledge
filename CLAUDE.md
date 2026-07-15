@@ -181,36 +181,93 @@ No i18n plugin — dual language is two independent builds, cross-linked via
 
 ## Module Page Format (all Claude-generated)
 
-Canonical section order — **omit a section's heading entirely when it's empty** rather than
+Canonical structure — 3 top-level H2s, the inner 7 possible sections nested as H3s under
+the two group headings. **Omit a section's heading entirely when it's empty** rather than
 keep a one-line placeholder ("Nessun parametro configurabile."); fold any genuinely useful
 "why this doesn't apply" reasoning into Panoramica as a trailing sentence instead:
 
 ```
-1. Panoramica          ← overview, Livello classification + rationale
-2. Composizione        ← only if the module has tagged embedded sub-instances; omit for
+## Panoramica            ← IDENTITY ONLY: what the module is, Livello classification +
+                            rationale, its role/family relation. NOT how it operates —
+                            see the Panoramica-vs-Funzionamento split below. Always
+                            present, ungrouped — the page's intro.
+
+## Interfaccia           ← group: everything about the module's shape and I/O surface
+### Composizione          only if the module has tagged embedded sub-instances; omit for
                           atomic/FC modules (Elettrovalvola, Pavone interface, Pipeline)
-3. Struttura dati       ← Mermaid classDiagram, moved up (was last) — shows the UDT's shape
-                          before the prose sections that reference individual fields
-4. Segnali di controllo ← single table with a `Direzione` column (see below); omit heading
+### Struttura dati        Mermaid classDiagram — shows the UDT's shape before the prose
+                          sections that reference individual fields
+### Segnali di controllo  single table with a `Direzione` column (see below); omit
                           only if the module has none (never happens so far)
-5. Parametri            ← omit heading entirely if the module has no SETTING fields
-6. Funzionamento        ← behavior prose; absorbs the old per-device Allarmi
-                          "condizione specifica" detail at the point the relevant
-                          guard/internal_error is discussed
-7. Macchina a stati     ← Mermaid stateDiagram-v2 + adjoining guard-formula code block +
+### Parametri             omit heading entirely if the module has no SETTING fields
+
+## Comportamento         ← group: everything about runtime behavior — this is where
+                          Diagramma di stato found its logical home (was flat/orphaned)
+### Funzionamento         ALL behavior prose, including the physical operating principle
+                          (excitation logic, sensor confirmation, normal-state behavior)
+                          that used to sit in Panoramica — see the split below
+### Allarmi               omit entirely if the module has no ALARMS struct AND no
+                          cross-reference target worth pointing to (same omit-if-empty
+                          rule as Parametri) — see below for the fold-vs-own-heading
+                          history and the current rule
+### Diagramma di stato    Mermaid stateDiagram-v2 + adjoining guard-formula code block +
                           a compact state table (name + one-line description, NO numeric
                           value column — state name alone is enough); omit entirely for
                           stateless FC modules (Pavone interface, Pipeline)
+### Timer                 own sub-heading, own table, right after Diagramma di stato;
+                          omit entirely (no heading, no placeholder line) for modules
+                          with no FSM of their own or whose FSM has no timer at all —
+                          same omit-if-empty rule as Parametri/Allarmi
 ```
 
-This is a net reduction from the old fixed 8-section shape — Allarmi and Parametri
-disappear when empty, and the old "Stati e output" table merges into Macchina a stati.
+One wrinkle: `load-cells/loading-unloading` splits Funzionamento/Diagramma di
+stato/Timer further into `Loading`/`Unloading` (two independent FSMs sharing one UDT) —
+those splits become H4s under the H3, since the H3 itself is already nested one level
+under the H2 group. Anchor slugs are derived from heading text, not heading level, so
+existing cross-links into any of these headings (e.g. `#diagramma-di-stato`,
+`#allarmi-delle-valvole`) keep resolving unchanged regardless of H2/H3/H4 nesting.
 
-**Allarmi is gone as its own heading** wherever a category-level alarms page exists to
-cross-reference (the per-device "condizione specifica" detail moves into Funzionamento
-instead). Exception: **Portello** keeps its own dedicated Allarmi section — Portelli has no
-category-level alarms page, so there's nowhere to fold it into or link out to. If a future
-single-module category is added with no category alarms page, it gets the same exception.
+**Timer** (own H3 under Comportamento, not a sub-table inside Diagramma di stato — see the
+fold-vs-own-heading history below, same reasoning that gave Allarmi its own heading back):
+every FB with its own
+FSM initializes at least one TON timer to gate a state transition — mermaid `stateDiagram-v2`
+can't express timer semantics at all, so it needs a plain table: `Timer | Stato in cui è
+attivo | Soglia (parametro)`. Derive `Stato in cui è attivo` from the timer's actual `IN :=`
+expression in the `.s7dcl` source (not assumed from the state name — `movement_timer` is
+active across two sibling states, `OPENING` OR `CLOSING`), and `Soglia` from its `PT :=`
+binding — always a `SETTING` field, already documented in Parametri, so this table is what
+cross-references the parameter to the state it actually gates. **No "condizione di reset"
+column** — every timer in this library follows the same universal pattern (documented once,
+as a global paragraph in `docs/it/library/index.md`, Libreria — Panoramica): `IN` is always
+exactly "currently in state X", so it resets automatically on leaving that state, nothing
+per-module to restate. Omit the whole section — heading included, not even a placeholder
+sentence — for modules with no FSM of their own (Sigillata SS delegates to `XV`, Deviatore
+delegates `actuator_timeout` to `XVA`/`XVB`) or whose FSM has no timer at all (Elettrovalvola
+— transition is immediate, no TON anywhere).
+
+**Panoramica vs. Funzionamento** — these used to overlap (Panoramica often restated the
+physical operating principle that Funzionamento then repeated in procedural form). Keep
+them cleanly split: Panoramica answers "what is this and where does it sit in the family"
+in 1–3 sentences (identity, Livello, composition rationale); Funzionamento answers "how does
+it actually behave" — the excitation/sensor/normally-open-or-closed description belongs
+here, not in Panoramica, even for simple atomic modules. When trimming an existing
+Panoramica, move the displaced operating-principle sentence to the top of Funzionamento
+rather than deleting it.
+
+**Allarmi is its own heading again, omit-if-empty** (like Parametri) — it was briefly folded
+into Funzionamento as a sub-heading with no heading of its own, which made that heading
+dishonest (a "Funzionamento" section whose tail was just an alarm-ID bullet list, no behavior
+in it). Reverted: give Allarmi its own heading (H3 under Comportamento, since the Phase 10
+grouping — see the section-order block above), and simply omit it when a module raises zero
+alarms and there's nothing worth cross-referencing (Elettrovalvola, both Filtro pages —
+fold the "why no alarms" rationale into Panoramica as a trailing sentence instead, same as
+Parametri's omit-if-empty pattern). When a module has no alarms of its own but still has
+something worth pointing at (Sealed SS, Nolvac — no own `ALARMS` struct, but a real
+propagated/cross-referenced condition), keep the heading anyway; there's content, just not
+an ID of its own. **Portello** keeps its own dedicated Allarmi section for the original
+reason — Portelli has no category-level alarms page, so there's nowhere to fold it into or
+link out to. If a future single-module category is added with no category alarms page, it
+gets the same exception.
 
 **`Direzione` column** (Segnali di controllo table): captures physical field I/O direction
 *and* how the signal is consumed between modules, not just sensor-vs-actuator. A scalar
@@ -238,7 +295,7 @@ legitimate all-`-` edge cases (every field read-only, including a register this 
 own FC writes every scan — the attribute governs external DCS/HMI access, not the owning
 FC's internal writes, so don't "fix" it to `+` by analogy with other FC outputs).
 
-**Macchina a stati state table may keep one boolean actuator-output column per genuinely
+**Diagramma di stato state table may keep one boolean actuator-output column per genuinely
 relevant embedded actuator** (e.g. Elettrovalvola's own `out`, or two columns for a
 two-actuator module like Doppio Solenoide's `XYA`/`XYB`) — "no numeric value column" means
 no raw internal state index (`active_sleeve` 0/1, a state's own integer code), not "strip to
@@ -256,6 +313,17 @@ the Filtri category page has no alarms table), the "why not applicable" rational
 moves to Panoramica as a trailing sentence, just without a link. Portello remains the only
 page keeping its own **heading** — the only case with real alarm content and no
 cross-reference target of any kind, category or peer.
+
+**Deferred — not yet implemented:**
+
+- **YAML-driven FSM generator.** Mermaid `stateDiagram-v2` is hand-written today; a script
+  that renders it (plus the guard-formula code block) from a YAML source of truth
+  (states/transitions/guards/notes) would keep the diagram and the formula from drifting
+  apart. Scoped as a follow-up once the template itself proved out on real content — it now
+  has, across all 15 pages, so this is next in line. The Timer section (above) is written by
+  hand today; once this generator exists, a YAML state definition can carry a timer's
+  IN/PT binding directly and render the Timer table too — each timer's `Stato in cui è
+  attivo`/`Soglia` pair is just an attribute of the state it's already declared on.
 
 All sections generated by Claude Code from `raw/` source files.
 Do not edit `docs/` pages manually — changes will be overwritten on next generation.

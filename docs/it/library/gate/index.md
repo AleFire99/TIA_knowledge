@@ -10,15 +10,15 @@ Non usa l'arbitraggio `manual_mode`/`manual`/`auto` comune al resto della librer
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XY` | Elettrovalvola (Livello 1) | Elettrovalvola di ritenuta — logica energizzato-per-sbloccare |
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -58,9 +58,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -71,9 +69,7 @@ classDiagram
 | `CMD.safe_to_open` | Bool | IN | Permesso a livello di coordinamento — condizione necessaria ma non sufficiente, vedere vincolo di sicurezza sopra |
 | `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -82,7 +78,9 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 `CMD.open` durante `CLOSING` riporta direttamente a `OPEN`, senza ripassare da `OPENING` né rivalutare `CMD.safe_to_open` — il portello non è mai stato effettivamente ribloccato (`ZSL` non è mai tornato TRUE), quindi non si sta concedendo un nuovo permesso, solo annullando una richiusura non ancora completata.
 
@@ -90,9 +88,7 @@ Al rientro da `FAULT`, il guard d'ingresso rivaluta lo stesso sensore `ZSL` — 
 
 In `FAULT`, `XY` viene deliberatamente energizzato (sbloccato): un guasto del PLC non deve mai intrappolare un operatore dietro una porta bloccata. La barriera di sicurezza reale è l'interblocco elettrico a monte di `XY`, non questo blocco funzionale.
 
----
-
-## Allarmi
+### Allarmi
 
 | ID | Titolo | Condizione |
 |----|--------|------------|
@@ -100,9 +96,7 @@ In `FAULT`, `XY` viene deliberatamente energizzato (sbloccato): un guasto del PL
 
 Nessun allarme di timeout sul ri-blocco (`CLOSING`): l'attesa indefinita è comportamento normale, non un guasto, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -134,3 +128,10 @@ internal_error := failed_to_unlock;
 | OPEN | TRUE | Sblocco confermato — la posizione fisica oltre questo punto è nota solo all'operatore |
 | CLOSING | FALSE | Ri-blocco comandato, in attesa che l'operatore richiuda fisicamente — nessuna scadenza, è attesa normale |
 | FAULT | TRUE | Guasto — sblocca deliberatamente (vedere sopra) |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `unlock_timer` | `OPENING` | `SETTING.unlock_timeout` |
+| `inactivity_timer` | `OPEN` | `SETTING.inactivity_timeout` |

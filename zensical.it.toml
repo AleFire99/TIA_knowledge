@@ -11,9 +11,9 @@ nav = [
           { "Panoramica" = "library/valves/index.md" },
           { "Elettrovalvola" = "library/valves/solenoid/index.md" },
           { "A Manicotto" = "library/valves/pinch/index.md" },
-          { "Valvola a Farfalla — Singolo Solenoide" = "library/valves/butterfly/single_solenoid/index.md" },
-          { "Valvola a Farfalla — Doppio Solenoide" = "library/valves/butterfly/double_solenoid/index.md" },
-          { "Sigillata SS" = "library/valves/sealed/ss/index.md" },
+          { "A Farfalla — Singolo Solenoide" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "A Farfalla — Doppio Solenoide" = "library/valves/butterfly/double_solenoid/index.md" },
+          { "Sigillata — Singolo Solenoide" = "library/valves/sealed/ss/index.md" },
       ] },
       { "Portelli" = "library/gate/index.md" },
       { "Filtri" = [

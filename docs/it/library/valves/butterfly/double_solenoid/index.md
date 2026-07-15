@@ -2,13 +2,13 @@
 
 ## Panoramica
 
-**Livello 2.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti, incorporando due istanze di Elettrovalvola (Livello 1). `XYA` aziona l'attuatore verso l'apertura; `XYB` verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a entrambi i solenoidi diseccitati — nessun ritorno a molla. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
-
-Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve`.
+**Livello 2.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti (`XYA` apertura, `XYB` chiusura), incorporando due istanze di Elettrovalvola (Livello 1). Attuatore a doppio effetto (bistabile), feedback di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
@@ -17,9 +17,7 @@ Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la st
 
 Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_open_command`) pilota quale delle due elettrovalvole va eccitata — le due istanze non arbitrano mai in autonomia.
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -63,9 +61,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -75,20 +71,24 @@ classDiagram
 | `DEVICES.XYB` | UDT_Solenoid_valve | OUT | Elettrovalvola chiusura — comandata, il proprio stato non viene riletto da questo blocco |
 | `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di apertura dall'automazione |
+| `CMD.auto` | Bool | IN | Comando di apertura in modalità automatica |
 | `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING |
+| `SETTING.actuator_timeout` | T#2s | Tempo massimo consentito per completare una manovra di apertura o chiusura |
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
+
+`XYA`/`XYB` sono eccitati solo durante il movimento (`OPENING`/`CLOSING`) — l'attuatore bistabile non richiede eccitazione di mantenimento in `CLOSED`/`OPEN`, mantiene la posizione anche a entrambi i solenoidi diseccitati (nessun ritorno a molla).
+
+Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve`.
 
 Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
 
@@ -96,13 +96,14 @@ Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola]
 desired_open_command := manual_mode ? manual : auto
 ```
 
-`XYA`/`XYB` sono eccitati solo durante il movimento (`OPENING`/`CLOSING`) — l'attuatore bistabile non richiede eccitazione di mantenimento in `CLOSED`/`OPEN`.
+### Allarmi
 
-[`XV-E01`](../../index.md#allarmi-delle-valvole) scatta quando lo stato stabile corrente non è confermato dal finecorsa atteso; [`XV-E02`](../../index.md#allarmi-delle-valvole) quando `ZSL AND ZSH` sono contemporaneamente TRUE; [`XV-E03`](../../index.md#allarmi-delle-valvole)/[`XV-E04`](../../index.md#allarmi-delle-valvole) se `CLOSING`/`OPENING` non si completano entro `actuator_timeout`.
+- [`XV-E01`](../../index.md#allarmi-delle-valvole) — stato stabile corrente non confermato dal finecorsa atteso
+- [`XV-E02`](../../index.md#allarmi-delle-valvole) — `ZSL AND ZSH` contemporaneamente TRUE
+- [`XV-E03`](../../index.md#allarmi-delle-valvole) — `CLOSING` non completato entro `actuator_timeout`
+- [`XV-E04`](../../index.md#allarmi-delle-valvole) — `OPENING` non completato entro `actuator_timeout`
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -136,3 +137,9 @@ internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR faile
 | OPEN | FALSE | FALSE | Disco aperto; nessuna eccitazione necessaria |
 | CLOSING | FALSE | TRUE | `XYB` riporta il disco in chiusura |
 | FAULT | FALSE | FALSE | Guasto; disco bistabile mantiene l'ultima posizione fisica |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `movement_timer` | `OPENING` o `CLOSING` (in `NORMAL`) | `SETTING.actuator_timeout` |

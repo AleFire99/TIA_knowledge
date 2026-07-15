@@ -8,7 +8,9 @@ Questa è, ad oggi, l'unica interfaccia trasmettitore della libreria. Un trasmet
 
 ---
 
-## Struttura dati
+## Interfaccia
+
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -54,9 +56,7 @@ classDiagram
 
 `-` = sola lettura (`ReadOnly := External` nel sorgente) — entrambi gli UDT sono interamente read-only da DCS/HMI, incluso `Command_register`, che pure viene scritto da questo stesso FC ogni scan: l'attributo governa l'accesso esterno DCS/HMI, non le scritture interne del FC che possiede l'istanza.
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 Il FC riceve `dat_IN : UDT_Pavone_IN`, restituisce `dat_OUT : UDT_Pavone_OUT`, e riceve in `VAR_IN_OUT` l'istanza `scale : UDT_Load_cells` su cui scrive. Dei molti registri disponibili in `UDT_Pavone_IN`/`UDT_Pavone_OUT`, solo tre vengono letti e uno scritto:
 
@@ -71,7 +71,9 @@ Il FC riceve `dat_IN : UDT_Pavone_IN`, restituisce `dat_OUT : UDT_Pavone_OUT`, e
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 ```Pascal
 scale.IN.scale_error := dat_IN.Status_register.weight_error;

@@ -2,23 +2,21 @@
 
 ## Panoramica
 
-**Livello 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide. L'attuatore è monostabile: l'eccitazione di `XY` lo spinge verso l'apertura, mentre la molla riporta il disco nell'unica posizione di riposo (chiuso) non appena `XY` si diseccita. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
-
-Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, condizione ambigua → FAULT.
+**Livello 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide (`XY`, monostabile) e feedback di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XY` | Elettrovalvola (Livello 1) | Attuatore — eccitato durante l'apertura e mantenuto eccitato in OPEN contro la molla |
 
-Arbitraggio manuale/automatico come in [Elettrovalvola](../../solenoid/index.md).
+Arbitraggio manuale/automatico secondo lo schema comune — vedere [Libreria — Panoramica](../../../index.md).
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -61,9 +59,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -72,20 +68,24 @@ classDiagram
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola attuatore — comandata, il proprio stato non viene riletto da questo blocco |
 | `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di apertura dall'automazione |
+| `CMD.auto` | Bool | IN | Comando di apertura in modalità automatica |
 | `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Tempo massimo ammesso per OPENING e CLOSING |
+| `SETTING.actuator_timeout` | T#2s | Tempo massimo consentito per completare una manovra di apertura o chiusura |
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
+
+L'attuatore è monostabile: l'eccitazione di `XY` lo spinge verso l'apertura, mentre la molla riporta il disco nell'unica posizione di riposo (chiuso) non appena `XY` si diseccita.
+
+Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, condizione ambigua → FAULT.
 
 Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
 
@@ -93,11 +93,14 @@ Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola]
 desired_open_command := manual_mode ? manual : auto
 ```
 
-[`XV-E01`](../../index.md#allarmi-delle-valvole) scatta quando lo stato stabile corrente non è confermato dal finecorsa atteso (`CLOSED` ma `!ZSL`, o `OPEN` ma `!ZSH`); [`XV-E02`](../../index.md#allarmi-delle-valvole) quando `ZSL AND ZSH` sono contemporaneamente TRUE; [`XV-E03`](../../index.md#allarmi-delle-valvole)/[`XV-E04`](../../index.md#allarmi-delle-valvole) se `CLOSING`/`OPENING` non si completano entro `actuator_timeout`.
+### Allarmi
 
----
+- [`XV-E01`](../../index.md#allarmi-delle-valvole) — stato stabile corrente non confermato dal finecorsa atteso (`CLOSED` ma `!ZSL`, o `OPEN` ma `!ZSH`)
+- [`XV-E02`](../../index.md#allarmi-delle-valvole) — `ZSL AND ZSH` contemporaneamente TRUE
+- [`XV-E03`](../../index.md#allarmi-delle-valvole) — `CLOSING` non completato entro `actuator_timeout`
+- [`XV-E04`](../../index.md#allarmi-delle-valvole) — `OPENING` non completato entro `actuator_timeout`
 
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -131,3 +134,9 @@ internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR faile
 | OPEN | TRUE | Disco aperto; l'elettrovalvola mantiene contro la molla |
 | CLOSING | FALSE | Molla riporta il disco in chiusura |
 | FAULT | FALSE | Guasto; attende `ack` con sensori validi |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `movement_timer` | `OPENING` o `CLOSING` (in `NORMAL`) | `SETTING.actuator_timeout` |

@@ -2,21 +2,21 @@
 
 ## Panoramica
 
-**Livello 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Livello 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Livello 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Livello 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 Nessun allarme proprio — `UDT_Filter_1_sleeve` non include una struttura `ALARMS`: non c'è sensore su cui basare una rilevazione di guasto.
 
 ---
 
-## Composizione
+## Interfaccia
+
+### Composizione
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XY` | Elettrovalvola (Livello 1) | Impulso di pulizia |
 
----
-
-## Struttura dati
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -49,9 +49,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -60,9 +58,7 @@ classDiagram
 | `CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
 | `CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -71,7 +67,11 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
+
+Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente.
 
 **IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di abilitazione (manuale o automatico), lo stato transita verso ACTIVE con `active_state = WAITING`.
 
@@ -83,9 +83,7 @@ Il ciclo WAITING → PULSING → WAITING si ripete finché il comando rimane att
 
 In **modalità manuale** (`manual_mode = TRUE`), il comando proviene da `CMD.manual`. In **modalità automatica**, da `CMD.auto`.
 
----
-
-## Macchina a stati
+### Diagramma di stato
 
 ```mermaid
 stateDiagram-v2
@@ -106,3 +104,10 @@ stateDiagram-v2
 | IDLE | — | FALSE | Filtro inattivo |
 | ACTIVE | WAITING | FALSE | In pausa tra impulsi; `interval_timer` in esecuzione |
 | ACTIVE | PULSING | TRUE | Impulso di pulizia attivo; `pulse_timer` in esecuzione |
+
+### Timer
+
+| Timer | Stato in cui è attivo | Soglia (parametro) |
+|-------|------------------------|---------------------|
+| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |
+| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |

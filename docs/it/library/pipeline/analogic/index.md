@@ -6,7 +6,9 @@
 
 ---
 
-## Struttura dati
+## Interfaccia
+
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -35,9 +37,7 @@ classDiagram
 
 `+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -47,9 +47,7 @@ classDiagram
 | `STATUS.is_with_material` | Bool | OUT | TRUE se `material_thresh ≤ PT < clogged_thresh` |
 | `ALARMS.pipeline_clogged` | Bool | OUT | TRUE se `PT ≥ clogged_thresh` |
 
----
-
-## Parametri
+### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -59,7 +57,9 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 ```Pascal
 STATUS.is_empty := PT.Scaled_value < empty_thresh;
@@ -71,4 +71,7 @@ ALARMS.pipeline_clogged := PT.Scaled_value >= clogged_thresh;
 
 Le prime tre condizioni sono fasi normali che il processo attraversa continuamente. `pipeline_clogged` non è una quarta fascia dello stesso tipo — rappresenta una condizione fisica anomala che non dovrebbe mai persistere. Non esiste una macchina a stati: la valutazione è puramente combinatoria e ricalcolata da zero ogni scan, senza isteresi.
 
-[`PL-E01`](../index.md#allarmi-delle-pipeline) scatta quando `PT.Scaled_value ≥ clogged_thresh`. Non applicabile: `PL-E02` (disallineamento sensori) — un'unica misura continua non ha un secondo valore indipendente con cui essere in contraddizione.
+### Allarmi
+
+- [`PL-E01`](../index.md#allarmi-delle-pipeline) — `PT.Scaled_value ≥ clogged_thresh`
+- Non applicabile: `PL-E02` (disallineamento sensori) — un'unica misura continua non ha un secondo valore indipendente con cui essere in contraddizione

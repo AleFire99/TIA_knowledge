@@ -8,7 +8,9 @@ Il pressostato bassa soglia (`PSL`) si attiva quando la pressione supera la sogl
 
 ---
 
-## Struttura dati
+## Interfaccia
+
+### Struttura dati
 
 ```mermaid
 classDiagram
@@ -32,9 +34,7 @@ classDiagram
 
 `-` = sola lettura (`ReadOnly := External` nel sorgente) — ogni campo di questo UDT è read-only da DCS/HMI; non esiste una struttura `SETTING`.
 
----
-
-## Segnali di controllo
+### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
@@ -47,7 +47,9 @@ classDiagram
 
 ---
 
-## Funzionamento
+## Comportamento
+
+### Funzionamento
 
 ```Pascal
 ALARMS.sensor_mismatch := NOT PSL AND PSH;
@@ -65,5 +67,10 @@ STATUS.is_with_material := PSL AND NOT PSH;
 | 1 | 1 | `pipeline_clogged` | Allarme ([`PL-E01`](../index.md#allarmi-delle-pipeline)) |
 
 `is_empty`/`is_with_material` sono condizioni normali che il processo attraversa continuamente. `pipeline_clogged` non è una terza variante dello stesso ciclo: fisicamente indica che il materiale si è accumulato al punto da impegnare anche il sensore alto, condizione che non dovrebbe mai persistere. `sensor_mismatch` segnala una combinazione fisicamente incoerente (il sensore alto non può attivarsi senza che il basso lo abbia già fatto) — un probabile guasto o errore di cablaggio piuttosto che una condizione di processo reale. Non esiste una macchina a stati: la valutazione è puramente combinatoria e ricalcolata da zero ogni scan, senza isteresi.
+
+### Allarmi
+
+- [`PL-E01`](../index.md#allarmi-delle-pipeline) — `pipeline_clogged` (`PSL AND PSH`)
+- [`PL-E02`](../index.md#allarmi-delle-pipeline) — `sensor_mismatch` (`NOT PSL AND PSH`)
 
 Essendo un FC privo di stato proprio, nessuna delle due condizioni confluisce automaticamente in un `internal_error` — questo dispositivo non ha una propria FSM da portare in fault. Se il chiamante vuole che `pipeline_clogged`/`sensor_mismatch` contribuiscano al proprio aggregato di guasto, è responsabilità del blocco chiamante includerli esplicitamente (stesso schema con cui il Nolvac incorpora `XV01.STATUS.is_fault`).
