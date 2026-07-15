@@ -1,0 +1,68 @@
+[project]
+site_name = "AleFire Library Wiki"
+docs_dir = "docs/it"
+site_dir = "site/it"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Library" = [
+      { "Library" = "library/index.md" },
+      { "Valves" = [
+          { "Valves" = "library/valves/index.md" },
+          { "Butterfly Valve — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
+          { "Butterfly Valve — Single Solenoid" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "Pinch" = "library/valves/pinch/index.md" },
+          { "Sealed SS" = "library/valves/sealed/ss/index.md" },
+          { "Solenoid" = "library/valves/solenoid/index.md" },
+      ] },
+      { "Diverters" = [
+          { "Diverters" = "library/diverters/index.md" },
+          { "Pinch Type" = "library/diverters/pinch_type/index.md" },
+      ] },
+      { "Filters" = [
+          { "Filters" = "library/filters/index.md" },
+          { "1-Sleeve" = "library/filters/1-sleeve/index.md" },
+          { "2-Sleeves" = "library/filters/2-sleeves/index.md" },
+      ] },
+      { "Gate" = "library/gate/index.md" },
+      { "Load Cells" = "library/load-cells/index.md" },
+      { "Nolvac" = "library/nolvac/index.md" },
+      { "Pipeline" = [
+          { "Pipeline" = "library/pipeline/index.md" },
+          { "Analogic" = "library/pipeline/analogic/index.md" },
+          { "Digital" = "library/pipeline/digital/index.md" },
+      ] },
+      { "Transporters" = [
+          { "Transporters" = "library/transporters/index.md" },
+          { "Sealed Inlet Transporter" = "library/transporters/sealed-inlet/index.md" },
+      ] },
+  ] },
+]
+
+[project.extra]
+alternate = [
+  { name = "Italiano", link = "/it/", lang = "it" },
+  { name = "English", link = "/en/", lang = "en" },
+]
+
+[project.theme]
+language = "it"
+variant = "classic"
+features = ["navigation.path", "content.code.copy"]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/sun", name = "Switch to dark mode" }
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/moon", name = "Switch to light mode" }
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
