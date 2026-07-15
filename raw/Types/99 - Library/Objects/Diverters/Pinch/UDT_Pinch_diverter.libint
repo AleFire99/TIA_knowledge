@@ -3,9 +3,9 @@
     Hash: 1caScCQRfLcI+E/v+MgA47yao4BtdCEF9Dd+cdbbAvU=
   - FileName: UDT_Pinch_diverter.s7res
     Hash: 8egZuXEcFvfPACEO7R6iU8p667dcTnMrnWciIP6+XS8=
-LibraryMetaFileHash: Nwoi/hsE2W1AQh7ANJyPw+zTLS6Slj/I/2SSDQ+qCck=
+LibraryMetaFileHash: 72hCVcuJptc5bxMyCDXRssYOMBFg6TbFQIzxwdONfAE=
 LibraryVersion:
-  Guid: 630857bf-8f00-4af3-ac29-bad47be1e81c
+  Guid: db453188-14ed-4b45-b39f-e5edf1be7564
   DependsOn:
     - TypeName: UDT_Pinch_Valve
-      VersionNumber: 2.0.0
+      VersionNumber: 2.0.1

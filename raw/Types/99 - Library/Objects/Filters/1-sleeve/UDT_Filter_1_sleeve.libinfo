@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed filter states with other objects
 LibraryVersion:
-  VersionNumber: 2.0.1
+  VersionNumber: 2.0.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added is_pulsing is_waiting states
+    en-US: Updated UDT

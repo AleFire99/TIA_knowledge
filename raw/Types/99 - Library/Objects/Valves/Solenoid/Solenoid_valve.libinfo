@@ -3,8 +3,8 @@
   Comment:
     en-US: Added same states as other valves
 LibraryVersion:
-  VersionNumber: 2.0.1
+  VersionNumber: 2.0.3
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Moved desired open command as temp
+    en-US: Updated UDT

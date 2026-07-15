@@ -67,8 +67,12 @@
             { S7_Access := "ReadOnly := External" }
             is_fault : Bool;
         END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
         ALARMS : STRUCT
-            { S7_MLC := "MLC_3Y7" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Y7"
+            }
             failed_to_unlock : Bool;
         END_STRUCT;
     END_STRUCT;

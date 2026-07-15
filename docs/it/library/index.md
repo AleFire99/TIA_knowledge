@@ -4,6 +4,8 @@ Libreria moduli NTE Process. Ogni modulo è un blocco funzionale PLC autonomo co
 
 I moduli sono raggruppati per tipo. Ogni pagina modulo descrive: panoramica, componenti, segnali I/O, funzionamento, allarmi, parametri, struttura dati e macchina a stati.
 
+Il comando `manual_mode`/`manual`/`auto` si risolve solo al livello più esterno esposto a HMI/DCS; i componenti annidati (es. elettrovalvole interne) ricevono soltanto l'`auto` già risolto dal blocco che li incorpora — non arbitrano in autonomia.
+
 ---
 
 ## [Valvole](valves/index.md)

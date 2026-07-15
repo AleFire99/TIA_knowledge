@@ -1,7 +1,7 @@
 ﻿MultiLingualTexts:
   - id: MLC_5AJ
     en-US: Actual desired command based on active mode
+  - id: MLC_53H
+    en-US: Solenoid valve de-energized
   - id: MLC_4rF
     en-US: Solenoid valve energized
-  - id: MLC_47m
-    en-US: Solenoid valve de-energized

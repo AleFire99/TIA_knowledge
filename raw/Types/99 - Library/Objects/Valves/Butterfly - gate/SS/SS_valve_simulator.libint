@@ -1,9 +1,9 @@
 ﻿DocumentHash:
   - FileName: SS_valve_simulator.s7dcl
     Hash: CHz3aque+hegmpw1nfruzJQxDBR1ojXM9QjUyA7EpBQ=
-LibraryMetaFileHash: D50e3Xt1bDJq2DpKyFU0XB6KBopa4bx6Xh43xcw+JaM=
+LibraryMetaFileHash: IFlSI+w9ivjS169MmINctV8yHyjNsqsR94Fwzsrs0E8=
 LibraryVersion:
-  Guid: 5346d628-0a5f-49c5-94c4-c000f5de663e
+  Guid: 691ae495-1886-4ca8-a00a-5101a368f8bb
   DependsOn:
     - TypeName: UDT_SS_Valve
-      VersionNumber: 2.0.0
+      VersionNumber: 2.0.1

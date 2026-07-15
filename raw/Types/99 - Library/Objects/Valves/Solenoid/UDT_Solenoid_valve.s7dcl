@@ -28,7 +28,10 @@
             }
             is_de_energized : Bool;
         END_STRUCT;
-        { S7_MLC := "MLC_4v8" }
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_4v8"
+        }
         out : Bool;
     END_STRUCT;
 END_TYPE

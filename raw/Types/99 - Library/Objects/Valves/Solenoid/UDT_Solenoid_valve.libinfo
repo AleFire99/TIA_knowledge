@@ -3,8 +3,8 @@
   Comment:
     en-US: Added same states as other valves
 LibraryVersion:
-  VersionNumber: 2.0.0
+  VersionNumber: 2.0.1
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Removed interlock and changed states to energized and de energized
+    en-US: Removed HMI right to write out

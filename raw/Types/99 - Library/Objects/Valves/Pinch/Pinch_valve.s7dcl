@@ -30,7 +30,7 @@ FUNCTION_BLOCK "Pinch_valve"
     END_VAR
     VAR_TEMP
         { S7_MLC := "MLC_Sn" }
-        desired_open_command : Bool;
+        desired_command : Bool;
         { S7_MLC := "MLC_NH" }
         internal_error : Bool;
     END_VAR
@@ -69,9 +69,9 @@ FUNCTION_BLOCK "Pinch_valve"
         
         REGION Determine desired target
             IF #XV.CMD.manual_mode THEN
-                #desired_open_command := #XV.CMD.manual;
+                #desired_command := #XV.CMD.manual;
             ELSE
-                #desired_open_command := #XV.CMD.auto;
+                #desired_command := #XV.CMD.auto;
             END_IF;
         END_REGION
         
@@ -134,7 +134,7 @@ FUNCTION_BLOCK "Pinch_valve"
             IF #XV.STATUS.state = #NORMAL THEN
                 CASE #XV.STATUS.normal_state OF
                     #CLOSED:
-                        IF #desired_open_command THEN
+                        IF #desired_command THEN
                             #XV.STATUS.normal_state := #OPENING;
                         END_IF;
                         
@@ -144,7 +144,7 @@ FUNCTION_BLOCK "Pinch_valve"
                         END_IF;
                         
                     #OPEN:
-                        IF NOT #desired_open_command THEN
+                        IF NOT #desired_command THEN
                             #XV.STATUS.normal_state := #CLOSING;
                         END_IF;
                         

@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: Pinch_valve.s7dcl
-    Hash: M2B5jt2a7neVcHHCxBV2pm/p018PtNlDlK/OESkC2xQ=
+    Hash: tEOIm6ysuAhuBcxzdJFPOGIG6X6fEVTbOlKJLqf01ps=
   - FileName: Pinch_valve.s7res
     Hash: fMyJyLM2qkt/W0kffScguEIUUWugauRw1wbCMEo4vzU=
-LibraryMetaFileHash: eeMKGXd3xW3T8Zpp2J06ukTUCgS2UXzwmPX4Ov7scpw=
+LibraryMetaFileHash: rEwECF+c2tN8fPj11iVgBswv3/0P/3ld0fRdL2yWtq8=
 LibraryVersion:
-  Guid: d6aab780-2d97-4449-a9bb-20413ef2bd3b
+  Guid: aeea8e12-092c-42f4-83ff-fede67b9d147
   DependsOn:
     - TypeName: UDT_Pinch_Valve
-      VersionNumber: 2.0.0
-    - TypeName: Solenoid_valve
       VersionNumber: 2.0.1
+    - TypeName: Solenoid_valve
+      VersionNumber: 2.0.3

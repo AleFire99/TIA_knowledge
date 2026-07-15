@@ -11,22 +11,22 @@ FUNCTION_BLOCK "Solenoid_valve"
     END_VAR
     VAR_TEMP
         { S7_MLC := "MLC_5AJ" }
-        desired_open_command : Bool;
+        desired_command : Bool;
     END_VAR
     VAR CONSTANT
-        { S7_MLC := "MLC_4rF" }
-        ENERGIZED : Int := 3;
-        { S7_MLC := "MLC_47m" }
+        { S7_MLC := "MLC_53H" }
         DE_ENERGIZED : Int := 1;
+        { S7_MLC := "MLC_4rF" }
+        ENERGIZED : Int := 2;
     END_VAR
 
     { S7_Language := "SCL" }
     NETWORK
         REGION Determine desired target
             IF #XY.CMD.manual_mode THEN
-                #desired_open_command := #XY.CMD.manual;
+                #desired_command := #XY.CMD.manual;
             ELSE
-                #desired_open_command := #XY.CMD.auto;
+                #desired_command := #XY.CMD.auto;
             END_IF;
         END_REGION
         
@@ -34,12 +34,12 @@ FUNCTION_BLOCK "Solenoid_valve"
             CASE #XY.STATUS.state OF
                     
                 #DE_ENERGIZED:
-                    IF #desired_open_command THEN
+                    IF #desired_command THEN
                         #XY.STATUS.state := #ENERGIZED;  
                     END_IF;
                     
                 #ENERGIZED:
-                    IF NOT #desired_open_command THEN
+                    IF NOT #desired_command THEN
                         #XY.STATUS.state := #DE_ENERGIZED; 
                     END_IF;
             END_CASE;

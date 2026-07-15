@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: SS_Sealed_valve.s7dcl
     Hash: 55SDComrRk8eTlHJQIkBRdvdBdBITZxkqgZL4A52qaI=
-LibraryMetaFileHash: WWwKVgnguoys5PVEzqOdlStK0UiJZFtg70QEKvUsBow=
+LibraryMetaFileHash: cByKGefzd7Pe5WLT4JzA3qgz1Uurv3L+h3q1FWez0gc=
 LibraryVersion:
-  Guid: 30ab6821-d5e9-4116-aea5-40ef224af636
+  Guid: ac8bcf0c-7cc5-4e7d-8c5c-b57669c2c135
   DependsOn:
     - TypeName: UDT_SS_Sealed_Valve
-      VersionNumber: 2.0.1
+      VersionNumber: 2.0.2
     - TypeName: Solenoid_valve
-      VersionNumber: 2.0.1
+      VersionNumber: 2.0.3
     - TypeName: SS_valve
-      VersionNumber: 2.1.1
+      VersionNumber: 2.1.3

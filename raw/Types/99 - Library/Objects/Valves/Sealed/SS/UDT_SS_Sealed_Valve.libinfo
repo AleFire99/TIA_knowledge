@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 2.0.1
+  VersionNumber: 2.0.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Removed seal timeout
+    en-US: Updated UDT

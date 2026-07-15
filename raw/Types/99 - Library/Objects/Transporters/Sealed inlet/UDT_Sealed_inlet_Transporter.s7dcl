@@ -1,20 +1,42 @@
 ﻿TYPE
     { S7_BlockComment := "MLC_4wY" }
     UDT_Sealed_inlet_Transporter : STRUCT
+        { S7_Access := "ReadOnly := External" }
         DEVICES : STRUCT
-            { S7_MLC := "MLC_3zn" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3zn"
+            }
             XV01 : _.UDT_SS_Sealed_Valve;
-            { S7_MLC := "MLC_XN" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_XN"
+            }
             XV02 : _.UDT_DS_Valve;
-            { S7_MLC := "MLC_4Ra" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Ra"
+            }
             XV03 : _.UDT_SS_Valve;
-            { S7_MLC := "MLC_4Sn" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Sn"
+            }
             XV04 : _.UDT_SS_Valve;
-            { S7_MLC := "MLC_4xv" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4xv"
+            }
             XV05 : _.UDT_SS_Valve;
-            { S7_MLC := "MLC_4zj" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4zj"
+            }
             XY : _.UDT_Solenoid_valve;
-            { S7_MLC := "MLC_4rb" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4rb"
+            }
             WT01 : _.UDT_Load_cells;
             {
                 S7_Access := "ReadOnly := External";

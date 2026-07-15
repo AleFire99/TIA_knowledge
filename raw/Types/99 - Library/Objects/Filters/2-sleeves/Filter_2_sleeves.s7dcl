@@ -41,7 +41,7 @@ FUNCTION_BLOCK "Filter_2_sleeves"
     END_VAR
     VAR_TEMP
         { S7_MLC := "MLC_49H" }
-        desired_open_command : Bool;
+        desired_command : Bool;
     END_VAR
     VAR CONSTANT
         { S7_MLC := "MLC_3JD" }
@@ -72,9 +72,9 @@ FUNCTION_BLOCK "Filter_2_sleeves"
         
         REGION Determine desired target
             IF #filter.CMD.manual_mode THEN
-                #desired_open_command := #filter.CMD.manual;
+                #desired_command := #filter.CMD.manual;
             ELSE
-                #desired_open_command := #filter.CMD.auto;
+                #desired_command := #filter.CMD.auto;
             END_IF;
         END_REGION
         
@@ -88,14 +88,14 @@ FUNCTION_BLOCK "Filter_2_sleeves"
         REGION Top FSM
             CASE #filter.STATUS.state OF
                 #IDLE:
-                    IF #desired_open_command THEN
+                    IF #desired_command THEN
                         #filter.STATUS.state := #ACTIVE;
                         #filter.STATUS.active_state := #PULSING;
                         #filter.STATUS.active_sleeve := 0;
                     END_IF;
                     
                 #ACTIVE:
-                    IF NOT #desired_open_command THEN
+                    IF NOT #desired_command THEN
                         #filter.STATUS.state := #IDLE;
                     END_IF;
             END_CASE;

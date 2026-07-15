@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: Gate_door.s7dcl
     Hash: WSSq7I5z9okvEQWliyCoKXhv1A7mor7vWDPkvQkuddc=
-LibraryMetaFileHash: riGMa8Soxz7OU3TnHXwqp/A0NCc1/WBHuq5LIZGdV8w=
+LibraryMetaFileHash: Y+7hG8lDWiqyN9yw1jW+yg0Ar9elUdTIeqMFwKWF9WQ=
 LibraryVersion:
-  Guid: 5502070e-dec6-4292-8c6f-1f85e4fb7821
+  Guid: 142d93b8-ce93-456e-9e63-3e5398add063
   DependsOn:
     - TypeName: UDT_Gate_Door
-      VersionNumber: 2.0.1
+      VersionNumber: 2.0.3
     - TypeName: Solenoid_valve
-      VersionNumber: 2.0.1
+      VersionNumber: 2.0.3

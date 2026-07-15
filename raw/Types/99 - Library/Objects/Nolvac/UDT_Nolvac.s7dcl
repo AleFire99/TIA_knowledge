@@ -1,11 +1,21 @@
 ﻿TYPE
     UDT_Nolvac : STRUCT
+        { S7_Access := "ReadOnly := External" }
         DEVICES : STRUCT
-            { S7_MLC := "MLC_4Yh" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Yh"
+            }
             XV01 : _.UDT_SS_Valve;
-            { S7_MLC := "MLC_aA" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_aA"
+            }
             XY02 : _.UDT_Solenoid_valve;
-            { S7_MLC := "MLC_4CZ" }
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4CZ"
+            }
             XY03 : _.UDT_Solenoid_valve;
         END_STRUCT;
         CMD : STRUCT
