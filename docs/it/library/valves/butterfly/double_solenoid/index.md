@@ -19,22 +19,68 @@ Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in
 
 ---
 
-## Segnali di controllo
+## Struttura dati
 
-| Segnale | Tipo | Descrizione |
-|---------|------|-------------|
-| `DEVICES.ZSL` | Bool | INPUT — Finecorsa posizione chiusa |
-| `DEVICES.ZSH` | Bool | INPUT — Finecorsa posizione aperta |
-| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola apertura |
-| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola chiusura |
-| `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | Comando di apertura dall'automazione (ReadOnly external) |
-| `CMD.ack` | Bool | Conferma allarmi e ripristino da FAULT |
+```mermaid
+classDiagram
+    class UDT_DS_Valve
+    class DEVICES {
+        -Bool ZSL
+        -Bool ZSH
+        -UDT_Solenoid_valve XYA
+        -UDT_Solenoid_valve XYB
+    }
+    class CMD {
+        +Bool manual_mode
+        +Bool manual
+        -Bool auto
+        +Bool ack
+    }
+    class SETTING {
+        +Time actuator_timeout
+    }
+    class STATUS {
+        -Int state
+        -Int normal_state
+        -Bool is_fault
+        -Bool is_closed
+        -Bool is_opening
+        -Bool is_open
+        -Bool is_closing
+    }
+    class ALARMS {
+        -Bool sensor_mismatch
+        -Bool sensor_conflict
+        -Bool failed_to_close
+        -Bool failed_to_open
+    }
+    UDT_DS_Valve *-- DEVICES
+    UDT_DS_Valve *-- CMD
+    UDT_DS_Valve *-- SETTING
+    UDT_DS_Valve *-- STATUS
+    UDT_DS_Valve *-- ALARMS
+```
+
+`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
 ---
 
-## Parametri di regolazione
+## Segnali di controllo
+
+| Segnale | Tipo | Direzione | Descrizione |
+|---------|------|-----------|-------------|
+| `DEVICES.ZSL` | Bool | IN | Finecorsa posizione chiusa |
+| `DEVICES.ZSH` | Bool | IN | Finecorsa posizione aperta |
+| `DEVICES.XYA` | UDT_Solenoid_valve | OUT | Elettrovalvola apertura — comandata, il proprio stato non viene riletto da questo blocco |
+| `DEVICES.XYB` | UDT_Solenoid_valve | OUT | Elettrovalvola chiusura — comandata, il proprio stato non viene riletto da questo blocco |
+| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
+| `CMD.auto` | Bool | IN | Comando di apertura dall'automazione |
+| `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
+
+---
+
+## Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -42,21 +88,21 @@ Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in
 
 ---
 
-## Stati e output
+## Funzionamento
 
-| Stato | `XYA` | `XYB` | Descrizione |
-|-------|-------|-------|-------------|
-| CLOSED | FALSE | FALSE | Disco chiuso; nessuna eccitazione necessaria (bistabile) |
-| OPENING | TRUE | FALSE | `XYA` spinge il disco verso apertura |
-| OPEN | FALSE | FALSE | Disco aperto; nessuna eccitazione necessaria |
-| CLOSING | FALSE | TRUE | `XYB` riporta il disco in chiusura |
-| FAULT | FALSE | FALSE | Guasto; disco bistabile mantiene l'ultima posizione fisica |
+Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
+
+```
+desired_open_command := manual_mode ? manual : auto
+```
 
 `XYA`/`XYB` sono eccitati solo durante il movimento (`OPENING`/`CLOSING`) — l'attuatore bistabile non richiede eccitazione di mantenimento in `CLOSED`/`OPEN`.
 
+[`XV-E01`](../../index.md#allarmi-delle-valvole) scatta quando lo stato stabile corrente non è confermato dal finecorsa atteso; [`XV-E02`](../../index.md#allarmi-delle-valvole) quando `ZSL AND ZSH` sono contemporaneamente TRUE; [`XV-E03`](../../index.md#allarmi-delle-valvole)/[`XV-E04`](../../index.md#allarmi-delle-valvole) se `CLOSING`/`OPENING` non si completano entro `actuator_timeout`.
+
 ---
 
-## Diagramma di stato
+## Macchina a stati
 
 ```mermaid
 stateDiagram-v2
@@ -83,59 +129,10 @@ state DS_VALVE{
 internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open;
 ```
 
----
-
-## Allarmi
-
-| ID | Condizione specifica |
-|----|----------------------|
-| [`XV-E01`](../../index.md#allarmi-delle-valvole) | Stato stabile corrente non confermato dal finecorsa atteso |
-| [`XV-E02`](../../index.md#allarmi-delle-valvole) | `ZSL AND ZSH` contemporaneamente TRUE |
-| [`XV-E03`](../../index.md#allarmi-delle-valvole) | `CLOSING` non confermato entro `actuator_timeout` |
-| [`XV-E04`](../../index.md#allarmi-delle-valvole) | `OPENING` non confermato entro `actuator_timeout` |
-
----
-
-## Struttura dati
-
-```mermaid
-classDiagram
-    class UDT_DS_Valve
-    class DEVICES {
-        +Bool ZSL
-        +Bool ZSH
-        +UDT_Solenoid_valve XYA
-        +UDT_Solenoid_valve XYB
-    }
-    class CMD {
-        +Bool manual_mode
-        +Bool manual
-        +Bool auto
-        +Bool ack
-    }
-    class SETTING {
-        +Time actuator_timeout
-    }
-    class STATUS {
-        +Int state
-        +Int normal_state
-        +Bool is_fault
-        +Bool is_closed
-        +Bool is_opening
-        +Bool is_open
-        +Bool is_closing
-    }
-    class ALARMS {
-        +Bool sensor_mismatch
-        +Bool sensor_conflict
-        +Bool failed_to_close
-        +Bool failed_to_open
-    }
-    UDT_DS_Valve *-- DEVICES
-    UDT_DS_Valve *-- CMD
-    UDT_DS_Valve *-- SETTING
-    UDT_DS_Valve *-- STATUS
-    UDT_DS_Valve *-- ALARMS
-```
-
-`internal_error` è interno al blocco funzionale, non esposto tramite l'UDT.
+| Stato | `XYA` | `XYB` | Descrizione |
+|-------|-------|-------|-------------|
+| CLOSED | FALSE | FALSE | Disco chiuso; nessuna eccitazione necessaria (bistabile) |
+| OPENING | TRUE | FALSE | `XYA` spinge il disco verso apertura |
+| OPEN | FALSE | FALSE | Disco aperto; nessuna eccitazione necessaria |
+| CLOSING | FALSE | TRUE | `XYB` riporta il disco in chiusura |
+| FAULT | FALSE | FALSE | Guasto; disco bistabile mantiene l'ultima posizione fisica |

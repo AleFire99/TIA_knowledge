@@ -6,26 +6,50 @@
 
 ---
 
-## Componenti principali
+## Struttura dati
 
-- **Trasmettitore di pressione `PT`** (`UDT_Analogic_signal`) — lettura scalata della pressione nella pipeline
-- **Tre soglie configurabili** — definiscono i confini tra i quattro stati
+```mermaid
+classDiagram
+    class UDT_An_Pipeline
+    class DEVICES {
+        -UDT_Analogic_signal PT
+    }
+    class SETTING {
+        +Real empty_thresh
+        +Real material_thresh
+        +Real clogged_thresh
+    }
+    class STATUS {
+        -Bool is_empty
+        -Bool is_pressurised
+        -Bool is_with_material
+    }
+    class ALARMS {
+        -Bool pipeline_clogged
+    }
+    UDT_An_Pipeline *-- DEVICES
+    UDT_An_Pipeline *-- SETTING
+    UDT_An_Pipeline *-- STATUS
+    UDT_An_Pipeline *-- ALARMS
+```
+
+`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
 ---
 
 ## Segnali di controllo
 
-| Segnale | Tipo | Descrizione |
-|---------|------|-------------|
-| `DEVICES.PT.Scaled_value` | Real | Lettura pressione, già scalata in unità ingegneristiche |
-| `STATUS.is_empty` | Bool | TRUE se `PT < empty_thresh` |
-| `STATUS.is_pressurised` | Bool | TRUE se `empty_thresh ≤ PT < material_thresh` |
-| `STATUS.is_with_material` | Bool | TRUE se `material_thresh ≤ PT < clogged_thresh` |
-| `ALARMS.pipeline_clogged` | Bool | TRUE se `PT ≥ clogged_thresh` |
+| Segnale | Tipo | Direzione | Descrizione |
+|---------|------|-----------|-------------|
+| `DEVICES.PT.Scaled_value` | Real | IN | Lettura pressione, già scalata in unità ingegneristiche |
+| `STATUS.is_empty` | Bool | OUT | TRUE se `PT < empty_thresh` |
+| `STATUS.is_pressurised` | Bool | OUT | TRUE se `empty_thresh ≤ PT < material_thresh` |
+| `STATUS.is_with_material` | Bool | OUT | TRUE se `material_thresh ≤ PT < clogged_thresh` |
+| `ALARMS.pipeline_clogged` | Bool | OUT | TRUE se `PT ≥ clogged_thresh` |
 
 ---
 
-## Parametri di regolazione
+## Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -35,7 +59,7 @@
 
 ---
 
-## Logica
+## Funzionamento
 
 ```Pascal
 STATUS.is_empty := PT.Scaled_value < empty_thresh;
@@ -47,41 +71,4 @@ ALARMS.pipeline_clogged := PT.Scaled_value >= clogged_thresh;
 
 Le prime tre condizioni sono fasi normali che il processo attraversa continuamente. `pipeline_clogged` non è una quarta fascia dello stesso tipo — rappresenta una condizione fisica anomala che non dovrebbe mai persistere. Non esiste una macchina a stati: la valutazione è puramente combinatoria e ricalcolata da zero ogni scan, senza isteresi.
 
----
-
-## Allarmi
-
-| ID | Condizione specifica |
-|----|----------------------|
-| [`PL-E01`](../index.md#allarmi-delle-pipeline) | `PT.Scaled_value ≥ clogged_thresh` |
-
-Non applicabile: `PL-E02` (disallineamento sensori) — un'unica misura continua non ha un secondo valore indipendente con cui essere in contraddizione.
-
----
-
-## Struttura dati
-
-```mermaid
-classDiagram
-    class UDT_An_Pipeline
-    class DEVICES {
-        +UDT_Analogic_signal PT
-    }
-    class SETTING {
-        +Real empty_thresh
-        +Real material_thresh
-        +Real clogged_thresh
-    }
-    class STATUS {
-        +Bool is_empty
-        +Bool is_pressurised
-        +Bool is_with_material
-    }
-    class ALARMS {
-        +Bool pipeline_clogged
-    }
-    UDT_An_Pipeline *-- DEVICES
-    UDT_An_Pipeline *-- SETTING
-    UDT_An_Pipeline *-- STATUS
-    UDT_An_Pipeline *-- ALARMS
-```
+[`PL-E01`](../index.md#allarmi-delle-pipeline) scatta quando `PT.Scaled_value ≥ clogged_thresh`. Non applicabile: `PL-E02` (disallineamento sensori) — un'unica misura continua non ha un secondo valore indipendente con cui essere in contraddizione.

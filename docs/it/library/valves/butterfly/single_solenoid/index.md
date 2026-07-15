@@ -18,21 +18,66 @@ Arbitraggio manuale/automatico come in [Elettrovalvola](../../solenoid/index.md)
 
 ---
 
-## Segnali di controllo
+## Struttura dati
 
-| Segnale | Tipo | Descrizione |
-|---------|------|-------------|
-| `DEVICES.ZSL` | Bool | INPUT — Finecorsa posizione chiusa |
-| `DEVICES.ZSH` | Bool | INPUT — Finecorsa posizione aperta |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola attuatore |
-| `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | Comando di apertura dall'automazione (ReadOnly external) |
-| `CMD.ack` | Bool | Conferma allarmi e ripristino da FAULT |
+```mermaid
+classDiagram
+    class UDT_SS_Valve
+    class DEVICES {
+        -Bool ZSL
+        -Bool ZSH
+        -UDT_Solenoid_valve XY
+    }
+    class CMD {
+        +Bool manual_mode
+        +Bool manual
+        -Bool auto
+        +Bool ack
+    }
+    class SETTING {
+        +Time actuator_timeout
+    }
+    class STATUS {
+        -Int state
+        -Int normal_state
+        -Bool is_fault
+        -Bool is_closed
+        -Bool is_opening
+        -Bool is_open
+        -Bool is_closing
+    }
+    class ALARMS {
+        -Bool sensor_mismatch
+        -Bool sensor_conflict
+        -Bool failed_to_close
+        -Bool failed_to_open
+    }
+    UDT_SS_Valve *-- DEVICES
+    UDT_SS_Valve *-- CMD
+    UDT_SS_Valve *-- SETTING
+    UDT_SS_Valve *-- STATUS
+    UDT_SS_Valve *-- ALARMS
+```
+
+`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
 
 ---
 
-## Parametri di regolazione
+## Segnali di controllo
+
+| Segnale | Tipo | Direzione | Descrizione |
+|---------|------|-----------|-------------|
+| `DEVICES.ZSL` | Bool | IN | Finecorsa posizione chiusa |
+| `DEVICES.ZSH` | Bool | IN | Finecorsa posizione aperta |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola attuatore — comandata, il proprio stato non viene riletto da questo blocco |
+| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
+| `CMD.auto` | Bool | IN | Comando di apertura dall'automazione |
+| `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
+
+---
+
+## Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -40,19 +85,19 @@ Arbitraggio manuale/automatico come in [Elettrovalvola](../../solenoid/index.md)
 
 ---
 
-## Stati e output
+## Funzionamento
 
-| Stato | `XY` | Descrizione |
-|-------|------|-------------|
-| CLOSED | FALSE | Disco chiuso; molla in posizione |
-| OPENING | TRUE | Attuatore spinge il disco verso apertura |
-| OPEN | TRUE | Disco aperto; l'elettrovalvola mantiene contro la molla |
-| CLOSING | FALSE | Molla riporta il disco in chiusura |
-| FAULT | FALSE | Guasto; attende `ack` con sensori validi |
+Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
+
+```
+desired_open_command := manual_mode ? manual : auto
+```
+
+[`XV-E01`](../../index.md#allarmi-delle-valvole) scatta quando lo stato stabile corrente non è confermato dal finecorsa atteso (`CLOSED` ma `!ZSL`, o `OPEN` ma `!ZSH`); [`XV-E02`](../../index.md#allarmi-delle-valvole) quando `ZSL AND ZSH` sono contemporaneamente TRUE; [`XV-E03`](../../index.md#allarmi-delle-valvole)/[`XV-E04`](../../index.md#allarmi-delle-valvole) se `CLOSING`/`OPENING` non si completano entro `actuator_timeout`.
 
 ---
 
-## Diagramma di stato
+## Macchina a stati
 
 ```mermaid
 stateDiagram-v2
@@ -79,58 +124,10 @@ state SS_VALVE{
 internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open;
 ```
 
----
-
-## Allarmi
-
-| ID | Condizione specifica |
-|----|----------------------|
-| [`XV-E01`](../../index.md#allarmi-delle-valvole) | Stato stabile corrente non confermato dal finecorsa atteso (`CLOSED` ma `!ZSL`, o `OPEN` ma `!ZSH`) |
-| [`XV-E02`](../../index.md#allarmi-delle-valvole) | `ZSL AND ZSH` contemporaneamente TRUE |
-| [`XV-E03`](../../index.md#allarmi-delle-valvole) | `CLOSING` non confermato entro `actuator_timeout` |
-| [`XV-E04`](../../index.md#allarmi-delle-valvole) | `OPENING` non confermato entro `actuator_timeout` |
-
----
-
-## Struttura dati
-
-```mermaid
-classDiagram
-    class UDT_SS_Valve
-    class DEVICES {
-        +Bool ZSL
-        +Bool ZSH
-        +UDT_Solenoid_valve XY
-    }
-    class CMD {
-        +Bool manual_mode
-        +Bool manual
-        +Bool auto
-        +Bool ack
-    }
-    class SETTING {
-        +Time actuator_timeout
-    }
-    class STATUS {
-        +Int state
-        +Int normal_state
-        +Bool is_fault
-        +Bool is_closed
-        +Bool is_opening
-        +Bool is_open
-        +Bool is_closing
-    }
-    class ALARMS {
-        +Bool sensor_mismatch
-        +Bool sensor_conflict
-        +Bool failed_to_close
-        +Bool failed_to_open
-    }
-    UDT_SS_Valve *-- DEVICES
-    UDT_SS_Valve *-- CMD
-    UDT_SS_Valve *-- SETTING
-    UDT_SS_Valve *-- STATUS
-    UDT_SS_Valve *-- ALARMS
-```
-
-`internal_error` è interno al blocco funzionale, non esposto tramite l'UDT.
+| Stato | `XY` | Descrizione |
+|-------|------|-------------|
+| CLOSED | FALSE | Disco chiuso; molla in posizione |
+| OPENING | TRUE | Attuatore spinge il disco verso apertura |
+| OPEN | TRUE | Disco aperto; l'elettrovalvola mantiene contro la molla |
+| CLOSING | FALSE | Molla riporta il disco in chiusura |
+| FAULT | FALSE | Guasto; attende `ack` con sensori validi |

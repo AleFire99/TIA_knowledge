@@ -4,35 +4,77 @@
 
 **Livello 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Livello 2) e due Elettrovalvole (Livello 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
 
-Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché il comando resta attivo.
+Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché il comando resta attivo. Nessun allarme proprio — `UDT_Nolvac` non possiede una struttura `ALARMS`.
 
 ---
 
 ## Composizione
 
-| Tag | Tipo | Ruolo |
-|-----|------|-------|
-| `XV01` | Valvola a Farfalla SS (Livello 2) | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md) |
-| `XY02` | Elettrovalvola (Livello 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
-| `XY03` | Elettrovalvola (Livello 1) | Depressione di trasporto durante `SUCTION` |
+| Tag | Tipo | Direzione | Ruolo |
+|-----|------|-----------|-------|
+| `XV01` | Valvola a Farfalla SS (Livello 2) | IN/OUT | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md) |
+| `XY02` | Elettrovalvola (Livello 1) | OUT | Aria compressa di retrolavaggio filtro durante `CLEANING` |
+| `XY03` | Elettrovalvola (Livello 1) | OUT | Depressione di trasporto durante `SUCTION` |
+
+`XV01` è IN/OUT: il Nolvac scrive `CMD.ack`/`CMD.auto` e rilegge `STATUS.is_fault` per la propria `internal_error`. `XY02`/`XY03` sono OUT-only: comandate, il proprio stato non viene mai riletto.
+
+---
+
+## Struttura dati
+
+```mermaid
+classDiagram
+    class UDT_Nolvac
+    class DEVICES {
+        -UDT_SS_Valve XV01
+        -UDT_Solenoid_valve XY02
+        -UDT_Solenoid_valve XY03
+    }
+    class CMD {
+        +Bool manual_mode
+        +Bool manual
+        -Bool auto
+        +Bool ack
+    }
+    class SETTING {
+        +Time suction_time
+        +Time cleaning_time
+    }
+    class STATUS {
+        -Int state
+        -Int normal_state
+        -Int active_state
+        -Bool is_idle
+        -Bool is_active
+        -Bool is_suction
+        -Bool is_cleaning
+        -Bool is_fault
+    }
+    UDT_Nolvac *-- DEVICES
+    UDT_Nolvac *-- CMD
+    UDT_Nolvac *-- SETTING
+    UDT_Nolvac *-- STATUS
+```
+
+`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). Nessuna classe `ALARMS` — questo UDT non ne possiede una propria.
 
 ---
 
 ## Segnali di controllo
 
-| Segnale | Tipo | Descrizione |
-|---------|------|-------------|
-| `DEVICES.XV01` | UDT_SS_Valve | Valvola farfalla SS; aperta durante `CLEANING` |
-| `DEVICES.XY02` | UDT_Solenoid_valve | Elettrovalvola pulizia; eccitata durante `CLEANING` |
-| `DEVICES.XY03` | UDT_Solenoid_valve | Elettrovalvola aspirazione; eccitata durante `SUCTION` |
-| `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | Comando di avvio ciclo in modalità manuale |
-| `CMD.auto` | Bool | Comando di avvio ciclo dall'automazione (ReadOnly external) |
-| `CMD.ack` | Bool | Conferma allarme e ripristino da FAULT |
+| Segnale | Tipo | Direzione | Descrizione |
+|---------|------|-----------|-------------|
+| `DEVICES.XV01` | UDT_SS_Valve | IN/OUT | Valvola farfalla SS; aperta durante `CLEANING` |
+| `DEVICES.XY02` | UDT_Solenoid_valve | OUT | Elettrovalvola pulizia; eccitata durante `CLEANING` |
+| `DEVICES.XY03` | UDT_Solenoid_valve | OUT | Elettrovalvola aspirazione; eccitata durante `SUCTION` |
+| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
+| `CMD.manual` | Bool | IN | Comando di avvio ciclo in modalità manuale |
+| `CMD.auto` | Bool | IN | Comando di avvio ciclo dall'automazione |
+| `CMD.ack` | Bool | IN | Conferma allarme e ripristino da FAULT |
 
 ---
 
-## Parametri di regolazione
+## Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
@@ -41,18 +83,15 @@ Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`c
 
 ---
 
-## Stati e output
+## Funzionamento
 
-| Stato | `XV01` | `XY02` | `XY03` | Descrizione |
-|-------|--------|--------|--------|-------------|
-| IDLE | chiusa | spenta | spenta | Standby, in attesa del comando |
-| ACTIVE / SUCTION | chiusa | spenta | eccitata | Aspirazione del materiale |
-| ACTIVE / CLEANING | aperta | eccitata | spenta | Pulizia del filtro |
-| FAULT | — | spenta | spenta | Guasto; attende conferma operatore |
+L'unico guasto rilevato dal blocco è la propagazione diretta di `XV01.STATUS.is_fault` — le elettrovalvole `XY02`/`XY03` non hanno sensori propri e non possono generare un guasto. Vedere [Allarmi delle valvole](../valves/index.md#allarmi-delle-valvole) per la causa effettiva quando `internal_error` è TRUE.
+
+La rimozione del comando in qualsiasi momento durante `ACTIVE` riporta immediatamente a `IDLE`, disattivando tutte le uscite.
 
 ---
 
-## Diagramma di stato
+## Macchina a stati
 
 ```mermaid
 stateDiagram-v2
@@ -77,52 +116,9 @@ state NOLVAC{
 internal_error := XV01.STATUS.is_fault;
 ```
 
-La rimozione del comando in qualsiasi momento durante `ACTIVE` riporta immediatamente a `IDLE`, disattivando tutte le uscite.
-
----
-
-## Allarmi
-
-Nessun allarme proprio — `UDT_Nolvac` non possiede una struttura `ALARMS`. L'unico guasto rilevato è la propagazione diretta di `XV01.STATUS.is_fault`; le elettrovalvole `XY02`/`XY03` non hanno sensori propri e non possono generare un guasto.
-
-Vedere gli [allarmi Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md#allarmi) per la causa effettiva quando `internal_error` è TRUE.
-
----
-
-## Struttura dati
-
-```mermaid
-classDiagram
-    class UDT_Nolvac
-    class DEVICES {
-        +UDT_SS_Valve XV01
-        +UDT_Solenoid_valve XY02
-        +UDT_Solenoid_valve XY03
-    }
-    class CMD {
-        +Bool manual_mode
-        +Bool manual
-        +Bool auto
-        +Bool ack
-    }
-    class SETTING {
-        +Time suction_time
-        +Time cleaning_time
-    }
-    class STATUS {
-        +Int state
-        +Int normal_state
-        +Int active_state
-        +Bool is_idle
-        +Bool is_active
-        +Bool is_suction
-        +Bool is_cleaning
-        +Bool is_fault
-    }
-    UDT_Nolvac *-- DEVICES
-    UDT_Nolvac *-- CMD
-    UDT_Nolvac *-- SETTING
-    UDT_Nolvac *-- STATUS
-```
-
-Nessuna classe `ALARMS` — questo UDT non ne possiede una propria. `internal_error` è interno al blocco funzionale.
+| Stato | `XV01` | `XY02` | `XY03` | Descrizione |
+|-------|--------|--------|--------|-------------|
+| IDLE | chiusa | spenta | spenta | Standby, in attesa del comando |
+| ACTIVE / SUCTION | chiusa | spenta | eccitata | Aspirazione del materiale |
+| ACTIVE / CLEANING | aperta | eccitata | spenta | Pulizia del filtro |
+| FAULT | — | spenta | spenta | Guasto; attende conferma operatore |
