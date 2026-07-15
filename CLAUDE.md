@@ -42,7 +42,7 @@ tia-knowledge/
 │   │       ├── valves/
 │   │       ├── diverters/
 │   │       ├── filters/
-│   │       ├── gate/
+│   │       ├── access/
 │   │       ├── nolvac/
 │   │       └── load-cells/
 │   └── en/                      ← English tree, same shape as docs/it/
@@ -264,10 +264,10 @@ fold the "why no alarms" rationale into Panoramica as a trailing sentence instea
 Parametri's omit-if-empty pattern). When a module has no alarms of its own but still has
 something worth pointing at (Sealed SS, Nolvac — no own `ALARMS` struct, but a real
 propagated/cross-referenced condition), keep the heading anyway; there's content, just not
-an ID of its own. **Portello** keeps its own dedicated Allarmi section for the original
-reason — Portelli has no category-level alarms page, so there's nowhere to fold it into or
-link out to. If a future single-module category is added with no category alarms page, it
-gets the same exception.
+an ID of its own. If a single-module category with no category-level alarms page of its own
+ever recurs (Anta Cancello — Blocco Elettrico was this exact case until Dispositivi di
+Accesso got a real category-overview page), the same exception would apply: keep the
+device's own Allarmi heading, since there's nowhere to fold it into or link out to.
 
 **`Direzione` column** (Segnali di controllo table): captures physical field I/O direction
 *and* how the signal is consumed between modules, not just sensor-vs-actuator. A scalar
@@ -310,9 +310,9 @@ same way (e.g. Nolvac has no category page of its own, but cross-references
 module produces genuinely zero alarms and no target exists to link to either way (e.g. the
 two Filtro pages — `UDT_Filter_1_sleeve`/`UDT_Filter_2_sleeves` have no `ALARMS` struct and
 the Filtri category page has no alarms table), the "why not applicable" rationale still
-moves to Panoramica as a trailing sentence, just without a link. Portello remains the only
-page keeping its own **heading** — the only case with real alarm content and no
-cross-reference target of any kind, category or peer.
+moves to Panoramica as a trailing sentence, just without a link. No page currently lacks a
+cross-reference target of any kind (category or peer) — the exception exists for when one
+next does, not for a currently-live example.
 
 **Deferred — not yet implemented:**
 
@@ -431,7 +431,7 @@ Current values, for reference when adding a new module:
 | Module | Livello | Why |
 |---|---|---|
 | Elettrovalvola | 1 | Embeds nothing — genuinely atomic |
-| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Portello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
+| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
 | Deviatore a Manicotto, Valvola Sigillata SS, Nolvac | 3 | Embed at least one Livello-2 component |
 | Celle di Carico core (Ciclo di Carico e Scarico) | 1 | Embeds nothing, but two independent FSMs share one UDT — Livello 1 without being "atomico" |
 | Propulsore Ingresso Sigillato | 4 | Embeds Valvola Sigillata SS (Livello 3) |
@@ -443,8 +443,8 @@ Categories are ordered by **valve-nesting depth**, not alphabetically or by devi
 
 1. **Valvole** first — the only category with no external dependency (it *is* the Livello
    1–3 valve family other categories build on).
-2. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Portelli** (1×)
-   → **Filtri** (1–2×).
+2. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Dispositivi di
+   Accesso** (1×) → **Filtri** (1–2×).
 3. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
    **Nolvac** (Farfalla SS Livello 2 + 2× Elettrovalvola).
 4. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello

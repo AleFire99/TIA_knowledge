@@ -15,7 +15,10 @@ nav = [
           { "A Farfalla — Doppio Solenoide" = "library/valves/butterfly/double_solenoid/index.md" },
           { "Sigillata — Singolo Solenoide" = "library/valves/sealed/ss/index.md" },
       ] },
-      { "Portelli" = "library/gate/index.md" },
+      { "Dispositivi di Accesso" = [
+          { "Panoramica" = "library/access/index.md" },
+          { "Anta Cancello — Blocco Elettrico" = "library/access/gate/index.md" },
+      ] },
       { "Filtri" = [
           { "Panoramica" = "library/filters/index.md" },
           { "1 Manica" = "library/filters/1-sleeve/index.md" },

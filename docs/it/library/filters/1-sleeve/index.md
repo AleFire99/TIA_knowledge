@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Livello 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Livello 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Livello 2.** Il pulitore filtro a 1 manica genera impulsi periodici di aria compressa tramite una singola Elettrovalvola (Livello 1, `XY`) per rimuovere la polvere accumulata da una manica filtrante. Non è presente alcuna retroazione di posizione — il sistema è ad anello aperto.
 
 Nessun allarme proprio — `UDT_Filter_1_sleeve` non include una struttura `ALARMS`: non c'è sensore su cui basare una rilevazione di guasto.
 

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**FC, stateless.** `Dig_pipeline` determina lo stato della pipeline tramite due pressostati digitali (`PSL` bassa soglia, `PSH` alta soglia). La logica è una tabella di verità a due ingressi: le quattro combinazioni binarie mappano su stati e allarmi. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
+**FC, senza stato.** `Dig_pipeline` determina lo stato della pipeline tramite due pressostati digitali (`PSL` bassa soglia, `PSH` alta soglia). La logica è una tabella di verità a due ingressi: le quattro combinazioni binarie mappano su stati e allarmi. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
 
 Il pressostato bassa soglia (`PSL`) si attiva quando la pressione supera la soglia minima per rilevare la presenza di materiale. Il pressostato alta soglia (`PSH`) si attiva a una pressione superiore, che indica pressione eccessiva o ostruzione. In condizioni normali `PSH` non può attivarsi senza `PSL`.
 
@@ -73,4 +73,4 @@ STATUS.is_with_material := PSL AND NOT PSH;
 - [`PL-E01`](../index.md#allarmi-delle-pipeline) — `pipeline_clogged` (`PSL AND PSH`)
 - [`PL-E02`](../index.md#allarmi-delle-pipeline) — `sensor_mismatch` (`NOT PSL AND PSH`)
 
-Essendo un FC privo di stato proprio, nessuna delle due condizioni confluisce automaticamente in un `internal_error` — questo dispositivo non ha una propria FSM da portare in fault. Se il chiamante vuole che `pipeline_clogged`/`sensor_mismatch` contribuiscano al proprio aggregato di guasto, è responsabilità del blocco chiamante includerli esplicitamente (stesso schema con cui il Nolvac incorpora `XV01.STATUS.is_fault`).
+Essendo un FC privo di stato proprio, nessuna delle due condizioni confluisce automaticamente in un `internal_error` — questo dispositivo non ha una propria macchina a stati da portare in fault. Se il chiamante vuole che `pipeline_clogged`/`sensor_mismatch` contribuiscano al proprio aggregato di guasto, è responsabilità del blocco chiamante includerli esplicitamente (stesso schema con cui il Nolvac incorpora `XV01.STATUS.is_fault`).

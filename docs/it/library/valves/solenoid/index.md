@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Livello 1 — atomico.** L'elettrovalvola è l'attuatore pneumatico di base della libreria: una bobina elettromagnetica eccita o diseccita una singola uscita fisica (`out`). Non ha feedback di posizione proprio — il proprio stato (`ENERGIZED`/`DE_ENERGIZED`) riflette solo il comando ricevuto, non una conferma fisica. È il componente più riutilizzato della libreria: ogni valvola di livello superiore (Manicotto, Farfalla SS/DS, Sigillata) ne incorpora una o più istanze come proprio attuatore.
+**Livello 1 — atomico.** L'elettrovalvola è l'attuatore pneumatico di base della libreria: una bobina elettromagnetica eccita o diseccita una singola uscita fisica (`out`). Non ha retroazione di posizione propria — il proprio stato (`ENERGIZED`/`DE_ENERGIZED`) riflette solo il comando ricevuto, non una conferma fisica. È il componente più riutilizzato della libreria: ogni valvola di livello superiore (Manicotto, Farfalla SS/DS, Sigillata) ne incorpora una o più istanze come proprio attuatore.
 
 Nessun parametro configurabile. Non genera allarmi propri — nessun sensore di posizione disponibile su cui basare una rilevazione di guasto.
 

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**FC, stateless.** `An_pipeline` ricava lo stato della pipeline dalla lettura del trasmettitore di pressione analogico (`PT.Scaled_value`). La conversione da conteggio grezzo a valore scalato in unità ingegneristiche avviene a monte, non in questo blocco. La logica è una tabella di lookup: il valore PT viene confrontato con tre soglie configurabili. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
+**FC, senza stato.** `An_pipeline` ricava lo stato della pipeline dalla lettura del trasmettitore di pressione analogico (`PT.Scaled_value`). La conversione da conteggio grezzo a valore scalato in unità ingegneristiche avviene a monte, non in questo blocco. La logica è una tabella di consultazione: il valore PT viene confrontato con tre soglie configurabili. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
 
 ---
 

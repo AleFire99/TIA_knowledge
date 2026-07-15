@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Livello 2.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti (`XYA` apertura, `XYB` chiusura), incorporando due istanze di Elettrovalvola (Livello 1). Attuatore a doppio effetto (bistabile), feedback di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
+**Livello 2.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti (`XYA` apertura, `XYB` chiusura), incorporando due istanze di Elettrovalvola (Livello 1). Attuatore a doppio effetto (bistabile), retroazione di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
 
 ---
 

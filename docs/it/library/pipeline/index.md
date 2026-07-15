@@ -11,7 +11,7 @@ Condivisi da entrambe le voci di questa categoria.
 | `PL-E01` | Tubazione intasata | `PSL` e `PSH` attivi contemporaneamente (variante digitale) / valore scalato ≥ `clogged_thresh` (variante analogica) | Pipeline digitale, Pipeline analogica |
 | `PL-E02` | Disallineamento sensori | `PSH` attivo senza `PSL` attivo — combinazione fisicamente incoerente | Pipeline digitale |
 
-`PL-E02` è esclusivo della variante digitale: un segnale analogico singolo non ha un secondo valore indipendente con cui essere in contraddizione. Nessuna classe Errore/Warning assegnata — questi blocchi sono FC stateless, senza una propria FSM da portare in FAULT; il chiamante decide se e come includerli nel proprio aggregato di guasto.
+`PL-E02` è esclusivo della variante digitale: un segnale analogico singolo non ha un secondo valore indipendente con cui essere in contraddizione. Nessuna classe Errore/Avviso assegnata — questi blocchi sono FC senza stato, senza una propria macchina a stati da portare in FAULT; il chiamante decide se e come includerli nel proprio aggregato di guasto.
 
 ## Moduli
 
@@ -20,4 +20,4 @@ Condivisi da entrambe le voci di questa categoria.
 | [Pipeline analogica](analogic/index.md) | `UDT_An_Pipeline` | Trasmettitore pressione analogico (PT) | Vuota, Pressurizzata, Con materiale, Intasata |
 | [Pipeline digitale](digital/index.md) | `UDT_Dig_Pipeline` | Due pressostati digitali (PSL / PSH) | Vuota, Con materiale, Intasata (+ Disallineamento) |
 
-Le due varianti condividono la stessa logica concettuale — una tabella di lookup che mappa letture di pressione in stati operativi — ma differiscono per sensore, risoluzione e gestione degli stati anomali.
+Le due varianti condividono la stessa logica concettuale — una tabella di consultazione che mappa letture di pressione in stati operativi — ma differiscono per sensore, risoluzione e gestione degli stati anomali.

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Livello 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide (`XY`, monostabile) e feedback di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
+**Livello 2.** `SS_valve` gestisce una valvola a farfalla pneumatica con singolo solenoide (`XY`, monostabile) e retroazione di posizione a doppio finecorsa (`ZSL` chiuso, `ZSH` aperto).
 
 ---
 

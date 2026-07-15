@@ -1,12 +1,12 @@
-# Portello con Blocco Elettrico
+# Anta Cancello — Blocco Elettrico
 
 ## Panoramica
 
-**Livello 2.** Diverso dagli altri dispositivi della libreria: il PLC non movimenta mai il portello. L'apertura fisica è compiuta dall'operatore a mano; il PLC può solo concedere o negare il permesso, comandando lo sblocco dell'elettrovalvola di ritenuta (`XY`). La chiusura è analoga — il PLC comanda l'elettrovalvola a ribloccare, ma il completamento dipende interamente dall'operatore che richiude fisicamente il portello, senza alcun limite di tempo imposto dalla logica.
+**Livello 2.** Diverso dagli altri dispositivi della libreria: il PLC non movimenta mai l'anta. L'apertura fisica è compiuta dall'operatore a mano; il PLC può solo concedere o negare il permesso, comandando lo sblocco dell'elettrovalvola di ritenuta (`XY`). La chiusura è analoga — il PLC comanda l'elettrovalvola a ribloccare, ma il completamento dipende interamente dall'operatore che richiude fisicamente l'anta, senza alcun limite di tempo imposto dalla logica.
 
-**Vincolo di sicurezza:** la funzione di sicurezza vera e propria (impedire lo sblocco quando non è sicuro aprire) deve essere realizzata via cablaggio elettrico (es. un relè di sicurezza o un contatto cablato in serie all'alimentazione dell'elettrovalvola), non affidata alla sola logica PLC. `CMD.safe_to_open` in questo blocco è un permesso a livello di coordinamento/HMI, non la barriera di sicurezza — quest'ultima deve funzionare indipendentemente da qualsiasi bug o blocco del programma.
+**Vincolo di sicurezza:** la funzione di sicurezza vera e propria (impedire lo sblocco quando non è sicuro aprire) deve essere realizzata via cablaggio elettrico (es. un relè di sicurezza o un contatto cablato in serie all'alimentazione dell'elettrovalvola), non affidata alla sola logica PLC. `CMD.safe_to_open` in questo blocco è un permesso a livello di coordinamento/HMI, non la barriera di sicurezza — quest'ultima deve funzionare indipendentemente da qualsiasi difetto o blocco del programma.
 
-Non usa l'arbitraggio `manual_mode`/`manual`/`auto` comune al resto della libreria — `CMD.open`/`CMD.close` sono comandi diretti, e `XY.CMD.auto` è pilotato dallo stato interno della propria FSM (posizione del portello), non da una fonte manuale/automatica separata.
+Non usa l'arbitraggio `manual_mode`/`manual`/`auto` comune al resto della libreria — `CMD.open`/`CMD.close` sono comandi diretti, e `XY.CMD.auto` è pilotato dallo stato interno della propria macchina a stati (posizione dell'anta), non da una fonte manuale/automatica separata.
 
 ---
 
@@ -62,7 +62,7 @@ classDiagram
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
-| `DEVICES.ZSL` | Bool | IN | Portello fisicamente chiuso **e** elettrovalvola attivamente inserita (segnale combinato: il PLC non distingue "chiuso ma sbloccato" da "aperto") |
+| `DEVICES.ZSL` | Bool | IN | Anta fisicamente chiusa **e** elettrovalvola attivamente inserita (segnale combinato: il PLC non distingue "chiusa ma sbloccata" da "aperta") |
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola di ritenuta (energizzato = sbloccato) — comandata, il proprio stato non viene riletto da questo blocco |
 | `CMD.open` | Bool | IN | Richiesta operatore di sblocco/apertura |
 | `CMD.close` | Bool | IN | Richiesta operatore di ri-blocco anticipato, prima della scadenza del timer di inattività |
@@ -82,19 +82,15 @@ classDiagram
 
 ### Funzionamento
 
-`CMD.open` durante `CLOSING` riporta direttamente a `OPEN`, senza ripassare da `OPENING` né rivalutare `CMD.safe_to_open` — il portello non è mai stato effettivamente ribloccato (`ZSL` non è mai tornato TRUE), quindi non si sta concedendo un nuovo permesso, solo annullando una richiusura non ancora completata.
+`CMD.open` durante `CLOSING` riporta direttamente a `OPEN`, senza ripassare da `OPENING` né rivalutare `CMD.safe_to_open` — l'anta non è mai stata effettivamente ribloccata (`ZSL` non è mai tornato TRUE), quindi non si sta concedendo un nuovo permesso, solo annullando una richiusura non ancora completata.
 
-Al rientro da `FAULT`, il guard d'ingresso rivaluta lo stesso sensore `ZSL` — stesso meccanismo del primo scan. Con un solo segnale combinato, il rientro può distinguere solo `CLOSED` da `OPEN`, mai una condizione intermedia.
+Al rientro da `FAULT`, la condizione d'ingresso rivaluta lo stesso sensore `ZSL` — stesso meccanismo del primo scan. Con un solo segnale combinato, il rientro può distinguere solo `CLOSED` da `OPEN`, mai una condizione intermedia.
 
 In `FAULT`, `XY` viene deliberatamente energizzato (sbloccato): un guasto del PLC non deve mai intrappolare un operatore dietro una porta bloccata. La barriera di sicurezza reale è l'interblocco elettrico a monte di `XY`, non questo blocco funzionale.
 
 ### Allarmi
 
-| ID | Titolo | Condizione |
-|----|--------|------------|
-| `GD-E01` | Mancato sblocco | `CMD.open` accolto (stato `OPENING`), `ZSL` non rilasciato entro `unlock_timeout` |
-
-Nessun allarme di timeout sul ri-blocco (`CLOSING`): l'attesa indefinita è comportamento normale, non un guasto, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
+[`GD-E01`](../index.md#allarmi-dei-dispositivi-di-accesso) — `CMD.open` accolto (stato `OPENING`), `ZSL` non rilasciato entro `unlock_timeout`. Nessun allarme di timeout sul ri-blocco (`CLOSING`): l'attesa indefinita è comportamento normale, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
 
 ### Diagramma di stato
 
@@ -123,7 +119,7 @@ internal_error := failed_to_unlock;
 
 | Stato | `XY` | Descrizione |
 |-------|------|-------------|
-| CLOSED | FALSE | Portello chiuso e bloccato, confermato da `ZSL` |
+| CLOSED | FALSE | Anta chiusa e bloccata, confermata da `ZSL` |
 | OPENING | TRUE | Sblocco comandato, non ancora confermato |
 | OPEN | TRUE | Sblocco confermato — la posizione fisica oltre questo punto è nota solo all'operatore |
 | CLOSING | FALSE | Ri-blocco comandato, in attesa che l'operatore richiuda fisicamente — nessuna scadenza, è attesa normale |

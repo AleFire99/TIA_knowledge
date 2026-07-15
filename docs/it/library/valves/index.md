@@ -4,7 +4,7 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 
 ## Allarmi delle valvole
 
-Condivisi da tutte le voci di questa categoria che dispongono di feedback di posizione.
+Condivisi da tutte le voci di questa categoria che dispongono di retroazione di posizione.
 
 | ID | Titolo | Condizione | Applicabile a |
 |----|--------|------------|----------------|
@@ -19,8 +19,8 @@ Tutti e quattro concorrono a `internal_error`, variabile interna al blocco (non 
 
 | Modulo | Livello | Descrizione |
 |--------|------|-------------|
-| [Elettrovalvola](solenoid/index.md) | 1 | Attuatore atomico on/off; nessun feedback di posizione |
+| [Elettrovalvola](solenoid/index.md) | 1 | Attuatore atomico on/off; nessuna retroazione di posizione |
 | [Valvola a Manicotto](pinch/index.md) | 2 | Comprime un tubo flessibile; un pressostato conferma la posizione chiusa |
-| [Valvola a Farfalla — Singolo Solenoide (SS)](butterfly/single_solenoid/index.md) | 2 | Ritorno a molla in chiusura; feedback posizione via ZSL/ZSH |
-| [Valvola a Farfalla — Doppio Solenoide (DS)](butterfly/double_solenoid/index.md) | 2 | Bistabile, doppio effetto; feedback posizione via ZSL/ZSH |
+| [Valvola a Farfalla — Singolo Solenoide (SS)](butterfly/single_solenoid/index.md) | 2 | Ritorno a molla in chiusura; retroazione di posizione via ZSL/ZSH |
+| [Valvola a Farfalla — Doppio Solenoide (DS)](butterfly/double_solenoid/index.md) | 2 | Bistabile, doppio effetto; retroazione di posizione via ZSL/ZSH |
 | [Valvola Sigillata — Singolo Solenoide (SS Sealed)](sealed/ss/index.md) | 3 | Valvola SS + elettrovalvola di tenuta dedicata |

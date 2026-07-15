@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**FC, stateless.** `Pavone_DAT_1400` è l'interfaccia verso il trasmettitore di peso Pavone Sistemi DAT 1400: legge `UDT_Pavone_IN` (registri del trasmettitore) e scrive `UDT_Pavone_OUT` (registro comandi), convertendo i dati grezzi nei campi `IN` generici di [`UDT_Load_cells`](../loading-unloading/index.md) tramite il parametro `VAR_IN_OUT scale`. Nessuno stato proprio, nessun `CMD`/`ack` — ricalcola tutto da zero ogni scan.
+**FC, senza stato.** `Pavone_DAT_1400` è l'interfaccia verso il trasmettitore di peso Pavone Sistemi DAT 1400: legge `UDT_Pavone_IN` (registri del trasmettitore) e scrive `UDT_Pavone_OUT` (registro comandi), convertendo i dati grezzi nei campi `IN` generici di [`UDT_Load_cells`](../loading-unloading/index.md) tramite il parametro `VAR_IN_OUT scale`. Nessuno stato proprio, nessun `CMD`/`ack` — ricalcola tutto da zero ogni scan.
 
 Questa è, ad oggi, l'unica interfaccia trasmettitore della libreria. Un trasmettitore diverso richiederà una nuova coppia di UDT (`IN`/`OUT`) e un nuovo FC dedicato, scritti secondo lo stesso schema — [`UDT_Load_cells`](../loading-unloading/index.md) e i blocchi `Loading`/`Unloading` non cambiano.
 

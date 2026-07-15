@@ -6,7 +6,7 @@
 
 Il blocco coordina cinque valvole (`XV01`–`XV05`), un'elettrovalvola di pressurizzazione (`XY`), una bilancia (`WT01`) e due trasmettitori di pressione analogici (`PT01` vessel, `PT02` linea). Due pressostati digitali (`PSL`, `LSH`) garantiscono la sicurezza operativa.
 
-La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLING`→`CLEANING`→`SEALING`→`PRESSURIZING`→`CONVEYING`→`DEPRESSURIZING` al livello operativo.
+La macchina a stati è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLING`→`CLEANING`→`SEALING`→`PRESSURIZING`→`CONVEYING`→`DEPRESSURIZING` al livello operativo.
 
 ---
 
@@ -28,7 +28,7 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 | `PSL` | Bool | IN | Pressostato sicurezza: TRUE = pressione entro limiti |
 | `LSH` | Bool | IN | Sensore livello alto: TRUE = vessel pieno (condizione di guasto) |
 
-`XV01`–`XV05` e `WT01` sono IN/OUT: il propulsore scrive il loro `CMD` (auto/ack, e per `WT01` anche stop/reset/loading_start/unloading_start) e rilegge il loro `STATUS`/`ALARMS`/`BATCH` per la propria FSM e `internal_error`. `XY` è OUT-only, come ogni Elettrovalvola comandata senza lettura del proprio stato. `PT01`/`PT02`/`PSL`/`LSH` sono sensori puri, nessun `CMD` da scrivere.
+`XV01`–`XV05` e `WT01` sono IN/OUT: il propulsore scrive il loro `CMD` (auto/ack, e per `WT01` anche stop/reset/loading_start/unloading_start) e rilegge il loro `STATUS`/`ALARMS`/`BATCH` per la propria macchina a stati e `internal_error`. `XY` è OUT-only, come ogni Elettrovalvola comandata senza lettura del proprio stato. `PT01`/`PT02`/`PSL`/`LSH` sono sensori puri, nessun `CMD` da scrivere.
 
 ### Struttura dati
 
@@ -215,4 +215,4 @@ stateDiagram-v2
 
 Nota: la variabile interna `filter_cleaning_timer` e il parametro `SETTING.cleaning_timer` hanno nomi diversi — non confonderli con la fase CLEANING stessa.
 
-Le valvole non elencate per uno stato sono chiuse (CMD.auto = FALSE). XV01–05 e XY hanno il proprio controller sub-FB sempre in esecuzione; il wrapper scrive solo `CMD.auto`.
+Le valvole non elencate per uno stato sono chiuse (CMD.auto = FALSE). XV01–05 e XY hanno il proprio controllore sub-FB sempre in esecuzione; il blocco esterno scrive solo `CMD.auto`.

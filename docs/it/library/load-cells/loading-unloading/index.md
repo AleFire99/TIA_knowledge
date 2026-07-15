@@ -79,7 +79,7 @@ classDiagram
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
 | `CMD.ack` | Bool | IN | Conferma per stato FAULT (Loading o Unloading) |
-| `CMD.loading_setpoint` | Real | IN | Peso target di carico [kg] |
+| `CMD.loading_setpoint` | Real | IN | Peso di riferimento per il carico [kg] |
 | `CMD.unloading_setpoint` | Real | IN | Peso da scaricare nel ciclo [kg] |
 | `CMD.tare_request` | Bool | IN | Richiesta tara, letta dall'interfaccia trasmettitore collegata |
 | `CMD.loading_start` | Bool | IN | Avvio ciclo di carico |

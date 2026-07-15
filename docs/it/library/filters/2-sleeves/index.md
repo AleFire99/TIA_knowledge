@@ -2,9 +2,9 @@
 
 ## Panoramica
 
-**Livello 2.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Elettrovalvole (Livello 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Livello 2.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Elettrovalvole (Livello 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcuna retroazione di posizione — il sistema è ad anello aperto.
 
-Nessun allarme proprio — nessun sensore di feedback disponibile su cui basare una rilevazione di guasto.
+Nessun allarme proprio — nessun sensore di retroazione disponibile su cui basare una rilevazione di guasto.
 
 ---
 

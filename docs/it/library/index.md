@@ -16,21 +16,21 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Elettrovalvola](valves/solenoid/index.md) | Valvola on/off semplice; nessun feedback |
+| [Elettrovalvola](valves/solenoid/index.md) | Valvola on/off semplice; nessuna retroazione |
 | [Valvola a Manicotto](valves/pinch/index.md) | Comprime un tubo flessibile per chiudersi; pressostato conferma la posizione |
-| [Valvola a Farfalla — Singolo Solenoide](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; feedback posizione via ZSL/ZSH |
-| [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; feedback posizione via ZSL/ZSH |
+| [Valvola a Farfalla — Singolo Solenoide](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; retroazione di posizione via ZSL/ZSH |
+| [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; retroazione di posizione via ZSL/ZSH |
 | [Valvola Sigillata — Singolo Solenoide](valves/sealed/ss/index.md) | Valvola SS + elettrovalvola di tenuta dedicata |
 
 ---
 
-## Portelli
+## [Dispositivi di Accesso](access/index.md)
 
-Blocco elettrico per un portello ad apertura manuale — il PLC concede solo il permesso di sblocco, non movimenta nulla.
+Il PLC concede solo il permesso di sblocco in base allo stato corrente — l'accesso fisico resta all'operatore, il PLC non movimenta nulla.
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Portello con Blocco Elettrico](gate/index.md) | Sblocco/blocco elettrovalvola su richiesta operatore; nessun movimento comandato dal PLC |
+| [Anta Cancello — Blocco Elettrico](access/gate/index.md) | Sblocco/blocco elettrovalvola su richiesta operatore; nessun movimento comandato dal PLC |
 
 ---
 
@@ -88,7 +88,7 @@ Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e 
 
 ## [Pipeline](pipeline/index.md)
 
-Derivazione dello stato di pressione dalla lettura di un trasmettitore PT o di due pressostati digitali. Nessuna FSM — stato funzione diretta e istantanea della lettura corrente, senza isteresi.
+Derivazione dello stato di pressione dalla lettura di un trasmettitore PT o di due pressostati digitali. Nessuna macchina a stati — stato funzione diretta e istantanea della lettura corrente, senza isteresi.
 
 | Modulo | Descrizione |
 |--------|-------------|
