@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** `SS_Sealed_valve` avvolge un'istanza di Valvola a Farfalla SS (Tier 2) aggiungendo un solenoide di sigillo dedicato (`XY_seal`, Tier 1). Il sigillo viene eccitato automaticamente quando la valvola interna è confermata `CLOSED`, garantendo tenuta pneumatica in stato di riposo; si diseccita non appena la valvola inizia ad aprirsi.
+**Tier 3 — composito.** `SS_Sealed_valve` avvolge un'istanza di Valvola a Farfalla SS (Tier 2) aggiungendo un'elettrovalvola di sigillo dedicata (`XY_seal`, Tier 1). Il sigillo viene eccitato automaticamente quando la valvola interna è confermata `CLOSED`, garantendo tenuta pneumatica in stato di riposo; si diseccita non appena la valvola inizia ad aprirsi.
 
 Il blocco delega interamente la logica di apertura/chiusura, il rilevamento allarmi e la macchina a stati all'istanza interna `XV`; non possiede una propria FSM né un proprio `ALARMS` — `STATUS` è una copia diretta di `XV.STATUS` ad ogni scan.
 
@@ -13,7 +13,7 @@ Il blocco delega interamente la logica di apertura/chiusura, il rilevamento alla
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XV` | Valvola a Farfalla SS (Tier 2) | Valvola principale — vedere [Valvola a Farfalla SS](../../butterfly/single_solenoid/index.md) |
-| `XY_seal` | Valvola a Solenoide (Tier 1) | Solenoide di tenuta — eccitato ↔ `XV` in `CLOSED` |
+| `XY_seal` | Elettrovalvola (Tier 1) | Elettrovalvola di tenuta — eccitata ↔ `XV` in `CLOSED` |
 
 ---
 
@@ -22,7 +22,7 @@ Il blocco delega interamente la logica di apertura/chiusura, il rilevamento alla
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
 | `DEVICES.XV` | UDT_SS_Valve | Valvola a farfalla SS interna |
-| `DEVICES.XY_seal` | UDT_Solenoid_valve | Solenoide di sigillo |
+| `DEVICES.XY_seal` | UDT_Solenoid_valve | Elettrovalvola di sigillo |
 | `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | Comando di apertura in modalità manuale |
 | `CMD.auto` | Bool | Comando di apertura dall'automazione (ReadOnly external) |

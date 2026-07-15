@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Living knowledge base for the **AleFire-Library** — a Siemens TIA Portal V20 global library
+Living knowledge base for the **AleFire-Library** — a Siemens TIA Portal V21 global library
 of function blocks and UDTs for pneumatic field devices (valves, diverters, filters, etc.).
 
 Two outputs on every update cycle:
@@ -248,7 +248,7 @@ All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are aut
 
 ---
 
-## Known Gotchas — TIA Portal V20 / siemens_tia_scripting v1.2.1
+## Known Gotchas — TIA Portal V21 / siemens_tia_scripting v1.2.1
 
 1. `LibraryTypeVersion.export()` is **blocked** for global library types via API.
    Workaround: use staging project + `block.export()`.

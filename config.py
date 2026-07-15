@@ -8,7 +8,7 @@ ROOT = Path(__file__).parent
 # ─── AleFire-Library ────────────────────────────────────────────────────────
 LIBRARY_PATH = Path(os.getenv(
     "TIA_LIBRARY_PATH",
-    str(ROOT / "library" / "AleFire-Library" / "AleFire-Library.al20"),
+    str(ROOT / "library" / "AleFire-Library_V21" / "AleFire-Library_V21.al21"),
 ))
 
 # ─── Staging project (export workflow) ──────────────────────────────────────
@@ -19,9 +19,9 @@ STAGING_PROJECT = Path(os.getenv(
 
 TIA_PLC_NAME = os.getenv("TIA_PLC_NAME", "PLC_1")
 
-# ─── TIA Portal API paths (for pythonnet/Openness — V20) ────────────────────
-TIA_PUBLIC_API = Path(r"C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20")
-TIA_BIN_API    = Path(r"C:\Program Files\Siemens\Automation\Portal V20\Bin\PublicAPI")
+# ─── TIA Portal API paths (for pythonnet/Openness — V21) ────────────────────
+TIA_PUBLIC_API = Path(r"C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21")
+TIA_BIN_API    = Path(r"C:\Program Files\Siemens\Automation\Portal V21\Bin\PublicAPI")
 
 # ─── Raw Simatic SD exports ───────────────────────────────────────────────────
 RAW         = ROOT / "raw"

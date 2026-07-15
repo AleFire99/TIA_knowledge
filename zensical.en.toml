@@ -1,5 +1,5 @@
 [project]
-site_name = "AleFire Library Wiki"
+site_name = "NTE Process PLC Library"
 docs_dir = "docs/en"
 site_dir = "site/en"
 
@@ -54,13 +54,13 @@ features = ["navigation.path", "content.code.copy"]
 scheme = "default"
 primary = "red"
 accent = "red"
-toggle = { icon = "lucide/sun", name = "Switch to dark mode" }
+toggle = { icon = "lucide/moon", name = "Switch to dark mode" }
 
 [[project.theme.palette]]
 scheme = "slate"
 primary = "red"
 accent = "red"
-toggle = { icon = "lucide/moon", name = "Switch to light mode" }
+toggle = { icon = "lucide/sun", name = "Switch to light mode" }
 
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [

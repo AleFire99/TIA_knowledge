@@ -2,9 +2,9 @@
 
 ## Panoramica
 
-**Tier 2.** Diverso dagli altri dispositivi della libreria: il PLC non movimenta mai il portello. L'apertura fisica è compiuta dall'operatore a mano; il PLC può solo concedere o negare il permesso, comandando lo sblocco del solenoide di ritenuta (`XY`). La chiusura è analoga — il PLC comanda il solenoide a ribloccare, ma il completamento dipende interamente dall'operatore che richiude fisicamente il portello, senza alcun limite di tempo imposto dalla logica.
+**Tier 2.** Diverso dagli altri dispositivi della libreria: il PLC non movimenta mai il portello. L'apertura fisica è compiuta dall'operatore a mano; il PLC può solo concedere o negare il permesso, comandando lo sblocco dell'elettrovalvola di ritenuta (`XY`). La chiusura è analoga — il PLC comanda l'elettrovalvola a ribloccare, ma il completamento dipende interamente dall'operatore che richiude fisicamente il portello, senza alcun limite di tempo imposto dalla logica.
 
-**Vincolo di sicurezza:** la funzione di sicurezza vera e propria (impedire lo sblocco quando non è sicuro aprire) deve essere realizzata via cablaggio elettrico (es. un relè di sicurezza o un contatto cablato in serie all'alimentazione del solenoide), non affidata alla sola logica PLC. `CMD.safe_to_open` in questo blocco è un permesso a livello di coordinamento/HMI, non la barriera di sicurezza — quest'ultima deve funzionare indipendentemente da qualsiasi bug o blocco del programma.
+**Vincolo di sicurezza:** la funzione di sicurezza vera e propria (impedire lo sblocco quando non è sicuro aprire) deve essere realizzata via cablaggio elettrico (es. un relè di sicurezza o un contatto cablato in serie all'alimentazione dell'elettrovalvola), non affidata alla sola logica PLC. `CMD.safe_to_open` in questo blocco è un permesso a livello di coordinamento/HMI, non la barriera di sicurezza — quest'ultima deve funzionare indipendentemente da qualsiasi bug o blocco del programma.
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Valvola a Solenoide (Tier 1) | Solenoide di ritenuta — logica energizzato-per-sbloccare |
+| `XY` | Elettrovalvola (Tier 1) | Elettrovalvola di ritenuta — logica energizzato-per-sbloccare |
 
 ---
 
@@ -20,8 +20,8 @@
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `DEVICES.ZSL` | Bool | INPUT — Portello fisicamente chiuso **e** solenoide attivamente inserito (segnale combinato: il PLC non distingue "chiuso ma sbloccato" da "aperto") |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Solenoide di ritenuta (energizzato = sbloccato) |
+| `DEVICES.ZSL` | Bool | INPUT — Portello fisicamente chiuso **e** elettrovalvola attivamente inserita (segnale combinato: il PLC non distingue "chiuso ma sbloccato" da "aperto") |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola di ritenuta (energizzato = sbloccato) |
 | `CMD.open` | Bool | Richiesta operatore di sblocco/apertura |
 | `CMD.close` | Bool | Richiesta operatore di ri-blocco anticipato, prima della scadenza del timer di inattività |
 | `CMD.safe_to_open` | Bool | Permesso a livello di coordinamento (ReadOnly external) — condizione necessaria ma non sufficiente, vedere vincolo di sicurezza sopra |

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile. L'eccitazione del solenoide interno (`XY`) aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. Un pressostato (`PSL`) conferma la posizione chiusa — è l'unico sensore di posizione del dispositivo. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa.
+**Tier 2.** La valvola a manicotto controlla il flusso comprimendo meccanicamente un tubo flessibile. L'eccitazione dell'elettrovalvola interna (`XY`) aziona l'attuatore pneumatico che schiaccia il tubo chiudendolo; la diseccitazione rilascia il tubo ripristinando il flusso. Un pressostato (`PSL`) conferma la posizione chiusa — è l'unico sensore di posizione del dispositivo. La valvola è normalmente aperta: richiede eccitazione attiva per rimanere chiusa.
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Valvola a Solenoide (Tier 1) | Attuatore — eccitato = chiuso |
+| `XY` | Elettrovalvola (Tier 1) | Attuatore — eccitato = chiuso |
 
-L'arbitraggio manuale/automatico (`manual_mode`/`manual`/`auto`) segue lo stesso schema descritto in [Valvola a Solenoide](../solenoid/index.md).
+L'arbitraggio manuale/automatico (`manual_mode`/`manual`/`auto`) segue lo stesso schema descritto in [Elettrovalvola](../solenoid/index.md).
 
 ---
 

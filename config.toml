@@ -1,6 +1,6 @@
 [tia]
-# Full path to the AleFire-Library .al20 global library file
-library_path = "C:/Users/user015/Desktop/Projects/tia-knowledge/library/AleFire-Library/AleFire-Library.al20"
+# Full path to the AleFire-Library_V21 .al21 global library file
+library_path = "C:/Users/user015/Desktop/Projects/tia-knowledge/library/AleFire-Library_V21/AleFire-Library_V21.al21"
 
 # Full path to the .ap20 export staging project (must have hardware config with at least one PLC)
 project_path = "C:/Users/user015/Desktop/Projects/tia-knowledge/Library_export/Library_export.ap20"

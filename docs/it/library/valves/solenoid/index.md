@@ -1,10 +1,10 @@
-# Valvola a Solenoide
+# Elettrovalvola
 
 ## Panoramica
 
-**Tier 1 — atomico.** La valvola a solenoide è l'attuatore pneumatico di base della libreria: una bobina elettromagnetica eccita o diseccita una singola uscita fisica (`out`). Non ha feedback di posizione proprio — il proprio stato (`ENERGIZED`/`DE_ENERGIZED`) riflette solo il comando ricevuto, non una conferma fisica. È il componente più riutilizzato della libreria: ogni valvola di livello superiore (Manicotto, Farfalla SS/DS, Sigillata) ne incorpora una o più istanze come proprio attuatore.
+**Tier 1 — atomico.** L'elettrovalvola è l'attuatore pneumatico di base della libreria: una bobina elettromagnetica eccita o diseccita una singola uscita fisica (`out`). Non ha feedback di posizione proprio — il proprio stato (`ENERGIZED`/`DE_ENERGIZED`) riflette solo il comando ricevuto, non una conferma fisica. È il componente più riutilizzato della libreria: ogni valvola di livello superiore (Manicotto, Farfalla SS/DS, Sigillata) ne incorpora una o più istanze come proprio attuatore.
 
-L'arbitraggio `manual_mode`/`manual`/`auto` di questo blocco è lo schema canonico riutilizzato — con la stessa logica, anche se non sempre con lo stesso nome di campo — da ogni dispositivo di questa libreria che incorpora un'istanza di Valvola a Solenoide.
+L'arbitraggio `manual_mode`/`manual`/`auto` di questo blocco è lo schema canonico riutilizzato — con la stessa logica, anche se non sempre con lo stesso nome di campo — da ogni dispositivo di questa libreria che incorpora un'istanza di Elettrovalvola.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti, incorporando due istanze di Valvola a Solenoide (Tier 1). `XYA` aziona l'attuatore verso l'apertura; `XYB` verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a entrambi i solenoidi diseccitati — nessun ritorno a molla. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
+**Tier 3 — composito.** `DS_valve` gestisce una valvola a farfalla pneumatica con due solenoidi indipendenti, incorporando due istanze di Elettrovalvola (Tier 1). `XYA` aziona l'attuatore verso l'apertura; `XYB` verso la chiusura. L'attuatore è a doppio effetto (bistabile): mantiene la posizione anche a entrambi i solenoidi diseccitati — nessun ritorno a molla. Due finecorsa (`ZSL` chiuso, `ZSH` aperto) forniscono il feedback di posizione.
 
 Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve`.
 
@@ -12,10 +12,10 @@ Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la st
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XYA` | Valvola a Solenoide (Tier 1) | Aziona verso l'apertura |
-| `XYB` | Valvola a Solenoide (Tier 1) | Aziona verso la chiusura |
+| `XYA` | Elettrovalvola (Tier 1) | Aziona verso l'apertura |
+| `XYB` | Elettrovalvola (Tier 1) | Aziona verso la chiusura |
 
-Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_open_command`) pilota quale dei due solenoidi va eccitato — le due istanze non arbitrano mai in autonomia.
+Un'unica decisione manuale/automatica (`manual_mode`/`manual`/`auto`, risolta in `desired_open_command`) pilota quale delle due elettrovalvole va eccitata — le due istanze non arbitrano mai in autonomia.
 
 ---
 

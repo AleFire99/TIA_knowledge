@@ -4,7 +4,7 @@
 
 **Tier 3 — composito.** `Sealed_inlet_Transporter` gestisce un ciclo completo di trasporto pneumatico in pressione: carica materiale in un vessel, lo sigilla, lo pressurizza a pressione superiore a quella della linea, convoglia il materiale verso la linea e infine depressurizza il vessel prima di un nuovo ciclo.
 
-Il blocco coordina cinque valvole (`XV01`–`XV05`), un solenoide di pressurizzazione (`XY`), una bilancia (`WT01`) e due trasmettitori di pressione analogici (`PT01` vessel, `PT02` linea). Due pressostati digitali (`PSL`, `LSH`) garantiscono la sicurezza operativa.
+Il blocco coordina cinque valvole (`XV01`–`XV05`), un'elettrovalvola di pressurizzazione (`XY`), una bilancia (`WT01`) e due trasmettitori di pressione analogici (`PT01` vessel, `PT02` linea). Due pressostati digitali (`PSL`, `LSH`) garantiscono la sicurezza operativa.
 
 La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLING`→`CLEANING`→`SEALING`→`PRESSURIZING`→`CONVEYING`→`DEPRESSURIZING` al livello operativo.
 
@@ -19,7 +19,7 @@ La FSM è a due livelli: `NORMAL`/`FAULT` al livello superiore; `IDLE`→`FILLIN
 | `XV03` | Valvola a Farfalla SS (Tier 2) | Valvola orifizio; aperta durante FILLING |
 | `XV04` | Valvola a Farfalla SS (Tier 2) | Valvola di scarico; aperta durante PRESSURIZING e CONVEYING |
 | `XV05` | Valvola a Farfalla SS (Tier 2) | Valvola di linea; aperta durante CONVEYING |
-| `XY` | Valvola a Solenoide (Tier 1) | Solenoide pressurizzazione; eccitato durante PRESSURIZING e CONVEYING |
+| `XY` | Elettrovalvola (Tier 1) | Elettrovalvola pressurizzazione; eccitata durante PRESSURIZING e CONVEYING |
 | `WT01` | Celle di Carico (Tier 3) | Bilancia; gestita da `Loading` e `Unloading` interni — vedere [Celle di Carico](../../load-cells/index.md) |
 | `PT01` | UDT_Analogic_signal | Trasmettitore pressione vessel |
 | `PT02` | UDT_Analogic_signal | Trasmettitore pressione linea |

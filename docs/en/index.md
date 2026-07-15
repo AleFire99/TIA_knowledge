@@ -1,6 +1,13 @@
-# AleFire Library Wiki
+# NTE Process — PLC Library
 
-Technical documentation for the AleFire TIA Portal V20 global library.
+Knowledge base for NTE Process's TIA Portal V21 global library: function blocks and UDTs
+for pneumatic field devices (valves, diverters, filters, gates, load cells, Nolvac, pipeline).
+
+Every page in this wiki comes from the actual source code — a VCI (Simatic SD) export of
+the TIA Portal library — not hand-written notes. An ingestion pipeline reads the exported
+blocks and UDTs, structures them into a manifest, and regenerates each module's I/O signals,
+alarms, parameters, state machine, and data structure automatically. When the library
+changes, the documentation regenerates with it — no page drifts from the code it describes.
 
 ## Library Objects
 
@@ -13,16 +20,3 @@ Technical documentation for the AleFire TIA Portal V20 global library.
 | [Nolvac](library/nolvac/index.md) | Nolvac unit |
 | [Load cells](library/load-cells/index.md) | Load cells for batching |
 | [Pipeline](library/pipeline/index.md) | Pipeline pressure state supervision |
-
-## Regenerating Documentation
-
-```bash
-# Export sources from TIA Portal library
-python wiki/scripts/export.py
-
-# Regenerate docs and manifest
-python wiki/scripts/generate_docs.py
-
-# Local preview
-uv run zensical serve --config-file zensical.en.toml
-```

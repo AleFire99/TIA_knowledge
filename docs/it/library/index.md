@@ -22,11 +22,11 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Valvola a Solenoide](valves/solenoid/index.md) | Valvola on/off semplice; nessun feedback |
+| [Elettrovalvola](valves/solenoid/index.md) | Valvola on/off semplice; nessun feedback |
 | [Valvola a Manicotto](valves/pinch/index.md) | Comprime un tubo flessibile per chiudersi; pressostato conferma la posizione |
 | [Valvola a Farfalla — Solenoide Singolo](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; feedback posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; feedback posizione via ZSL/ZSH |
-| [Valvola Sigillata — Solenoide Singolo](valves/sealed/ss/index.md) | Valvola SS + solenoide di tenuta dedicato |
+| [Valvola Sigillata — Solenoide Singolo](valves/sealed/ss/index.md) | Valvola SS + elettrovalvola di tenuta dedicata |
 
 ---
 
@@ -36,7 +36,7 @@ Blocco elettrico per un portello ad apertura manuale — il PLC concede solo il 
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Portello con Blocco Elettrico](gate/index.md) | Sblocco/blocco solenoide su richiesta operatore; nessun movimento comandato dal PLC |
+| [Portello con Blocco Elettrico](gate/index.md) | Sblocco/blocco elettrovalvola su richiesta operatore; nessun movimento comandato dal PLC |
 
 ---
 
@@ -66,7 +66,7 @@ Sistemi di pulizia a impulsi d'aria compressa per maniche filtranti.
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Pulitore Filtro — 1 Manica](filters/1-sleeve/index.md) | Ciclo a impulso periodico con singolo solenoide |
+| [Pulitore Filtro — 1 Manica](filters/1-sleeve/index.md) | Ciclo a impulso periodico con una singola elettrovalvola |
 | [Pulitore Filtro — 2 Maniche](filters/2-sleeves/index.md) | Sequenza di impulsi alternati su due maniche |
 
 ---

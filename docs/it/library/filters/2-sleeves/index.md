@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Valvole a Solenoide (Tier 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
+**Tier 3 — composito.** Il pulitore filtro a 2 maniche genera impulsi alternati di aria compressa tramite due Elettrovalvole (Tier 1, `XYA`/`XYB`) per pulire un filtro a doppia manica. Le maniche vengono pulsate in sequenza — mai simultaneamente — per minimizzare il calo di pressione nell'accumulatore e garantire una pulizia efficace di ciascuna manica. Non è presente alcun feedback di posizione — il sistema è ad anello aperto.
 
 ---
 
@@ -10,8 +10,8 @@
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XYA` | Valvola a Solenoide (Tier 1) | Impulso manica A |
-| `XYB` | Valvola a Solenoide (Tier 1) | Impulso manica B |
+| `XYA` | Elettrovalvola (Tier 1) | Impulso manica A |
+| `XYB` | Elettrovalvola (Tier 1) | Impulso manica B |
 
 ---
 
@@ -19,8 +19,8 @@
 
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
-| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Solenoide impulso manica A |
-| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Solenoide impulso manica B |
+| `DEVICES.XYA` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola impulso manica A |
+| `DEVICES.XYB` | UDT_Solenoid_valve | OUTPUT — Elettrovalvola impulso manica B |
 | `CMD.manual_mode` | Bool | TRUE = modalità manuale |
 | `CMD.manual` | Bool | Abilitazione in modalità manuale |
 | `CMD.auto` | Bool | Abilitazione in modalità automatica (ReadOnly external) |
@@ -32,9 +32,9 @@
 Quando abilitato, il sistema alterna tra le maniche A e B in un ciclo continuo:
 
 1. **PULSING manica A** — `XYA` eccitato per `pulse_duration`
-2. **WAITING** — entrambi i solenoidi spenti per `interval_duration`
+2. **WAITING** — entrambe le elettrovalvole spente per `interval_duration`
 3. **PULSING manica B** — `XYB` eccitato per `pulse_duration`
-4. **WAITING** — entrambi i solenoidi spenti per `interval_duration`
+4. **WAITING** — entrambe le elettrovalvole spente per `interval_duration`
 5. Ripetere dal passo 1
 
 La manica attiva è tracciata da `STATUS.active_sleeve` (0 = A, 1 = B). La rimozione del comando di abilitazione in qualsiasi momento riporta il sistema in **IDLE**.
@@ -127,5 +127,5 @@ state FILTER{
 |---------------|------------|-----------------|--------|
 | IDLE | Comando abilitazione | ACTIVE/PULSING | Inizia con manica A; `XYA` → TRUE; avvia timer impulso |
 | ACTIVE/PULSING | Timer impulso scaduto | ACTIVE/WAITING | `XYA`/`XYB` → FALSE; avvia timer intervallo |
-| ACTIVE/WAITING | Timer intervallo scaduto | ACTIVE/PULSING | Alterna manica (A→B o B→A); eccita solenoide successivo; avvia timer impulso |
+| ACTIVE/WAITING | Timer intervallo scaduto | ACTIVE/PULSING | Alterna manica (A→B o B→A); eccita l'elettrovalvola successiva; avvia timer impulso |
 | ACTIVE (qualsiasi) | Comando rimosso | IDLE | `XYA` → FALSE, `XYB` → FALSE |

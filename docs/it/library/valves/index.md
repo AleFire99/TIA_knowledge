@@ -19,8 +19,8 @@ Tutti e quattro concorrono a `internal_error`, variabile interna al blocco (non 
 
 | Modulo | Tier | Descrizione |
 |--------|------|-------------|
-| [Valvola a Solenoide](solenoid/index.md) | 1 | Attuatore atomico on/off; nessun feedback di posizione |
+| [Elettrovalvola](solenoid/index.md) | 1 | Attuatore atomico on/off; nessun feedback di posizione |
 | [Valvola a Manicotto](pinch/index.md) | 2 | Comprime un tubo flessibile; un pressostato conferma la posizione chiusa |
 | [Valvola a Farfalla — Monosolenoide (SS)](butterfly/single_solenoid/index.md) | 2 | Ritorno a molla in chiusura; feedback posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Bisolenoide (DS)](butterfly/double_solenoid/index.md) | 3 | Bistabile, doppio effetto; feedback posizione via ZSL/ZSH |
-| [Valvola Sigillata — Monosolenoide (SS Sealed)](sealed/ss/index.md) | 3 | Valvola SS + solenoide di tenuta dedicato |
+| [Valvola Sigillata — Monosolenoide (SS Sealed)](sealed/ss/index.md) | 3 | Valvola SS + elettrovalvola di tenuta dedicata |

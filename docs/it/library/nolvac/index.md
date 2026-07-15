@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**Tier 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Tier 2) e due Valvole a Solenoide (Tier 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
+**Tier 3 — composito.** Il Nolvac è un'unità di convogliamento pneumatico a ciclo aspirazione/pulizia, incorporando una Valvola a Farfalla SS (Tier 2) e due Elettrovalvole (Tier 1). `XY03` attiva il percorso di aspirazione per convogliare il materiale; `XV01` e `XY02` agiscono in combinazione durante la fase di pulizia per rigenerare il filtro interno.
 
 Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`cleaning_time`) — e riparte automaticamente finché il comando resta attivo.
 
@@ -13,8 +13,8 @@ Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`c
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
 | `XV01` | Valvola a Farfalla SS (Tier 2) | Apre l'ingresso durante `CLEANING` — vedere [Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md) |
-| `XY02` | Valvola a Solenoide (Tier 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
-| `XY03` | Valvola a Solenoide (Tier 1) | Depressione di trasporto durante `SUCTION` |
+| `XY02` | Elettrovalvola (Tier 1) | Aria compressa di retrolavaggio filtro durante `CLEANING` |
+| `XY03` | Elettrovalvola (Tier 1) | Depressione di trasporto durante `SUCTION` |
 
 ---
 
@@ -23,8 +23,8 @@ Il ciclo alterna due fasi — **aspirazione** (`suction_time`) e **pulizia** (`c
 | Segnale | Tipo | Descrizione |
 |---------|------|-------------|
 | `DEVICES.XV01` | UDT_SS_Valve | Valvola farfalla SS; aperta durante `CLEANING` |
-| `DEVICES.XY02` | UDT_Solenoid_valve | Solenoide pulizia; eccitato durante `CLEANING` |
-| `DEVICES.XY03` | UDT_Solenoid_valve | Solenoide aspirazione; eccitato durante `SUCTION` |
+| `DEVICES.XY02` | UDT_Solenoid_valve | Elettrovalvola pulizia; eccitata durante `CLEANING` |
+| `DEVICES.XY03` | UDT_Solenoid_valve | Elettrovalvola aspirazione; eccitata durante `SUCTION` |
 | `CMD.manual_mode` | Bool | TRUE = modalità manuale HMI |
 | `CMD.manual` | Bool | Comando di avvio ciclo in modalità manuale |
 | `CMD.auto` | Bool | Comando di avvio ciclo dall'automazione (ReadOnly external) |
@@ -83,7 +83,7 @@ La rimozione del comando in qualsiasi momento durante `ACTIVE` riporta immediata
 
 ## Allarmi
 
-Nessun allarme proprio — `UDT_Nolvac` non possiede una struttura `ALARMS`. L'unico guasto rilevato è la propagazione diretta di `XV01.STATUS.is_fault`; le solenoidi `XY02`/`XY03` non hanno sensori propri e non possono generare un guasto.
+Nessun allarme proprio — `UDT_Nolvac` non possiede una struttura `ALARMS`. L'unico guasto rilevato è la propagazione diretta di `XV01.STATUS.is_fault`; le elettrovalvole `XY02`/`XY03` non hanno sensori propri e non possono generare un guasto.
 
 Vedere gli [allarmi Valvola a Farfalla SS](../valves/butterfly/single_solenoid/index.md#allarmi) per la causa effettiva quando `internal_error` è TRUE.
 

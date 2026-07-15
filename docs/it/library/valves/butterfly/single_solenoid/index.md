@@ -12,9 +12,9 @@ Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato inizi
 
 | Tag | Tipo | Ruolo |
 |-----|------|-------|
-| `XY` | Valvola a Solenoide (Tier 1) | Attuatore — eccitato durante l'apertura e mantenuto eccitato in OPEN contro la molla |
+| `XY` | Elettrovalvola (Tier 1) | Attuatore — eccitato durante l'apertura e mantenuto eccitato in OPEN contro la molla |
 
-Arbitraggio manuale/automatico come in [Valvola a Solenoide](../../solenoid/index.md).
+Arbitraggio manuale/automatico come in [Elettrovalvola](../../solenoid/index.md).
 
 ---
 
@@ -46,7 +46,7 @@ Arbitraggio manuale/automatico come in [Valvola a Solenoide](../../solenoid/inde
 |-------|------|-------------|
 | CLOSED | FALSE | Disco chiuso; molla in posizione |
 | OPENING | TRUE | Attuatore spinge il disco verso apertura |
-| OPEN | TRUE | Disco aperto; solenoide mantiene contro la molla |
+| OPEN | TRUE | Disco aperto; l'elettrovalvola mantiene contro la molla |
 | CLOSING | FALSE | Molla riporta il disco in chiusura |
 | FAULT | FALSE | Guasto; attende `ack` con sensori validi |
 
