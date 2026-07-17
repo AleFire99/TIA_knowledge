@@ -2,6 +2,8 @@
 
 Valvole controllate pneumaticamente per isolamento, attuazione e controllo di processo.
 
+Il parametro `SETTING.actuator_timeout` (default `T#2s`, tempo massimo consentito per completare una manovra di apertura o chiusura) è lo stesso, con lo stesso significato, su ogni valvola dotata di un proprio `movement_timer` — Manicotto, Farfalla SS, Farfalla DS. I moduli che ne incorporano una (Sigillata SS, Deviatore a Manicotto, Propulsore Ingresso Sigillato) non possiedono un `actuator_timeout` proprio: inoltrano il valore ricevuto all'istanza interna ad ogni scan.
+
 ## Allarmi delle valvole
 
 Condivisi da tutte le voci di questa categoria che dispongono di retroazione di posizione.

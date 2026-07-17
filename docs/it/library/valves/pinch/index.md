@@ -72,7 +72,7 @@ classDiagram
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Tempo massimo consentito per completare una manovra di apertura o chiusura |
+| `SETTING.actuator_timeout` | T#2s | Vedi la convenzione in [Valvole — Panoramica](../index.md) |
 
 ---
 

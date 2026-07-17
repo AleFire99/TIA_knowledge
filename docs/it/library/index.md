@@ -55,13 +55,13 @@ Deviano il materiale convogliato tra due o più percorsi di scarico tramite un m
 
 ---
 
-## Nolvac
+## [Nolvac](nolvac/index.md)
 
-Unità di convogliamento pneumatico a ciclo aspirazione/pulizia.
+Unità di convogliamento pneumatico a ciclo aspirazione/pulizia; le varianti si distinguono per come determinano la durata delle fasi.
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Nolvac](nolvac/index.md) | Cicli alternati di aspirazione materiale e pulizia filtro |
+| [Nolvac — Ciclo a Tempo](nolvac/timed-cycle/index.md) | Cicli alternati di aspirazione materiale e pulizia filtro, temporizzati a parametro |
 
 ---
 

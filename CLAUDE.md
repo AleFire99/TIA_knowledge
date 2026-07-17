@@ -265,10 +265,12 @@ fold the "why no alarms" rationale into Panoramica as a trailing sentence instea
 Parametri's omit-if-empty pattern). When a module has no alarms of its own but still has
 something worth pointing at (Sealed SS, Nolvac — no own `ALARMS` struct, but a real
 propagated/cross-referenced condition), keep the heading anyway; there's content, just not
-an ID of its own. If a single-module category with no category-level alarms page of its own
-ever recurs (Anta Cancello — Blocco Elettrico was this exact case until Dispositivi di
-Accesso got a real category-overview page), the same exception would apply: keep the
-device's own Allarmi heading, since there's nowhere to fold it into or link out to.
+an ID of its own. This has recurred twice so far — Anta Cancello — Blocco Elettrico (until Dispositivi di
+Accesso got a real category-overview page) and Nolvac — Ciclo a Tempo (its category page
+exists now too, but carries no alarms table — nothing to hoist, since the device has no
+alarm ID of its own to promote). If a single-module category with no category-level alarms
+page of its own recurs again, the same exception applies: keep the device's own Allarmi
+heading, since there's nowhere to fold it into or link out to.
 
 **`Direzione` column** (Segnali di controllo table): captures physical field I/O direction
 *and* how the signal is consumed between modules, not just sensor-vs-actuator. A scalar
@@ -306,8 +308,10 @@ Elettrovalvola page's own table shape.
 
 **Allarmi folds into Panoramica/Funzionamento whenever *any* cross-reference target
 exists** — not only a category-overview page. A peer device's own Allarmi section works the
-same way (e.g. Nolvac has no category page of its own, but cross-references
-[Valvola a Farfalla SS](library/valves/butterfly/single_solenoid/index.md)'s alarms). When a
+same way (e.g. Nolvac — Ciclo a Tempo delegates its only fault source, `XV01.STATUS.is_fault`,
+entirely — its own category page carries no alarms table of its own, nothing to hoist, so it
+cross-references [Valvola a Farfalla SS](library/valves/butterfly/single_solenoid/index.md)'s
+alarms directly instead). When a
 module produces genuinely zero alarms and no target exists to link to either way (e.g. the
 two Filtro pages — `UDT_Filter_1_sleeve`/`UDT_Filter_2_sleeves` have no `ALARMS` struct and
 the Filtri category page has no alarms table), the "why not applicable" rationale still
@@ -433,7 +437,7 @@ Current values, for reference when adding a new module:
 |---|---|---|
 | Elettrovalvola | 1 | Embeds nothing — genuinely atomic |
 | Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
-| Deviatore a Manicotto, Valvola Sigillata SS, Nolvac | 3 | Embed at least one Livello-2 component |
+| Deviatore a Manicotto, Valvola Sigillata SS, Nolvac — Ciclo a Tempo | 3 | Embed at least one Livello-2 component |
 | Celle di Carico core (Ciclo di Carico e Scarico) | 1 | Embeds nothing, but two independent FSMs share one UDT — Livello 1 without being "atomico" |
 | Propulsore Ingresso Sigillato | 4 | Embeds Valvola Sigillata SS (Livello 3) |
 | Interfaccia Pavone DAT 1400, Pipeline Analogica/Digitale | not classified | FC, stateless — Livello only applies to stateful FBs with their own state machine |
@@ -514,15 +518,27 @@ current mode) — changed because it reads more intuitively.
 
 Default: one page per module, with a single "Composizione" table (Tag | Tipo | Ruolo)
 listing embedded component instances by tag — this covers most modules, including ones
-with several internal roles (e.g. Nolvac, Propulsori), as long as they're all built on
-one core UDT.
+with several internal roles (e.g. Propulsori), as long as they're all built on one core UDT
+and no second variant is concretely expected.
 
-Split into a category-overview page plus separate detail sub-pages **only when genuinely
-distinct UDTs are involved** — e.g. Pipeline (`UDT_An_Pipeline` vs `UDT_Dig_Pipeline`) or
-Celle di Carico (`UDT_Load_cells` vs `UDT_Pavone_IN`/`UDT_Pavone_OUT`). Don't split just
-because a module has functionally distinct roles (adapter vs. logic) if they still share
-one UDT — that was tried for Celle di Carico and reverted once it became clear the real
-line was the UDT boundary, not the role.
+Two independent, valid reasons to split into a category-overview page plus separate detail
+sub-pages:
+
+1. **Genuinely distinct UDTs already exist today** — e.g. Pipeline (`UDT_An_Pipeline` vs
+   `UDT_Dig_Pipeline`) or Celle di Carico (`UDT_Load_cells` vs `UDT_Pavone_IN`/
+   `UDT_Pavone_OUT`). Don't split just because a module has functionally distinct roles
+   (adapter vs. logic) if they still share one UDT — that was tried for Celle di Carico and
+   reverted once it became clear the real line was the UDT boundary, not the role.
+2. **Anticipatory split** — only one UDT/device exists today, but a concretely expected
+   second variant is coming (not a hypothetical "maybe someday"). Splitting now avoids a
+   second disruptive migration later. Two examples so far: Dispositivi di Accesso (device
+   renamed to "Anta Cancello — Blocco Elettrico" ahead of other portello types expected to
+   share the category's permission-based contract) and Nolvac (device renamed to "Nolvac —
+   Ciclo a Tempo" ahead of a `ZSH` level-feedback variant). In both cases the device's own
+   name gets the distinguishing-mechanism suffix so it reads sensibly next to its future
+   sibling, and the category-overview page's intro states the actual distinguishing trait
+   between variants (present vs. future) explicitly — don't just present the split with no
+   explanation of why it exists yet for a single device.
 
 For an interface/adapter split specifically (a swappable hardware-facing UDT+FC pair vs. a
 stable core-logic UDT): the point of the split is to document the decoupling itself — the

@@ -28,7 +28,10 @@ nav = [
           { "Panoramica" = "library/diverters/index.md" },
           { "A Manicotto" = "library/diverters/pinch_type/index.md" },
       ] },
-      { "Nolvac" = "library/nolvac/index.md" },
+      { "Nolvac" = [
+          { "Panoramica" = "library/nolvac/index.md" },
+          { "Ciclo a Tempo" = "library/nolvac/timed-cycle/index.md" },
+      ] },
       { "Celle di Carico" = [
           { "Panoramica" = "library/load-cells/index.md" },
           { "Ciclo di Carico e Scarico" = "library/load-cells/loading-unloading/index.md" },
