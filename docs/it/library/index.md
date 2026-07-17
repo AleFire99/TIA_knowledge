@@ -76,6 +76,16 @@ Sistema di pesatura basato su un'unica struttura dati condivisa, con la logica d
 
 ---
 
+## [Segnali Analogici](io/index.md)
+
+Utility di libreria condivisa: converte un conteggio grezzo di ingresso analogico in un valore scalato in unità ingegneristiche.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Segnali Analogici](io/index.md) | Conversione conteggio grezzo → valore scalato, usata da Pipeline Analogica e Propulsore Ingresso Sigillato |
+
+---
+
 ## [Propulsori](transporters/index.md)
 
 Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e scarico pressurizzato.

@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**FC, senza stato.** `An_pipeline` ricava lo stato della pipeline dalla lettura del trasmettitore di pressione analogico (`PT.Scaled_value`). La conversione da conteggio grezzo a valore scalato in unità ingegneristiche avviene a monte, non in questo blocco. La logica è una tabella di consultazione: il valore PT viene confrontato con tre soglie configurabili. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
+**FC, senza stato.** `An_pipeline` ricava lo stato della pipeline dalla lettura del trasmettitore di pressione analogico (`PT.Scaled_value`). La conversione da conteggio grezzo a valore scalato in unità ingegneristiche avviene a monte, non in questo blocco — vedere [Segnali Analogici](../../io/index.md). La logica è una tabella di consultazione: il valore PT viene confrontato con tre soglie configurabili. Nessun `CMD`, nessun `ack` — non essendoci stato da conservare, non c'è nulla da confermare.
 
 ---
 
@@ -35,7 +35,7 @@ classDiagram
     UDT_An_Pipeline *-- ALARMS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 
@@ -61,13 +61,12 @@ classDiagram
 
 ### Funzionamento
 
-```Pascal
-STATUS.is_empty := PT.Scaled_value < empty_thresh;
-STATUS.is_pressurised := (PT.Scaled_value >= empty_thresh) AND (PT.Scaled_value < material_thresh);
-STATUS.is_with_material := (PT.Scaled_value >= material_thresh) AND (PT.Scaled_value < clogged_thresh);
-
-ALARMS.pipeline_clogged := PT.Scaled_value >= clogged_thresh;
-```
+| Intervallo | Esito | Categoria |
+|------------|-------|-----------|
+| `PT < empty_thresh` | `is_empty` | Stato |
+| `empty_thresh ≤ PT < material_thresh` | `is_pressurised` | Stato |
+| `material_thresh ≤ PT < clogged_thresh` | `is_with_material` | Stato |
+| `PT ≥ clogged_thresh` | `pipeline_clogged` | Allarme ([`PL-E01`](../index.md#allarmi-delle-pipeline)) |
 
 Le prime tre condizioni sono fasi normali che il processo attraversa continuamente. `pipeline_clogged` non è una quarta fascia dello stesso tipo — rappresenta una condizione fisica anomala che non dovrebbe mai persistere. Non esiste una macchina a stati: la valutazione è puramente combinatoria e ricalcolata da zero ogni scan, senza isteresi.
 

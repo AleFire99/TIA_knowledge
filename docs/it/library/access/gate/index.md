@@ -56,7 +56,7 @@ classDiagram
     UDT_Gate_Door *-- ALARMS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 
@@ -90,7 +90,7 @@ In `FAULT`, `XY` viene deliberatamente energizzato (sbloccato): un guasto del PL
 
 ### Allarmi
 
-[`GD-E01`](../index.md#allarmi-dei-dispositivi-di-accesso) — `CMD.open` accolto (stato `OPENING`), `ZSL` non rilasciato entro `unlock_timeout`. Nessun allarme di timeout sul ri-blocco (`CLOSING`): l'attesa indefinita è comportamento normale, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
+[`AD-E01`](../index.md#allarmi-dei-dispositivi-di-accesso) — `CMD.open` accolto (stato `OPENING`), `ZSL` non rilasciato entro `unlock_timeout`. Nessun allarme di timeout sul ri-blocco (`CLOSING`): l'attesa indefinita è comportamento normale, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
 
 ### Diagramma di stato
 

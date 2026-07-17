@@ -32,7 +32,7 @@ classDiagram
     UDT_Dig_Pipeline *-- ALARMS
 ```
 
-`-` = sola lettura (`ReadOnly := External` nel sorgente) — ogni campo di questo UDT è read-only da DCS/HMI; non esiste una struttura `SETTING`.
+`-` = sola lettura — ogni campo di questo UDT è read-only da DCS/HMI; non esiste una struttura `SETTING`.
 
 ### Segnali di controllo
 
@@ -50,14 +50,6 @@ classDiagram
 ## Comportamento
 
 ### Funzionamento
-
-```Pascal
-ALARMS.sensor_mismatch := NOT PSL AND PSH;
-ALARMS.pipeline_clogged := PSL AND PSH;
-
-STATUS.is_empty := NOT PSL AND NOT PSH;
-STATUS.is_with_material := PSL AND NOT PSH;
-```
 
 | `PSL` | `PSH` | Esito | Categoria |
 |-------|-------|-------|-----------|

@@ -55,7 +55,7 @@ classDiagram
     UDT_Pinch_Valve *-- ALARMS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 

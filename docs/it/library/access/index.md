@@ -6,7 +6,7 @@ Il PLC non movimenta mai fisicamente questi dispositivi — l'accesso è compiut
 
 | ID | Titolo | Condizione | Applicabile a |
 |----|--------|------------|----------------|
-| `GD-E01` | Mancato sblocco | `CMD.open` accolto (stato `OPENING`), sensore di chiusura non rilasciato entro `unlock_timeout` | Anta Cancello — Blocco Elettrico |
+| `AD-E01` | Mancato sblocco | `CMD.open` accolto (stato `OPENING`), sensore di chiusura non rilasciato entro `unlock_timeout` | Anta Cancello — Blocco Elettrico |
 
 Nessun allarme di timeout sul ri-blocco: l'attesa indefinita è comportamento normale, non un guasto, poiché il completamento dipende dall'azione fisica dell'operatore e non dal PLC.
 

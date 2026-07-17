@@ -30,7 +30,7 @@ classDiagram
     UDT_Solenoid_valve : -Bool out
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 

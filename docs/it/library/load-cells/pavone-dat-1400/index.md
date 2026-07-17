@@ -54,7 +54,7 @@ classDiagram
     }
 ```
 
-`-` = sola lettura (`ReadOnly := External` nel sorgente) — entrambi gli UDT sono interamente read-only da DCS/HMI, incluso `Command_register`, che pure viene scritto da questo stesso FC ogni scan: l'attributo governa l'accesso esterno DCS/HMI, non le scritture interne del FC che possiede l'istanza.
+`-` = sola lettura — entrambi gli UDT sono interamente read-only da DCS/HMI, incluso `Command_register`, che pure viene scritto da questo stesso FC ogni scan: l'attributo governa l'accesso esterno DCS/HMI, non le scritture interne del FC che possiede l'istanza.
 
 ### Segnali di controllo
 

@@ -54,7 +54,7 @@ classDiagram
     UDT_Nolvac *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). Nessuna classe `ALARMS` — questo UDT non ne possiede una propria.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. Nessuna classe `ALARMS` — questo UDT non ne possiede una propria.
 
 ### Segnali di controllo
 

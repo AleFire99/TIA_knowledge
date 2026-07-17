@@ -72,7 +72,7 @@ classDiagram
     UDT_Load_cells *-- ALARMS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). `IN` è scritto dall'interfaccia trasmettitore collegata (es. [Interfaccia Pavone DAT 1400](../pavone-dat-1400/index.md)), non da DCS/HMI direttamente.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. `IN` è scritto dall'interfaccia trasmettitore collegata (es. [Interfaccia Pavone DAT 1400](../pavone-dat-1400/index.md)), non da DCS/HMI direttamente.
 
 ### Segnali di controllo
 

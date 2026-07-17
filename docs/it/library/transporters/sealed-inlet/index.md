@@ -23,8 +23,8 @@ La macchina a stati è a due livelli: `NORMAL`/`FAULT` al livello superiore; `ID
 | `XV05` | Valvola a Farfalla SS (Livello 2) | IN/OUT | Valvola di linea; aperta durante CONVEYING |
 | `XY` | Elettrovalvola (Livello 1) | OUT | Elettrovalvola pressurizzazione; eccitata durante PRESSURIZING e CONVEYING |
 | `WT01` | Celle di Carico (Livello 1) | IN/OUT | Bilancia; gestita da `Loading` e `Unloading` interni — vedere [Ciclo di Carico e Scarico](../../load-cells/loading-unloading/index.md) |
-| `PT01` | UDT_Analogic_signal | IN | Trasmettitore pressione vessel |
-| `PT02` | UDT_Analogic_signal | IN | Trasmettitore pressione linea |
+| `PT01` | [UDT_Analogic_signal](../../io/index.md) | IN | Trasmettitore pressione vessel |
+| `PT02` | [UDT_Analogic_signal](../../io/index.md) | IN | Trasmettitore pressione linea |
 | `PSL` | Bool | IN | Pressostato sicurezza: TRUE = pressione entro limiti |
 | `LSH` | Bool | IN | Sensore livello alto: TRUE = vessel pieno (condizione di guasto) |
 
@@ -93,7 +93,7 @@ classDiagram
     UDT_Sealed_inlet_Transporter *-- OUT
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 

@@ -44,7 +44,8 @@ tia-knowledge/
 │   │       ├── filters/
 │   │       ├── access/
 │   │       ├── nolvac/
-│   │       └── load-cells/
+│   │       ├── load-cells/
+│   │       └── io/
 │   └── en/                      ← English tree, same shape as docs/it/
 │       └── library/ (mirrors docs/it/library/)
 │
@@ -374,7 +375,7 @@ Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 | UDT_An_Pipeline | An_Pipeline | pipeline | — |
 | UDT_Dig_Pipeline | Dig_Pipeline | pipeline | — |
 | UDT_Sealed_inlet_Transporter | Sealed_inlet_Transporter | TR | Sealed_inlet_Transporter_simulator (TR) |
-| UDT_Analogic_signal | — | — | — |
+| UDT_Analogic_signal | — (`Scale_input` FC, utility not a device) | `analogic_signal` | — |
 | UDT_Pavone_IN / UDT_Pavone_OUT | Pavone_DAT_1400 (FC) | dat_IN / dat_OUT | — |
 
 All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are auto-detected by `ingest.py` via name regex. No manual overrides needed.
@@ -449,14 +450,21 @@ Categories are ordered by **valve-nesting depth**, not alphabetically or by devi
    **Nolvac** (Farfalla SS Livello 2 + 2× Elettrovalvola).
 4. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
    classification below), but independent of Valvole regardless (own device family: a core
-   UDT plus swappable transmitter interfaces). Introduced here because the next item
+   UDT plus swappable transmitter interfaces). Introduced here because a later item
    depends on it, not because of its own livello number.
-5. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
+5. **Segnali Analogici** — not classified (stateless FC utility, not a device), no valve
+   dependency, sits outside the nesting chain like Pipeline further below. Placed here,
+   before **Propulsori**, because Propulsore Ingresso Sigillato is a real consumer too
+   (`PT01`/`PT02` are `UDT_Analogic_signal`) — not just Pipeline Analogica. Both dependents
+   need it introduced first, so it sits right after Celle di Carico and before either.
+6. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
    multiple valve livelli (Sigillata SS at Livello 3, Farfalla SS at Livello 2, Elettrovalvola
-   at Livello 1) *and* a full Celle di Carico instance. Needs both prior chains already introduced.
-6. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, no
-   dependency on anything else. A different logical domain (sensor-state derivation, not
-   valve actuation), so it sits outside the nesting chain entirely.
+   at Livello 1) *and* a full Celle di Carico instance, *and* consuming Segnali Analogici
+   (`PT01`/`PT02`). Needs all three prior chains already introduced.
+7. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, depends
+   only on Segnali Analogici (already introduced above it). A different logical domain
+   (sensor-state derivation, not valve actuation), so it sits outside the nesting chain
+   otherwise.
 
 **Adding a new category:** identify what Livello-1+ components it embeds and whether it
 depends on another composite category (the way Propulsori depends on Celle di Carico).

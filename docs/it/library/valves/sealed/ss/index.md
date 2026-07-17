@@ -52,7 +52,7 @@ classDiagram
     UDT_SS_Sealed_Valve *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente). Nessuna classe `ALARMS` — a differenza di altri dispositivi compositi, questo UDT non ne ha nemmeno una a specchio: gli allarmi restano leggibili solo su `DEVICES.XV.ALARMS`.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. Nessuna classe `ALARMS` — a differenza di altri dispositivi compositi, questo UDT non ne ha nemmeno una a specchio: gli allarmi restano leggibili solo su `DEVICES.XV.ALARMS`.
 
 ### Segnali di controllo
 

@@ -52,7 +52,7 @@ classDiagram
     UDT_Filter_2_sleeves *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura (`ReadOnly := External` nel sorgente).
+`+` = scrivibile da DCS/HMI, `-` = sola lettura.
 
 ### Segnali di controllo
 

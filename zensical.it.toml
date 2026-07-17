@@ -34,6 +34,7 @@ nav = [
           { "Ciclo di Carico e Scarico" = "library/load-cells/loading-unloading/index.md" },
           { "Interfaccia Pavone DAT 1400" = "library/load-cells/pavone-dat-1400/index.md" },
       ] },
+      { "Segnali Analogici" = "library/io/index.md" },
       { "Propulsori" = [
           { "Panoramica" = "library/transporters/index.md" },
           { "Propulsore Ingresso Sigillato" = "library/transporters/sealed-inlet/index.md" },
