@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 2.0.2
+  VersionNumber: 2.0.3
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT
+    en-US: Updated alarm tags

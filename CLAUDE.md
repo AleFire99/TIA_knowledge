@@ -215,14 +215,24 @@ keep a one-line placeholder ("Nessun parametro configurabile."); fold any genuin
                           a compact state table (name + one-line description, NO numeric
                           value column — state name alone is enough); omit entirely for
                           stateless FC modules (Pavone interface, Pipeline)
-### Timer                 own sub-heading, own table, right after Diagramma di stato;
+### Azioni di ingresso    own sub-heading, right after Diagramma di stato and before Timer;
+                          one-shot writes that fire only on entering a state (not derivable
+                          from the state alone — e.g. resetting a counter, snapshotting an
+                          anchor value, pulsing a 1-scan output), pulled straight from the
+                          FB's own `REGION Entry actions` block. Table shape: `Stato
+                          raggiunto | Azione all'ingresso`. Omit entirely for modules whose
+                          state/output table already captures everything (true of most
+                          valves — no heading, no placeholder line, same omit-if-empty rule
+                          as Parametri/Allarmi/Timer)
+### Timer                 own sub-heading, own table, right after Azioni di ingresso;
                           omit entirely (no heading, no placeholder line) for modules
                           with no FSM of their own or whose FSM has no timer at all —
                           same omit-if-empty rule as Parametri/Allarmi
 ```
 
 One wrinkle: `load-cells/loading-unloading` splits Funzionamento/Diagramma di
-stato/Timer further into `Loading`/`Unloading` (two independent FSMs sharing one UDT) —
+stato/Azioni di ingresso/Timer further into `Loading`/`Unloading` (two independent FSMs
+sharing one UDT) —
 those splits become H4s under the H3, since the H3 itself is already nested one level
 under the H2 group. Anchor slugs are derived from heading text, not heading level, so
 existing cross-links into any of these headings (e.g. `#diagramma-di-stato`,

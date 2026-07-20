@@ -196,6 +196,22 @@ state UNLOADING_FB{
 | UNLOADING | Scarico attivo; `transferred` aggiornato ogni scan |
 | PAUSED | Batch sospeso; `transferred` congelato |
 
+### Azioni di ingresso
+
+#### Loading
+
+| Stato raggiunto | Azione all'ingresso |
+|------------------|----------------------|
+| NORMAL/IDLE | `BATCH.transferred := 0`; `STATUS.LOADING.loading_finished` impulso 1-scan |
+| NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (snapshot dell'ancora) |
+
+#### Unloading
+
+| Stato raggiunto | Azione all'ingresso |
+|------------------|----------------------|
+| IDLE | `BATCH.transferred := 0`; `STATUS.UNLOADING.unloading_finished` impulso 1-scan |
+| UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (ricalcola l'ancora — copre sia il primo avvio, con `transferred=0`, sia la ripresa da pausa) |
+
 ### Timer
 
 #### Loading
