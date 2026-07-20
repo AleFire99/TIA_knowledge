@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: a7b97863-34e7-4428-a14f-bab2da33a9f6
+LibraryVersion:
+  VersionNumber: 1.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Modified UDT

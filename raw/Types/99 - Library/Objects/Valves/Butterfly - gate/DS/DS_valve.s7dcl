@@ -1,0 +1,198 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "DS_valve"
+    VAR_IN_OUT
+        XV : _.UDT_DS_Valve;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3pQ";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool := TRUE;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3EU";
+            S7_Visibility := "Hidden := External"
+        }
+        movement_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XYA : _.Solenoid_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XYB : _.Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        { S7_MLC := "MLC_3Tk" }
+        desired_command : Bool;
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        { S7_MLC := "MLC_4zW" }
+        FAULT : Int := 0;
+        { S7_MLC := "MLC_3d7" }
+        NORMAL : Int := 1;
+        { S7_MLC := "MLC_3Nb" }
+        CLOSED : Int := 1;
+        { S7_MLC := "MLC_Zz" }
+        OPENING : Int := 2;
+        { S7_MLC := "MLC_3ZN" }
+        OPEN : Int := 3;
+        { S7_MLC := "MLC_kL" }
+        CLOSING : Int := 4;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Initialization
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
+                    #XV.STATUS.state := #NORMAL;
+                    #XV.STATUS.normal_state := #CLOSED;
+                ELSIF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
+                    #XV.STATUS.state := #NORMAL;
+                    #XV.STATUS.normal_state := #OPEN;
+                ELSE
+                    #XV.STATUS.state := #FAULT;
+                END_IF;
+            END_IF;
+        END_REGION
+        
+        REGION Map internal valves
+            #fb_XYA(#XV.DEVICES.XYA);
+            #fb_XYB(#XV.DEVICES.XYB);
+        END_REGION
+        
+        REGION Determine desired target
+            IF #XV.CMD.manual_mode THEN
+                #desired_command := #XV.CMD.manual;
+            ELSE
+                #desired_command := #XV.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Movement timer
+            #movement_timer(
+                            IN := (#XV.STATUS.state = #NORMAL AND
+                            (#XV.STATUS.normal_state = #OPENING OR #XV.STATUS.normal_state = #CLOSING)),
+                            PT := #XV.SETTING.actuator_timeout);
+        END_REGION
+        
+        REGION Alarms
+            IF (#XV.STATUS.state = #NORMAL AND #XV.STATUS.normal_state = #CLOSED AND NOT #XV.DEVICES.ZSL) OR
+                (#XV.STATUS.state = #NORMAL AND #XV.STATUS.normal_state = #OPEN AND NOT #XV.DEVICES.ZSH) THEN
+                #XV.ALARMS.sensor_mismatch := TRUE;
+            END_IF;
+            
+            IF #XV.DEVICES.ZSL AND #XV.DEVICES.ZSH THEN
+                #XV.ALARMS.sensor_conflict := TRUE;
+            END_IF;
+            
+            IF #movement_timer.Q THEN
+                IF #XV.STATUS.normal_state = #CLOSING THEN
+                    #XV.ALARMS.failed_to_close := TRUE;
+                ELSIF #XV.STATUS.normal_state = #OPENING THEN
+                    #XV.ALARMS.failed_to_open := TRUE;
+                END_IF;
+            END_IF;
+        END_REGION
+        
+        REGION Acknowledgment
+            IF #XV.CMD.ack THEN
+                #XV.ALARMS.sensor_mismatch := FALSE;
+                #XV.ALARMS.sensor_conflict := FALSE;
+                #XV.ALARMS.failed_to_close := FALSE;
+                #XV.ALARMS.failed_to_open := FALSE;
+            END_IF;
+        END_REGION
+        
+        REGION Internal error
+            #internal_error := #XV.ALARMS.sensor_mismatch
+            OR #XV.ALARMS.sensor_conflict
+            OR #XV.ALARMS.failed_to_close
+            OR #XV.ALARMS.failed_to_open;
+        END_REGION
+        
+        REGION Top FSM
+            CASE #XV.STATUS.state OF
+                #NORMAL:
+                    IF #internal_error THEN
+                        #XV.STATUS.state := #FAULT;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #XV.CMD.ack AND NOT #internal_error THEN
+                        IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
+                            #XV.STATUS.normal_state := #CLOSED;
+                            #XV.STATUS.state := #NORMAL;
+                        ELSIF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
+                            #XV.STATUS.normal_state := #OPEN;
+                            #XV.STATUS.state := #NORMAL;
+                        END_IF;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #XV.STATUS.state = #NORMAL THEN
+                CASE #XV.STATUS.normal_state OF
+                    #CLOSED:
+                        IF #desired_command THEN
+                            #XV.STATUS.normal_state := #OPENING;
+                        END_IF;
+                        
+                    #OPENING:
+                        IF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
+                            #XV.STATUS.normal_state := #OPEN;
+                        END_IF;
+                        
+                    #OPEN:
+                        IF NOT #desired_command THEN
+                            #XV.STATUS.normal_state := #CLOSING;
+                        END_IF;
+                        
+                    #CLOSING:
+                        IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
+                            #XV.STATUS.normal_state := #CLOSED;
+                        END_IF;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #XV.DEVICES.XYA.CMD.auto := FALSE;
+            #XV.DEVICES.XYB.CMD.auto := FALSE;
+            
+            IF #XV.STATUS.state = #NORMAL THEN
+                CASE #XV.STATUS.normal_state OF
+                    
+                    #OPENING:
+                        #XV.DEVICES.XYA.CMD.auto := TRUE;
+                        
+                    #CLOSING:
+                        #XV.DEVICES.XYB.CMD.auto := TRUE;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #XV.STATUS.is_closed := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #CLOSED);
+            #XV.STATUS.is_opening := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #OPENING);
+            #XV.STATUS.is_open := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #OPEN);
+            #XV.STATUS.is_closing := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #CLOSING);
+            #XV.STATUS.is_fault := (#XV.STATUS.state = #FAULT);
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

@@ -1,0 +1,80 @@
+[project]
+site_name = "NTE Process — Libreria PLC"
+docs_dir = "docs/it"
+site_dir = "site/it"
+extra_javascript = ["javascripts/lang-switch.js"]
+
+nav = [
+  { "Home" = "index.md" },
+  { "Libreria" = [
+      { "Panoramica" = "library/index.md" },
+      { "Valvole" = [
+          { "Panoramica" = "library/valves/index.md" },
+          { "Elettrovalvola" = "library/valves/solenoid/index.md" },
+          { "A Manicotto" = "library/valves/pinch/index.md" },
+          { "A Farfalla — Singolo Solenoide" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "A Farfalla — Doppio Solenoide" = "library/valves/butterfly/double_solenoid/index.md" },
+          { "Sigillata — Singolo Solenoide" = "library/valves/sealed/ss/index.md" },
+      ] },
+      { "Dispositivi di Accesso" = [
+          { "Panoramica" = "library/access/index.md" },
+          { "Anta Cancello — Blocco Elettrico" = "library/access/gate/index.md" },
+      ] },
+      { "Filtri" = [
+          { "Panoramica" = "library/filters/index.md" },
+          { "1 Manica" = "library/filters/1-sleeve/index.md" },
+          { "2 Maniche" = "library/filters/2-sleeves/index.md" },
+      ] },
+      { "Deviatori" = [
+          { "Panoramica" = "library/diverters/index.md" },
+          { "A Manicotto" = "library/diverters/pinch_type/index.md" },
+      ] },
+      { "Nolvac" = [
+          { "Panoramica" = "library/nolvac/index.md" },
+          { "Ciclo a Tempo" = "library/nolvac/timed-cycle/index.md" },
+      ] },
+      { "Celle di Carico" = [
+          { "Panoramica" = "library/load-cells/index.md" },
+          { "Ciclo di Carico e Scarico" = "library/load-cells/loading-unloading/index.md" },
+          { "Interfaccia Pavone DAT 1400" = "library/load-cells/pavone-dat-1400/index.md" },
+      ] },
+      { "Segnali Analogici" = "library/io/index.md" },
+      { "Propulsori" = [
+          { "Panoramica" = "library/transporters/index.md" },
+          { "Propulsore Ingresso Sigillato" = "library/transporters/sealed-inlet/index.md" },
+      ] },
+      { "Tubazione" = [
+          { "Panoramica" = "library/pipeline/index.md" },
+          { "Analogica" = "library/pipeline/analogic/index.md" },
+          { "Digitale" = "library/pipeline/digital/index.md" },
+      ] },
+  ] },
+]
+
+[project.extra]
+alternate = [
+  { name = "Italiano", link = "/it/", lang = "it" },
+  { name = "English", link = "/en/", lang = "en" },
+]
+
+[project.theme]
+language = "it"
+variant = "classic"
+features = ["navigation.path", "content.code.copy"]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/moon", name = "Switch to dark mode" }
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/sun", name = "Switch to light mode" }
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]

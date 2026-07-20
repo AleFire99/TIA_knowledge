@@ -1,8 +1,53 @@
-Library_export/
+# Zensical build output
 site/
+
+# Temp files
+*.tmp
+
+# Python
 __pycache__/
 *.pyc
 .env
 .venv/
-*.al20
+
+# TIA Portal internal dirs — TIA_Portal staging project (track only .ap20 + src/)
+TIA_Portal/
+TIA_Portal_V21/
+
+# TIA Portal backup folders
+library/TIA_Portal.backup/
+library/TIA_Portal_V21.backup/
+
+# TIA Portal internal dirs — AleFire-Library binary (track only .al20)
+library/AleFire-Library/AdditionalFiles/
+library/AleFire-Library/IM/
+library/AleFire-Library/Logs/
+library/AleFire-Library/System/
+library/AleFire-Library/TMP/
+library/AleFire-Library/UserFiles/
+library/AleFire-Library/Vci/
+library/AleFire-Library/XRef/
+library/AleFire-Library/src/
+library/AleFire-Library/*.backup/
+
+# TIA Portal internal dirs — AleFire-Library_V21 binary (track only .al21)
+library/AleFire-Library_V21/AdditionalFiles/
+library/AleFire-Library_V21/IM/
+library/AleFire-Library_V21/Logs/
+library/AleFire-Library_V21/System/
+library/AleFire-Library_V21/TMP/
+library/AleFire-Library_V21/tmp/
+library/AleFire-Library_V21/UserFiles/
+library/AleFire-Library_V21/Vci/
+library/AleFire-Library_V21/XRef/
+library/AleFire-Library_V21/src/
+library/AleFire-Library_V21/*.backup/
+
+# siemens_tia_scripting local CLI state
+.tia/
+
+# Ingest hash cache (local build artifact — not portable across machines)
+dist/.ingest_cache.json
+
+# Claude local settings
 .claude/settings.local.json

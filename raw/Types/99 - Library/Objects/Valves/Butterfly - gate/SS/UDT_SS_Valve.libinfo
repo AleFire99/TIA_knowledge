@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 2f980b82-8df9-4337-b91b-a83451e9aabc
+  Comment:
+    en-US: Uniformed states and variables visibility in HMI
+LibraryVersion:
+  VersionNumber: 2.0.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

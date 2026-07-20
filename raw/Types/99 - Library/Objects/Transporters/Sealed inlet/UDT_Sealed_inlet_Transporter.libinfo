@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 87242aeb-a136-449c-b661-6f3c26cda5e5
+  Comment:
+    en-US: First version
+LibraryVersion:
+  VersionNumber: 2.0.3
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated alarm tags

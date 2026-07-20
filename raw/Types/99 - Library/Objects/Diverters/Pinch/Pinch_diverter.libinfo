@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: de7cbfb7-fd70-4bfa-8824-19d0a418e741
+  Comment:
+    en-US: Uniformed states and fixed HMI visibility
+LibraryVersion:
+  VersionNumber: 2.0.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 740f6195-1abb-41c3-8fb6-31d4a6fa7b8e
+  Comment:
+    en-US: Added new Structure with solenoid valves
+LibraryVersion:
+  VersionNumber: 2.0.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

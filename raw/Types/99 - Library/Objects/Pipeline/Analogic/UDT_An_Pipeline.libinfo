@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 2a00b842-00ec-4e0c-9597-632355700d7a
+  Comment:
+    it-IT: First version of pipeline
+LibraryVersion:
+  VersionNumber: 2.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated comments and added tag in alarm

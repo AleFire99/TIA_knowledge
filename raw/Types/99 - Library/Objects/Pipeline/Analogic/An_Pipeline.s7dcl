@@ -1,0 +1,30 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION "An_pipeline" : Void
+    VAR_IN_OUT
+        pipeline : _.UDT_An_Pipeline;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Alarms
+            #pipeline.ALARMS.pipeline_clogged := #pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.clogged_thresh;
+        END_REGION
+        
+        REGION State mapping
+            #pipeline.STATUS.is_empty := #pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.empty_thresh;
+            
+            #pipeline.STATUS.is_pressurised :=
+            (#pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.empty_thresh)
+            AND (#pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.material_thresh);
+            
+            #pipeline.STATUS.is_with_material :=
+            (#pipeline.DEVICES.PT.Scaled_value >= #pipeline.SETTING.material_thresh)
+            AND (#pipeline.DEVICES.PT.Scaled_value < #pipeline.SETTING.clogged_thresh);
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION

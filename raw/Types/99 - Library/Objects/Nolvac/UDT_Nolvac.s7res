@@ -1,0 +1,35 @@
+﻿MultiLingualTexts:
+  - id: MLC_4Yh
+    en-US: VALVE - Discharge valve
+  - id: MLC_aA
+    en-US: VALVE - Cleaning valve
+  - id: MLC_4CZ
+    en-US: VALVE - Venturi valve
+  - id: MLC_3uF
+    en-US: COMMAND - Active mode
+  - id: MLC_4Vw
+    en-US: COMMAND - Manual command
+  - id: MLC_3s9
+    en-US: COMMAND - Automatic command
+  - id: MLC_3fa
+    en-US: COMMAND - Acknowledge all errors and warnings
+  - id: MLC_4YC
+    en-US: SETTING - Time Nolvac is aspiring material
+  - id: MLC_3eS
+    en-US: SETTING - Time Nolvac cleaning state
+  - id: MLC_3e7
+    en-US: STATUS - 0=fault, 1=normal
+  - id: MLC_36V
+    en-US: STATUS - 1=idle, 2=active
+  - id: MLC_52D
+    en-US: STATUS - 1=suction, 2=cleaning
+  - id: MLC_4ZB
+    en-US: STATUS - Nolvac is in idle
+  - id: MLC_3V9
+    en-US: STATUS - Nolvac is in active routine
+  - id: MLC_3mx
+    en-US: STATUS - Nolvac is conveying material
+  - id: MLC_4KE
+    en-US: STATUS - Nolvac is purging material
+  - id: MLC_4tv
+    en-US: STATUS - Nolvac is in fault

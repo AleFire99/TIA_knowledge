@@ -1,160 +1,310 @@
 {
   "manifest_version": "1.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-04-28T08:08:14Z",
+  "generated_at": "2026-06-29T12:46:55Z",
   "udts": {
-    "UDT_Pinch_diverter": {
-      "description": "99 - Library / Objects / Diverters / Pinch",
+    "UDT_Analogic_signal": {
+      "description": "Types / 99 - Library / IO",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {}
+    },
+    "UDT_Pinch_diverter": {
+      "description": "Uniformed states and fixed HMI visibility",
+      "label": "Pinch diverter",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "XVA": {
           "type": "UDT_Pinch_Valve",
-          "description": "DEVICE - Pinch valve for line A"
+          "description": ""
         },
         "XVB": {
           "type": "UDT_Pinch_Valve",
-          "description": "DEVICE- Pinch valve for line B"
+          "description": ""
         }
       }
     },
     "UDT_DIGITAL_OUTPUT": {
-      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "description": "Types / 99 - Library / Objects / Diverters / Plug_type_diverter",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_PTD_IO": {
-      "description": "99 - Library / Objects / Diverters / Plug_type_diverter",
+      "description": "First version",
+      "label": "Plug-type diverter",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Filter_1_sleeve": {
-      "description": "99 - Library / Objects / Filters / 1-sleeve",
+      "description": "Uniformed filter states with other objects",
+      "label": "Filter (1 sleeve)",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {
         "XY": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid command"
+          "description": ""
         }
       }
     },
     "UDT_Filter_2_sleeves": {
-      "description": "99 - Library / Objects / Filters / 2-sleeves",
+      "description": "Added new Structure with solenoid valves",
+      "label": "Filter (2 sleeves)",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {
         "XYA": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid command sleeve A"
+          "description": ""
         },
         "XYB": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid command sleeve B"
+          "description": ""
         }
       }
     },
     "UDT_Gate_Door": {
-      "description": "99 - Library / Objects / Gate",
+      "description": "Added automatic closing timeout",
+      "label": "Gate / door",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
       "devices": {
         "ZSL": {
           "type": "Bool",
-          "description": "INPUT - Pressure received"
+          "description": ""
         },
         "XY": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Command"
+          "description": ""
         }
       }
     },
-    "UDT_Load_cells": {
-      "description": "99 - Library / Objects / Load cells",
+    "UDT_Pavone_IN": {
+      "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
+      "label": "",
       "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {}
+    },
+    "UDT_Pavone_OUT": {
+      "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {}
+    },
+    "UDT_Load_cells": {
+      "description": "Added flags for loaded finished and unloading finished routines",
+      "label": "Load cells",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Nolvac": {
-      "description": "99 - Library / Objects / Nolvac",
+      "description": "First release",
+      "label": "Nolvac",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "XV01": {
           "type": "UDT_SS_Valve",
-          "description": "VALVE - Discharge valve"
+          "description": ""
         },
         "XY02": {
           "type": "UDT_Solenoid_valve",
-          "description": "VALVE - Cleaning valve"
+          "description": ""
         },
         "XY03": {
           "type": "UDT_Solenoid_valve",
-          "description": "VALVE - Venturi valve"
+          "description": ""
+        }
+      }
+    },
+    "UDT_An_Pipeline": {
+      "description": "Types / 99 - Library / Objects / Pipeline / Analogic",
+      "label": "Pipeline (analogic)",
+      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {
+        "PT": {
+          "type": "UDT_Analogic_signal",
+          "description": ""
+        }
+      }
+    },
+    "UDT_Dig_Pipeline": {
+      "description": "Types / 99 - Library / Objects / Pipeline / Digital",
+      "label": "Pipeline (digital)",
+      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": false,
+      "devices": {
+        "PSL": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PSH": {
+          "type": "Bool",
+          "description": ""
+        }
+      }
+    },
+    "UDT_Sealed_inlet_Transporter": {
+      "description": "First version",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": false,
+      "devices": {
+        "XV01": {
+          "type": "UDT_SS_Sealed_Valve",
+          "description": ""
+        },
+        "XV02": {
+          "type": "UDT_DS_Valve",
+          "description": ""
+        },
+        "XV03": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XV04": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XV05": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
+        },
+        "WT01": {
+          "type": "UDT_Load_cells",
+          "description": ""
+        },
+        "LSH": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PSL": {
+          "type": "Bool",
+          "description": ""
+        },
+        "PT01": {
+          "type": "UDT_Analogic_signal",
+          "description": ""
+        },
+        "PT02": {
+          "type": "UDT_Analogic_signal",
+          "description": ""
         }
       }
     },
     "UDT_DS_Valve": {
-      "description": "99 - Library / Objects / Valves / Butterfly / DS",
+      "description": "First commit",
+      "label": "Double solenoid valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "ZSL": {
           "type": "Bool",
-          "description": "INPUT - Limit switch closed"
+          "description": ""
         },
         "ZSH": {
           "type": "Bool",
-          "description": "INPUT - Limit switch opened"
+          "description": ""
         },
         "XYA": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid to open"
+          "description": ""
         },
         "XYB": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid to close"
+          "description": ""
         }
       }
     },
     "UDT_SS_Valve": {
-      "description": "99 - Library / Objects / Valves / Butterfly / SS",
+      "description": "Uniformed states and variables visibility in HMI",
+      "label": "Single solenoid valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "ZSL": {
           "type": "Bool",
-          "description": "INPUT - Limit switch closed"
+          "description": ""
         },
         "ZSH": {
           "type": "Bool",
-          "description": "INPUT - Limit switch opened"
+          "description": ""
         },
         "XY": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Solenoid command"
+          "description": ""
         }
       }
     },
     "UDT_Pinch_Valve": {
-      "description": "99 - Library / Objects / Valves / Pinch",
+      "description": "Uniformed states and fixed HMI visibility",
+      "label": "Pinch valve",
       "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {
         "PSL": {
           "type": "Bool",
-          "description": "INPUT - Pressure received (TRUE = closed)"
+          "description": ""
         },
         "XY": {
           "type": "UDT_Solenoid_valve",
-          "description": "OUTPUT - Command"
+          "description": ""
+        }
+      }
+    },
+    "UDT_SS_Sealed_Valve": {
+      "description": "First version",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "devices": {
+        "XV": {
+          "type": "UDT_SS_Valve",
+          "description": ""
+        },
+        "XY_seal": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
         }
       }
     },
     "UDT_Solenoid_valve": {
-      "description": "99 - Library / Objects / Valves / Solenoid",
+      "description": "Added same states as other valves",
+      "label": "Solenoid valve",
       "has_out": true,
-      "devices": {}
-    },
-    "UDT_PAVONE_INPUT": {
-      "description": "99 - Library / Pavone Sistemi",
-      "has_out": false,
-      "devices": {}
-    },
-    "UDT_PAVONE_OUTPUT": {
-      "description": "99 - Library / Pavone Sistemi",
-      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
       "devices": {}
     }
   },
@@ -195,15 +345,12 @@
         "name": "Gate_door",
         "param": "gate_door"
       },
-      "sim": {
-        "name": "Gate_door_sim",
-        "param": "gate_door"
-      }
+      "sim": null
     },
     "UDT_Load_cells": {
       "ctrl": {
-        "name": "Load_cells",
-        "param": "batch"
+        "name": "Unloading",
+        "param": "scale"
       },
       "sim": null
     },
@@ -214,9 +361,33 @@
       },
       "sim": null
     },
+    "UDT_Pipeline": {
+      "ctrl": {
+        "name": "An_Pipeline",
+        "param": "pipeline"
+      },
+      "sim": null
+    },
+    "UDT_Dig_Pipeline": {
+      "ctrl": {
+        "name": "Dig_Pipeline",
+        "param": "pipeline"
+      },
+      "sim": null
+    },
+    "UDT_Sealed_inlet_Transporter": {
+      "ctrl": {
+        "name": "Sealed_inlet_Transporter",
+        "param": "TR"
+      },
+      "sim": {
+        "name": "Sealed_inlet_Transporter_simulator",
+        "param": "TR"
+      }
+    },
     "UDT_DS_Valve": {
       "ctrl": {
-        "name": "DS_Butterfly_valve",
+        "name": "DS_valve",
         "param": "XV"
       },
       "sim": {
@@ -226,7 +397,7 @@
     },
     "UDT_SS_Valve": {
       "ctrl": {
-        "name": "SS_Butterfly_valve",
+        "name": "SS_valve",
         "param": "XV"
       },
       "sim": {
@@ -244,10 +415,27 @@
         "param": "XV"
       }
     },
+    "UDT_SS_Sealed_Valve": {
+      "ctrl": {
+        "name": "SS_Sealed_valve",
+        "param": "XV"
+      },
+      "sim": {
+        "name": "SS_Sealed_valve_simulator",
+        "param": "XV"
+      }
+    },
     "UDT_Solenoid_valve": {
       "ctrl": {
         "name": "Solenoid_valve",
         "param": "XY"
+      },
+      "sim": null
+    },
+    "UDT_An_Pipeline": {
+      "ctrl": {
+        "name": "An_Pipeline",
+        "param": "pipeline"
       },
       "sim": null
     }

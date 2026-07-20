@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: e7aaaaf0-0975-4871-8d4d-3f2049429586
+LibraryVersion:
+  VersionNumber: 2.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added tags for errors and modified comments

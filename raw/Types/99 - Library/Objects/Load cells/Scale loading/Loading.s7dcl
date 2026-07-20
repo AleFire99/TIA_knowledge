@@ -1,0 +1,123 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Loading"
+    VAR_IN_OUT
+        scale : _.UDT_Load_cells;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        prev_normal_state : Int := 1;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        loading_timer : TON_TIME;
+    END_VAR
+    VAR_TEMP
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        FAULT : Int := 0;
+        NORMAL : Int := 1;
+        IDLE : Int := 1;
+        LOADING : Int := 2;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Timeout timer
+            #loading_timer(IN := (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING),
+                         PT := #scale.SETTING.loading_timeout);
+        END_REGION
+        
+        REGION Configuration
+            #scale.ALARMS.weight_invalid := (#scale.IN.current_weight < #scale.SETTING.min_weight) OR (#scale.IN.current_weight > #scale.SETTING.max_weight);
+        END_REGION
+        
+        REGION Alarms
+            #internal_error := #loading_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
+        END_REGION
+        
+        REGION Top FSM
+            CASE #scale.STATUS.LOADING.state OF
+                #NORMAL:
+                    IF #internal_error THEN
+                        #scale.STATUS.LOADING.state := #FAULT;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #scale.CMD.ack AND NOT #internal_error THEN
+                        #scale.STATUS.LOADING.state := #NORMAL;
+                        #scale.STATUS.LOADING.normal_state := #IDLE;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #scale.STATUS.LOADING.state = #NORMAL THEN
+                CASE #scale.STATUS.LOADING.normal_state OF
+                    #IDLE:
+                        IF #scale.CMD.loading_start AND NOT #scale.ALARMS.weight_invalid THEN
+                            #scale.STATUS.LOADING.normal_state := #LOADING;
+                        END_IF;
+                        
+                    #LOADING:
+                        IF #scale.CMD.stop OR (#scale.IN.current_weight >= #scale.CMD.loading_setpoint - #scale.SETTING.loading_tail) THEN
+                            #scale.STATUS.LOADING.normal_state := #IDLE;
+                        END_IF;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Entry actions
+          // Executed once on the scan the state changes.
+            #scale.STATUS.LOADING.loading_finished := FALSE;
+            
+          IF #scale.STATUS.LOADING.normal_state <> #prev_normal_state THEN
+            
+            CASE #scale.STATUS.LOADING.normal_state OF
+                #IDLE:
+                // Reset batch counter when entering IDLE.
+                #scale.BATCH.transferred := 0.0;
+                #scale.STATUS.LOADING.loading_finished := TRUE;
+                
+              #LOADING:
+                // Snapshot weight anchor on loading start.
+                  #scale.BATCH.weight_at_start := #scale.IN.current_weight;
+            END_CASE;
+            
+            #prev_normal_state := #scale.STATUS.LOADING.normal_state;
+          END_IF;
+        END_REGION
+        
+        REGION Loaded quantity
+          // Computed every scan. Only meaningful during LOADING.
+          // Clamped to zero to avoid negative display on sensor drift.
+          // ERROR: no assignment — holds last frozen value.
+            IF (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING) THEN
+            #scale.BATCH.transferred := #scale.IN.current_weight - #scale.BATCH.weight_at_start;
+            IF #scale.BATCH.transferred < 0.0 THEN
+              #scale.BATCH.transferred := 0.0;
+            END_IF;
+          END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #scale.STATUS.LOADING.is_idle := (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #IDLE);
+            #scale.STATUS.LOADING.is_loading := (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING);
+            #scale.STATUS.LOADING.is_fault := (#scale.STATUS.LOADING.state = #FAULT);
+        END_REGION
+        
+        REGION Alarms mapping
+            #scale.ALARMS.loading_timeout := #internal_error;
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

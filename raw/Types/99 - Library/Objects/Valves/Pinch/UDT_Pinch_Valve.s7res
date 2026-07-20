@@ -1,0 +1,35 @@
+﻿MultiLingualTexts:
+  - id: MLC_58U
+    en-US: INPUT - Pressure received (TRUE = closed)
+  - id: MLC_3du
+    en-US: OUTPUT - Command
+  - id: MLC_4BU
+    en-US: COMMAND - Active mode
+  - id: MLC_3Am
+    en-US: COMMAND - Manual command
+  - id: MLC_46p
+    en-US: COMMAND - Automatic command
+  - id: MLC_4s4
+    en-US: COMMAND - Acknowledge all errors
+  - id: MLC_3Gx
+    en-US: SETTING - Max time to complete movement
+  - id: MLC_N4
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_Mb
+    en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
+  - id: MLC_sQ
+    en-US: STATUS - Valve in fault state
+  - id: MLC_3Ky
+    en-US: STATUS - Valve closed
+  - id: MLC_cT
+    en-US: STATUS - Valve opening
+  - id: MLC_53F
+    en-US: STATUS - Valve open
+  - id: MLC_3zQ
+    en-US: STATUS - Valve closing
+  - id: MLC_3ch
+    en-US: ALARM - Sensor contradicts current stable state
+  - id: MLC_44X
+    en-US: ALARM - Valve took too long to close
+  - id: MLC_32d
+    en-US: ALARM - Valve took too long to open

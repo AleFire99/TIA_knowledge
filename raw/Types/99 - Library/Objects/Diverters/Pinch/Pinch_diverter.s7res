@@ -1,0 +1,5 @@
+﻿MultiLingualTexts:
+  - id: MLC_dz
+    en-US: TRUE if first scan, then set to FALSE
+  - id: MLC_vE
+    en-US: Actual desired command based on active mode

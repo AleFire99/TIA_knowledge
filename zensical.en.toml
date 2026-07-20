@@ -1,0 +1,80 @@
+[project]
+site_name = "NTE Process PLC Library"
+docs_dir = "docs/en"
+site_dir = "site/en"
+extra_javascript = ["javascripts/lang-switch.js"]
+
+nav = [
+  { "Home" = "index.md" },
+  { "Library" = [
+      { "Overview" = "library/index.md" },
+      { "Valves" = [
+          { "Overview" = "library/valves/index.md" },
+          { "Solenoid Valve" = "library/valves/solenoid/index.md" },
+          { "Pinch" = "library/valves/pinch/index.md" },
+          { "Butterfly — Single Solenoid" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "Butterfly — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
+          { "Sealed — Single Solenoid" = "library/valves/sealed/ss/index.md" },
+      ] },
+      { "Access Devices" = [
+          { "Overview" = "library/access/index.md" },
+          { "Gate Leaf — Electric Lock" = "library/access/gate/index.md" },
+      ] },
+      { "Filters" = [
+          { "Overview" = "library/filters/index.md" },
+          { "1 Sleeve" = "library/filters/1-sleeve/index.md" },
+          { "2 Sleeves" = "library/filters/2-sleeves/index.md" },
+      ] },
+      { "Diverters" = [
+          { "Overview" = "library/diverters/index.md" },
+          { "Pinch Type" = "library/diverters/pinch_type/index.md" },
+      ] },
+      { "Nolvac" = [
+          { "Overview" = "library/nolvac/index.md" },
+          { "Timed Cycle" = "library/nolvac/timed-cycle/index.md" },
+      ] },
+      { "Load Cells" = [
+          { "Overview" = "library/load-cells/index.md" },
+          { "Loading and Unloading Cycle" = "library/load-cells/loading-unloading/index.md" },
+          { "Pavone DAT 1400 Interface" = "library/load-cells/pavone-dat-1400/index.md" },
+      ] },
+      { "Analog Signals" = "library/io/index.md" },
+      { "Transporters" = [
+          { "Overview" = "library/transporters/index.md" },
+          { "Sealed Inlet Transporter" = "library/transporters/sealed-inlet/index.md" },
+      ] },
+      { "Pipeline" = [
+          { "Overview" = "library/pipeline/index.md" },
+          { "Analog" = "library/pipeline/analogic/index.md" },
+          { "Digital" = "library/pipeline/digital/index.md" },
+      ] },
+  ] },
+]
+
+[project.extra]
+alternate = [
+  { name = "English", link = "/en/", lang = "en" },
+  { name = "Italiano", link = "/it/", lang = "it" },
+]
+
+[project.theme]
+language = "en"
+variant = "classic"
+features = ["navigation.path", "content.code.copy"]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/moon", name = "Switch to dark mode" }
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "red"
+accent = "red"
+toggle = { icon = "lucide/sun", name = "Switch to light mode" }
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]

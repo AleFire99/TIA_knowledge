@@ -1,0 +1,31 @@
+﻿MultiLingualTexts:
+  - id: MLC_4Kd
+    en-US: DEVICE - Pinch valve for line A
+  - id: MLC_4Hn
+    en-US: DEVICE- Pinch valve for line B
+  - id: MLC_4nb
+    en-US: COMMAND - Active mode
+  - id: MLC_35T
+    en-US: COMMAND - Manual command (TRUE = route B)
+  - id: MLC_3Gt
+    en-US: COMMAND - Automatic command (TRUE = route B)
+  - id: MLC_3rw
+    en-US: COMMAND - Acknowledge all errors
+  - id: MLC_4ZL
+    en-US: SETTING - Sub-valve actuator timeout
+  - id: MLC_5CJ
+    en-US: STATE - 0=error, 1=normal
+  - id: MLC_4EX
+    en-US: STATE - 1=A active,2=A to B,3=B active,4=B to A
+  - id: MLC_3Cv
+    en-US: STATUS - Routing through line A
+  - id: MLC_bV
+    en-US: STATUS - Transitioning to line B
+  - id: MLC_3dB
+    en-US: STATUS - Routing through line B
+  - id: MLC_4AD
+    en-US: STATUS - Transitioning to line A
+  - id: MLC_4fF
+    en-US: STATUS - Diverter in fault state
+  - id: MLC_3nh
+    en-US: ALARM - Valve mismatch

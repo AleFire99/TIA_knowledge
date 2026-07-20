@@ -1,0 +1,13 @@
+﻿DocumentHash:
+  - FileName: DS_valve.s7dcl
+    Hash: bFbZDBGRJOfVXBxqeeCa1nSpJ+GoFSX1Su0U4YcVNmU=
+  - FileName: DS_valve.s7res
+    Hash: zrzr4wlXtUzlWw6i/0VywOBHbOnY2QlZ4opJ+F/Kfyw=
+LibraryMetaFileHash: KQpgkxLkdTNV9k9uDKqSoMps+n0WI2D7zAZCxrbQ/P4=
+LibraryVersion:
+  Guid: 85471286-2763-450e-be9c-aede4f87c9da
+  DependsOn:
+    - TypeName: UDT_DS_Valve
+      VersionNumber: 2.0.1
+    - TypeName: Solenoid_valve
+      VersionNumber: 2.0.3

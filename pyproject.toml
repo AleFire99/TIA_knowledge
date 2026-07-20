@@ -1,0 +1,19 @@
+[project]
+name = "tia-knowledge"
+version = "0.1.0"
+description = "AleFire-Library knowledge base — TIA Portal export + Zensical wiki"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "zensical>=0.0.40",
+]
+
+# siemens_tia_scripting must be installed manually from the local .whl file.
+# Python 3.12 ONLY (cp312 wheel):
+#
+#   uv pip install "C:\Users\user015\Documents\109742322_TIA_Scripting_Python_CODE_V1_2_1\install\siemens_tia_scripting-1.2.1-cp312-cp312-win_amd64.whl"
+#
+# Only needed if running scripts/export.py (TIA Portal export).
+# scripts/generate_docs.py is stdlib-only — no extra deps required.
+
+[tool.uv]
+python-preference = "managed"

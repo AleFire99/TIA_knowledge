@@ -1,0 +1,165 @@
+﻿TYPE
+    UDT_Pavone_IN : STRUCT
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Status_register : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            hold : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            backup : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            input_1 : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            input_2 : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            output_1 : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            output_2 : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            delta_weight : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            setup : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            zero_center : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            stable_weight : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            zero_band : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            tare_inserted : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            underload : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            overload : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            weight_error : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_Visibility := "Hidden := External"
+            }
+            not_tared : Bool;
+        END_STRUCT;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        gross_weight : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        net_weight : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        peak : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        digital_inputs : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        digital_outputs : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        monitor_register : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        net_weight_weighing : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        code_weighing : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        setpoint_1 : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        setpoint_2 : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        capacity : DWord;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        sensitivity : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        weight_division_value : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        decimals : Word;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fixed_tare : DWord;
+    END_STRUCT;
+END_TYPE

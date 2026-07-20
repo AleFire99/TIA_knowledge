@@ -1,0 +1,21 @@
+{
+  "delta_version": "1.0.0",
+  "generated_at": "2026-06-29T12:46:57Z",
+  "total_types": 43,
+  "counts": {
+    "new": 1,
+    "changed": 1,
+    "removed": 0
+  },
+  "needs_doc_update": [
+    "UDT_Sealed_inlet_Transporter",
+    "Sealed_inlet_Transporter"
+  ],
+  "new": [
+    "UDT_Sealed_inlet_Transporter"
+  ],
+  "changed": [
+    "Sealed_inlet_Transporter"
+  ],
+  "removed": []
+}

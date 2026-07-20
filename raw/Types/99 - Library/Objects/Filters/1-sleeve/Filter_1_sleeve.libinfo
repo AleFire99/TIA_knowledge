@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: a8138613-520f-40e0-96ca-560f80fae0f3
+  Comment:
+    en-US: Uniformed filter states with other objects
+LibraryVersion:
+  VersionNumber: 2.1.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

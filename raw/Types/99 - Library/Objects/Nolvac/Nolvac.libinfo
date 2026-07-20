@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 2f8eb9a5-ea20-4bb8-8223-ee3aeb60e2c7
+  Comment:
+    en-US: First release
+LibraryVersion:
+  VersionNumber: 2.1.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

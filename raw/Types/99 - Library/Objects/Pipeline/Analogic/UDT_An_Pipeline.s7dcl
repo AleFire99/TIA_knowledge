@@ -1,0 +1,46 @@
+﻿TYPE
+    UDT_An_Pipeline : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4cG"
+            }
+            PT : _.UDT_Analogic_signal;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_4MU" }
+            empty_thresh : Real := 0.1;
+            { S7_MLC := "MLC_Pn" }
+            material_thresh : Real := 0.4;
+            { S7_MLC := "MLC_3JN" }
+            clogged_thresh : Real := 0.8;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_dQ"
+            }
+            is_empty : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_fj"
+            }
+            is_pressurised : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_jy"
+            }
+            is_with_material : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3wb"
+            }
+            pipeline_clogged : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

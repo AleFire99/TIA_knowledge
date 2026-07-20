@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: Scale_input.s7dcl
+    Hash: BhvaCsTXhCFopjRwRuH8551eIA33z3lQ2UjrymO501g=
+LibraryMetaFileHash: mNg3vZLgJQNv42G0D0WmSxRrtuZ8gWSGvRtMFwSwAgM=
+LibraryVersion:
+  Guid: 67b31d19-f5c9-448c-806a-c2f641e395dd
+  DependsOn:
+    - TypeName: UDT_Analogic_signal
+      VersionNumber: 0.0.2

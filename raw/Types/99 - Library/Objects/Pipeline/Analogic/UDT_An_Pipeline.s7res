@@ -1,0 +1,17 @@
+﻿MultiLingualTexts:
+  - id: MLC_4cG
+    en-US: Device - Pressure transmitter
+  - id: MLC_4MU
+    en-US: SETTING - Empty line threshold
+  - id: MLC_Pn
+    en-US: SETTING - Line with material threshold
+  - id: MLC_3JN
+    en-US: SETTING - Line clogged threshold
+  - id: MLC_dQ
+    en-US: STATUS - Pipeline empty
+  - id: MLC_fj
+    en-US: STATUS - Pipeline pressurised
+  - id: MLC_jy
+    en-US: STATUS - Pipeline has material
+  - id: MLC_3wb
+    en-US: ALARM - Pipeline clogged

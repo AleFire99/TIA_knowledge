@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: UDT_Pinch_Valve.s7dcl
+    Hash: XWBr+UPBUvSRL04Pt8cXwgDu5eALieSnNFrhexU55nI=
+  - FileName: UDT_Pinch_Valve.s7res
+    Hash: G0sLoWOfQFrr+LVRS4AwvMZqoRdFqIiwiI3UxfICgzE=
+LibraryMetaFileHash: 1EwZS6HmntwGd+D2tsJ9+oeaMKdj5f/yfrxn3rUhNOY=
+LibraryVersion:
+  Guid: 835b28c5-2270-4c81-b56b-9b9c9655143c
+  DependsOn:
+    - TypeName: UDT_Solenoid_valve
+      VersionNumber: 2.0.1

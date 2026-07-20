@@ -1,0 +1,351 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Sealed_inlet_Transporter"
+    VAR_IN_OUT
+        { S7_MLC := "MLC_33w" }
+        TR : _.UDT_Sealed_inlet_Transporter;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool := TRUE;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        prev_normal_state : Int;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        filter_cleaning_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        pressurizing_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        depressurizing_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_loading : _.Loading;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_unloading : _.Unloading;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XV01 : _.SS_Sealed_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XV02 : _.DS_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XV03 : _.SS_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XV04 : _.SS_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XV05 : _.SS_valve;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XY : _.Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        all_loading_closed : Bool;
+        pressure_gate_met : Bool;
+        depressurized : Bool;
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        FAULT : Int := 0;
+        NORMAL : Int := 1;
+        IDLE : Int := 1;
+        FILLING : Int := 2;
+        CLEANING : Int := 3;
+        SEALING : Int := 4;
+        PRESSURIZING : Int := 5;
+        CONVEYING : Int := 6;
+        DEPRESSURIZING : Int := 7;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+            REGION Run sub-FBs
+                // Always running - each manages its own state independently
+                
+                #fb_XV01(XV := #TR.DEVICES.XV01);
+                #TR.DEVICES.XV01.CMD.ack := #TR.CMD.ack;
+                
+                #fb_XV02(XV := #TR.DEVICES.XV02);
+                #TR.DEVICES.XV02.CMD.ack := #TR.CMD.ack;
+                
+                #fb_XV03(XV := #TR.DEVICES.XV03);
+                #TR.DEVICES.XV03.CMD.ack := #TR.CMD.ack;
+                
+                #fb_XV04(XV := #TR.DEVICES.XV04);
+                #TR.DEVICES.XV04.CMD.ack := #TR.CMD.ack;
+                
+                #fb_XV05(XV := #TR.DEVICES.XV05);
+                #TR.DEVICES.XV05.CMD.ack := #TR.CMD.ack;
+                
+                #fb_XY(XY := #TR.DEVICES.XY);
+                
+                #fb_loading(scale := #TR.DEVICES.WT01);
+                #fb_unloading(scale := #TR.DEVICES.WT01);
+                #TR.DEVICES.WT01.CMD.ack := #TR.CMD.ack;
+            END_REGION
+            
+            REGION Timers
+                #filter_cleaning_timer(IN := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #CLEANING),
+                                       PT := #TR.SETTING.cleaning_timer);
+                
+                #pressurizing_timer(IN := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #PRESSURIZING),
+                                    PT := #TR.SETTING.pressurizing_timeout);
+                
+                #depressurizing_timer(IN := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #DEPRESSURIZING),
+                                      PT := #TR.SETTING.depressurizing_timeout);
+            END_REGION
+            
+            REGION Alarms
+                IF #pressurizing_timer.Q THEN
+                    #TR.ALARMS.pressurization_timeout := TRUE;
+                END_IF;
+                
+                IF #depressurizing_timer.Q THEN
+                    #TR.ALARMS.depressurization_timeout := TRUE;
+                END_IF;
+            END_REGION
+            
+            REGION Acknowledgment
+                IF #TR.CMD.ack THEN
+                    #TR.ALARMS.pressurization_timeout := FALSE;
+                    #TR.ALARMS.depressurization_timeout := FALSE;
+                END_IF;
+            END_REGION
+            
+            REGION Derived conditions
+                // All loading-side valves confirmed closed by cascade controllers
+                #all_loading_closed :=
+                #TR.DEVICES.XV01.STATUS.is_closed AND
+                #TR.DEVICES.XV02.STATUS.is_closed AND
+                #TR.DEVICES.XV03.STATUS.is_closed;
+                
+                // Vessel sufficiently overpressured to open line valve
+                #pressure_gate_met := #TR.DEVICES.PT01.Scaled_value >= #TR.DEVICES.PT02.Scaled_value + #TR.SETTING.pressure_delta;
+                
+                // Both vessel and line back to atmosphere
+                #depressurized :=
+                (#TR.DEVICES.PT01.Scaled_value <= #TR.SETTING.vessel_empty_thresh) AND
+                (#TR.DEVICES.PT02.Scaled_value <= #TR.SETTING.line_empty_thresh);
+                
+                // Aggregate fault condition
+                #internal_error :=
+                #TR.DEVICES.XV01.STATUS.is_fault
+                OR #TR.DEVICES.XV02.STATUS.is_fault
+                OR #TR.DEVICES.XV03.STATUS.is_fault
+                OR #TR.DEVICES.XV04.STATUS.is_fault
+                OR #TR.DEVICES.XV05.STATUS.is_fault
+                OR #TR.DEVICES.WT01.ALARMS.loading_timeout
+                OR #TR.DEVICES.WT01.ALARMS.unloading_timeout
+                OR NOT #TR.DEVICES.PSL
+                OR #TR.DEVICES.LSH
+                OR #TR.ALARMS.pressurization_timeout
+                OR #TR.ALARMS.depressurization_timeout;
+                
+            END_REGION
+            
+            REGION FSM - Top level (NORMAL / FAULT)
+                CASE #TR.STATUS.state OF
+                        
+                    #NORMAL:
+                        IF #internal_error THEN
+                            #TR.STATUS.state := #FAULT;
+                        END_IF;
+                        
+                    #FAULT:
+                        IF #TR.CMD.ack AND NOT #internal_error THEN
+                            #TR.STATUS.state := #NORMAL;
+                            #TR.STATUS.normal_state := #IDLE;
+                        END_IF;
+                        
+                END_CASE;
+            END_REGION
+            
+            REGION FSM - Routine
+                IF #TR.STATUS.state = #NORMAL THEN
+                    CASE #TR.STATUS.normal_state OF
+                            
+                        #IDLE:
+                            IF #TR.CMD.start_loading THEN
+                                #TR.STATUS.normal_state := #FILLING;
+                            ELSIF #TR.CMD.start_convey THEN
+                                #TR.STATUS.normal_state := #SEALING;
+                            END_IF;
+                            
+                        #FILLING:
+                            IF #TR.CMD.stop THEN
+                                #TR.STATUS.normal_state := #IDLE;
+                            ELSIF #TR.DEVICES.WT01.STATUS.LOADING.loading_finished THEN
+                                #TR.STATUS.normal_state := #CLEANING;
+                            END_IF;
+                            
+                        #CLEANING:
+                            IF #TR.CMD.stop THEN
+                                #TR.STATUS.normal_state := #IDLE;
+                            ELSIF #filter_cleaning_timer.Q THEN
+                                #TR.STATUS.normal_state := #SEALING;
+                            END_IF;
+                            
+                        #SEALING:
+                            IF #all_loading_closed THEN
+                                #TR.STATUS.normal_state := #PRESSURIZING;
+                            END_IF;
+                            
+                        #PRESSURIZING:
+                            IF #TR.CMD.stop THEN
+                                #TR.STATUS.normal_state := #DEPRESSURIZING;
+                            ELSIF #pressure_gate_met THEN
+                                #TR.STATUS.normal_state := #CONVEYING;
+                            END_IF;
+                            
+                        #CONVEYING:
+                            IF #TR.CMD.stop OR #TR.DEVICES.WT01.STATUS.UNLOADING.unloading_finished OR #TR.DEVICES.WT01.STATUS.UNLOADING.is_paused THEN
+                                #TR.STATUS.normal_state := #DEPRESSURIZING;
+                            END_IF;
+                            
+                        #DEPRESSURIZING:
+                            IF #depressurized THEN
+                                #TR.STATUS.normal_state := #IDLE;
+                            END_IF;
+                            
+                    END_CASE;
+                END_IF;
+            END_REGION
+            
+            REGION Entry actions
+                // One-shot triggers that cannot be derived from state alone
+                
+                #TR.DEVICES.WT01.CMD.stop := FALSE;
+                #TR.DEVICES.WT01.CMD.reset := FALSE;
+                #TR.DEVICES.WT01.CMD.loading_start := FALSE;
+                #TR.DEVICES.WT01.CMD.unloading_start := FALSE;
+                
+                #TR.OUT.loading_finished := FALSE;
+                #TR.OUT.conveying_done := FALSE;
+                
+                IF #TR.STATUS.normal_state <> #prev_normal_state THEN
+                    CASE #TR.STATUS.normal_state OF
+                            
+                        #IDLE:
+                            #TR.DEVICES.WT01.CMD.stop := TRUE;  // stops loading FB if mid-cycle
+                            #TR.DEVICES.WT01.CMD.reset := TRUE;  // resets unloading FB from PAUSED to IDLE
+                            #TR.OUT.conveying_done := TRUE;
+                            
+                        #FILLING:
+                            #TR.DEVICES.WT01.CMD.loading_start := TRUE;
+                            
+                        #SEALING:
+                            #TR.OUT.loading_finished := TRUE;
+                            
+                        #CONVEYING:
+                            #TR.DEVICES.WT01.CMD.unloading_start := TRUE;
+                            
+                        #DEPRESSURIZING:
+                            #TR.DEVICES.WT01.CMD.stop := TRUE;
+                            
+                    END_CASE;
+                    #prev_normal_state := #TR.STATUS.normal_state;
+                END_IF;
+            END_REGION
+            
+            REGION Output mapping
+                // Reset all outputs each scan
+                
+                #TR.DEVICES.XV01.CMD.auto := FALSE;
+                #TR.DEVICES.XV02.CMD.auto := FALSE;
+                #TR.DEVICES.XV03.CMD.auto := FALSE;
+                #TR.DEVICES.XV04.CMD.auto := FALSE;
+                #TR.DEVICES.XV05.CMD.auto := FALSE;
+                #TR.DEVICES.XY.CMD.auto := FALSE;
+                #TR.OUT.filter_cleaner_command := FALSE;
+                
+                CASE #TR.STATUS.state OF
+                        
+                    #FAULT:
+                        #TR.DEVICES.XV02.CMD.auto := TRUE;   // Vent open - safe passive state
+                        #TR.DEVICES.XV04.CMD.auto := TRUE;
+                        #TR.DEVICES.WT01.CMD.stop := TRUE;
+                        #TR.DEVICES.WT01.CMD.reset := TRUE;
+                        
+                    #NORMAL:
+                        CASE #TR.STATUS.normal_state OF
+                                
+                            #IDLE:
+                                #TR.DEVICES.XV02.CMD.auto := TRUE;  // Vent
+                                
+                            #FILLING:
+                                #TR.DEVICES.XV01.CMD.auto := TRUE;  // Inlet
+                                #TR.DEVICES.XV02.CMD.auto := TRUE;  // Vent
+                                #TR.DEVICES.XV03.CMD.auto := TRUE;  // Orifice
+                                
+                            #CLEANING:
+                                #TR.OUT.filter_cleaner_command := TRUE;
+                                
+                            #PRESSURIZING:
+                                #TR.DEVICES.XY.CMD.auto := TRUE;  // Pressurization solenoid
+                                #TR.DEVICES.XV04.CMD.auto := TRUE;  // Discharge
+                                
+                            #CONVEYING:
+                                #TR.DEVICES.XV04.CMD.auto := TRUE;  // Discharge
+                                #TR.DEVICES.XV05.CMD.auto := TRUE;  // Line
+                                #TR.DEVICES.XY.CMD.auto := TRUE;  // Pressurization solenoid
+                                #TR.OUT.last_transferred := #TR.DEVICES.WT01.BATCH.transferred;
+                                
+                            #DEPRESSURIZING:
+                                #TR.DEVICES.XV02.CMD.auto := TRUE;  // Vent open - safe passive state
+                                #TR.DEVICES.XV04.CMD.auto := TRUE;
+                                
+                        END_CASE;
+                        
+                END_CASE;
+            END_REGION
+            
+            REGION State mapping
+                #TR.STATUS.is_idle := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #IDLE);
+                #TR.STATUS.is_filling := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #FILLING);
+                #TR.STATUS.is_cleaning := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #CLEANING);
+                #TR.STATUS.is_sealing := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #SEALING);
+                #TR.STATUS.is_pressurizing := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #PRESSURIZING);
+                #TR.STATUS.is_conveying := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #CONVEYING);
+                #TR.STATUS.is_depressurizing := (#TR.STATUS.state = #NORMAL) AND (#TR.STATUS.normal_state = #DEPRESSURIZING);
+                #TR.STATUS.is_fault := (#TR.STATUS.state = #FAULT);
+            END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

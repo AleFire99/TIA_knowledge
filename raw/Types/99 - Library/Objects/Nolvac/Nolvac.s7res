@@ -1,0 +1,9 @@
+﻿MultiLingualTexts:
+  - id: MLC_Vv
+    en-US: Nolvac in error state
+  - id: MLC_3dZ
+    en-US: Nolvac in idle
+  - id: MLC_4PG
+    en-US: Nolvac vacuum active
+  - id: MLC_e5
+    en-US: Nolvac cleaning procedure

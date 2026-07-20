@@ -1,0 +1,125 @@
+﻿TYPE
+    { S7_BlockComment := "MLC_3sW" }
+    UDT_Load_cells : STRUCT
+        CMD : STRUCT
+            { S7_MLC := "MLC_4en" }
+            ack : Bool;
+            loading_setpoint : Real;
+            { S7_MLC := "MLC_ff" }
+            unloading_setpoint : Real;
+            { S7_MLC := "MLC_3FL" }
+            tare_request : Bool;
+            loading_start : Bool;
+            { S7_MLC := "MLC_53b" }
+            unloading_start : Bool;
+            { S7_MLC := "MLC_4ZD" }
+            stop : Bool;
+            reset : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        IN : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3gw"
+            }
+            current_weight : Real;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_59r"
+            }
+            scale_error : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3yC"
+            }
+            plant_error : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            min_weight : Real := 0.0;
+            { S7_MLC := "MLC_4Qy" }
+            max_weight : Real := 1000.0;
+            loading_tail : Real;
+            { S7_MLC := "MLC_3zE" }
+            unloading_tail : Real;
+            loading_timeout : Time := T#10M;
+            { S7_MLC := "MLC_3Ld" }
+            unloading_timeout : Time := T#10M;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            { S7_Access := "ReadOnly := External" }
+            LOADING : STRUCT
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_3zk"
+                }
+                state : Int := 1;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_3rf"
+                }
+                normal_state : Int := 1;
+                { S7_Access := "ReadOnly := External" }
+                is_idle : Bool;
+                { S7_Access := "ReadOnly := External" }
+                is_loading : Bool;
+                { S7_Access := "ReadOnly := External" }
+                is_fault : Bool;
+                { S7_Access := "ReadOnly := External" }
+                loading_finished : Bool;
+            END_STRUCT;
+            { S7_Access := "ReadOnly := External" }
+            UNLOADING : STRUCT
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_3e5"
+                }
+                state : Int := 1;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_4iL"
+                }
+                is_idle : Bool;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_49n"
+                }
+                is_unloading : Bool;
+                {
+                    S7_Access := "ReadOnly := External";
+                    S7_MLC := "MLC_4cg"
+                }
+                is_paused : Bool;
+                { S7_Access := "ReadOnly := External" }
+                is_fault : Bool;
+                { S7_Access := "ReadOnly := External" }
+                unloading_finished : Bool;
+            END_STRUCT;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        BATCH : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4Sv"
+            }
+            transferred : Real;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_ws"
+            }
+            weight_at_start : Real;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_VQ"
+            }
+            weight_invalid : Bool;
+            { S7_Access := "ReadOnly := External" }
+            loading_timeout : Bool;
+            { S7_Access := "ReadOnly := External" }
+            unloading_timeout : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

@@ -1,0 +1,19 @@
+﻿MultiLingualTexts:
+  - id: MLC_3pQ
+    en-US: TRUE if first scan, then set to FALSE
+  - id: MLC_3EU
+    en-US: Movement timer
+  - id: MLC_3Tk
+    en-US: Actual desired command based on active mode
+  - id: MLC_4zW
+    en-US: Error valve state
+  - id: MLC_3d7
+    en-US: Normal valve state
+  - id: MLC_3Nb
+    en-US: Closed valve state
+  - id: MLC_Zz
+    en-US: Opening valve state
+  - id: MLC_3ZN
+    en-US: Open valve state
+  - id: MLC_kL
+    en-US: Closing valve state

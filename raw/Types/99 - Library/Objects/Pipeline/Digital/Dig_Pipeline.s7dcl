@@ -1,0 +1,23 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION "Dig_pipeline" : Void
+    VAR_IN_OUT
+        pipeline : _.UDT_Dig_Pipeline;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Alarms
+            #pipeline.ALARMS.sensor_mismatch := NOT #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH;
+            #pipeline.ALARMS.pipeline_clogged := #pipeline.DEVICES.PSL AND #pipeline.DEVICES.PSH;
+        END_REGION
+        
+        REGION State mapping
+            #pipeline.STATUS.is_empty := NOT #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH;
+            #pipeline.STATUS.is_with_material := #pipeline.DEVICES.PSL AND NOT #pipeline.DEVICES.PSH;
+        END_REGION
+    END_NETWORK
+END_FUNCTION

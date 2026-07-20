@@ -1,0 +1,58 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Pinch_diverter_simulator"
+    VAR_INPUT
+        ON_Delay : Time := T#1s;
+        OFF_Delay : Time := T#1s;
+    END_VAR
+    VAR_IN_OUT
+        "DIV" : _.UDT_Pinch_diverter;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        XVA : _.Pinch_valve_simulator;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        XVB : _.Pinch_valve_simulator;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION XVA instantiation
+            #XVA(ON_Delay := #ON_Delay,
+                 OFF_Delay := #OFF_Delay,
+                 XV := #DIV.DEVICES.XVA);
+        END_REGION
+        
+        REGION XVB instantiation
+            #XVB(ON_Delay := #ON_Delay,
+                 OFF_Delay := #OFF_Delay,
+                 XV := #DIV.DEVICES.XVB);
+        END_REGION
+        
+        REGION Simulation init
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                #DIV.DEVICES.XVA.CMD.auto := FALSE;
+                #DIV.DEVICES.XVA.CMD.manual := FALSE;
+                #DIV.DEVICES.XVB.CMD.auto := TRUE;
+                #DIV.DEVICES.XVB.CMD.manual := TRUE;
+            END_IF;
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

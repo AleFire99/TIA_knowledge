@@ -1,6 +1,6 @@
 [tia]
-# Full path to the AleFire-Library .al20 global library file
-library_path = "C:/Users/user015/Desktop/Projects/Libreria software/AleFire-Library/AleFire-Library.al20"
+# Full path to the AleFire-Library_V21 .al21 global library file
+library_path = "C:/Users/user015/Desktop/Projects/tia-knowledge/library/AleFire-Library_V21/AleFire-Library_V21.al21"
 
 # Full path to the .ap20 export staging project (must have hardware config with at least one PLC)
 project_path = "C:/Users/user015/Desktop/Projects/tia-knowledge/Library_export/Library_export.ap20"
@@ -10,30 +10,51 @@ version = ""
 
 [export]
 # Output directories for exported blocks and UDTs (relative to repo root)
-fb_output_dir  = "sources/FBs"
-udt_output_dir = "sources/UDTs"
+fb_output_dir  = "raw/FBs"
+udt_output_dir = "raw/UDTs"
 
 # Export format
 format = "ExternalSource"
 
-# Simulator FBs that are LAD (not SCL) and cannot be auto-detected from exported files.
-# generate_docs.py merges these into the manifest so sim: null is never written for them.
-[[manifest.sim_overrides]]
+# Ctrl FB overrides — for library FBs not yet exported to raw/.
+# Add entries here when a controlling FB exists in the library but is absent from raw/.
+# Format: udt = UDT name, name = FB block name, param = VAR_IN_OUT parameter name.
+[[manifest.ctrl_overrides]]
 udt   = "UDT_SS_Valve"
-name  = "SS_valve_simulator"
+name  = "SS_valve"
 param = "XV"
 
-[[manifest.sim_overrides]]
+[[manifest.ctrl_overrides]]
 udt   = "UDT_DS_Valve"
-name  = "DS_valve_simulator"
+name  = "DS_valve"
 param = "XV"
 
-[[manifest.sim_overrides]]
+[[manifest.ctrl_overrides]]
+udt   = "UDT_Solenoid_valve"
+name  = "Solenoid_valve"
+param = "XY"
+
+[[manifest.ctrl_overrides]]
 udt   = "UDT_Pinch_Valve"
-name  = "Pinch_valve_simulator"
+name  = "Pinch_valve"
 param = "XV"
 
-[[manifest.sim_overrides]]
-udt   = "UDT_Pinch_diverter"
-name  = "Pinch_diverter_simulator"
-param = "DIV"
+[[manifest.ctrl_overrides]]
+udt   = "UDT_An_Pipeline"
+name  = "An_Pipeline"
+param = "pipeline"
+
+[manifest.udt_labels]
+UDT_SS_Valve         = "Single solenoid valve"
+UDT_DS_Valve         = "Double solenoid valve"
+UDT_Solenoid_valve   = "Solenoid valve"
+UDT_Pinch_Valve      = "Pinch valve"
+UDT_Gate_Door        = "Gate / door"
+UDT_Pinch_diverter   = "Pinch diverter"
+UDT_PTD_IO           = "Plug-type diverter"
+UDT_Filter_1_sleeve  = "Filter (1 sleeve)"
+UDT_Filter_2_sleeves = "Filter (2 sleeves)"
+UDT_Load_cells       = "Load cells"
+UDT_Nolvac           = "Nolvac"
+UDT_An_Pipeline      = "Pipeline (analogic)"
+UDT_Dig_Pipeline     = "Pipeline (digital)"

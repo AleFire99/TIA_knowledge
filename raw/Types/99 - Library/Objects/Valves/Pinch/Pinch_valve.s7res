@@ -1,0 +1,21 @@
+﻿MultiLingualTexts:
+  - id: MLC_4DF
+    en-US: TRUE if first scan, then set to FALSE
+  - id: MLC_MV
+    en-US: Movement timer
+  - id: MLC_Sn
+    en-US: Actual desired command based on active mode
+  - id: MLC_NH
+    en-US: Aggregated alarm
+  - id: MLC_3Xa
+    en-US: Error valve state
+  - id: MLC_4XD
+    en-US: Normal valve state
+  - id: MLC_3uX
+    en-US: Closed valve state
+  - id: MLC_3Cr
+    en-US: Opening valve state
+  - id: MLC_4ea
+    en-US: Open valve state
+  - id: MLC_4FV
+    en-US: Closing valve state

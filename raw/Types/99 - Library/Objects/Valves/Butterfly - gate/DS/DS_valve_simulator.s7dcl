@@ -1,0 +1,73 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "DS_valve_simulator"
+    VAR_INPUT
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        ON_Delay : Time := T#1s;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        OFF_Delay : Time := T#1s;
+    END_VAR
+    VAR_IN_OUT
+        XV : _.UDT_DS_Valve;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool := TRUE;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Timer_ON : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Timer_OFF : TON_TIME;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION First scan
+            IF #first_scan THEN
+                #XV.DEVICES.ZSH := FALSE;
+                #XV.DEVICES.ZSL := TRUE;
+                #first_scan := FALSE;
+            END_IF;
+        END_REGION
+        
+        
+        REGION Timers
+          #Timer_ON(IN := #XV.DEVICES.XYA.out AND NOT #XV.DEVICES.XYB.out,
+                    PT := #ON_Delay);
+          
+          #Timer_OFF(IN := NOT #XV.DEVICES.XYA.out AND #XV.DEVICES.XYB.out,
+                     PT := #OFF_Delay);
+        END_REGION
+        
+        REGION Signals
+          IF #Timer_ON.Q THEN
+            #XV.DEVICES.ZSH := TRUE;
+            #XV.DEVICES.ZSL := FALSE;
+          END_IF;
+          
+          IF #Timer_OFF.Q THEN
+            #XV.DEVICES.ZSH := FALSE;
+            #XV.DEVICES.ZSL := TRUE;
+          END_IF;
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

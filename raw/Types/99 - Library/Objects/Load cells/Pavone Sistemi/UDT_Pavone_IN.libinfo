@@ -1,0 +1,8 @@
+﻿LibraryType:
+  Guid: 95fd1230-0cc6-40f9-b8d3-c57c8bb94057
+LibraryVersion:
+  VersionNumber: 0.0.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    it-IT: Added registers up until 24

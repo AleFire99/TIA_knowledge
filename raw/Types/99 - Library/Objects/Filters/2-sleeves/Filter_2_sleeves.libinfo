@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: b4ba5e00-293c-4e3f-8bd7-4676c25d5c76
+  Comment:
+    en-US: Modular filter routine with hierarchical FSM
+LibraryVersion:
+  VersionNumber: 2.1.2
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

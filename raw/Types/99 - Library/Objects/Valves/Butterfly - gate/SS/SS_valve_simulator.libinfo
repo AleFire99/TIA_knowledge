@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 77abd009-2616-45c6-84f2-dd72753eb51a
+  Comment:
+    en-US: Converted to SCL
+LibraryVersion:
+  VersionNumber: 2.0.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

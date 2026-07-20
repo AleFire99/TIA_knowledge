@@ -1,0 +1,62 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Solenoid_valve"
+    VAR_IN_OUT
+        XY : _.UDT_Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        { S7_MLC := "MLC_5AJ" }
+        desired_command : Bool;
+    END_VAR
+    VAR CONSTANT
+        { S7_MLC := "MLC_53H" }
+        DE_ENERGIZED : Int := 1;
+        { S7_MLC := "MLC_4rF" }
+        ENERGIZED : Int := 2;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Determine desired target
+            IF #XY.CMD.manual_mode THEN
+                #desired_command := #XY.CMD.manual;
+            ELSE
+                #desired_command := #XY.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION FSM
+            CASE #XY.STATUS.state OF
+                    
+                #DE_ENERGIZED:
+                    IF #desired_command THEN
+                        #XY.STATUS.state := #ENERGIZED;  
+                    END_IF;
+                    
+                #ENERGIZED:
+                    IF NOT #desired_command THEN
+                        #XY.STATUS.state := #DE_ENERGIZED; 
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Output mapping
+            #XY.out := FALSE;
+            
+            IF #XY.STATUS.state = #ENERGIZED THEN
+                #XY.out := TRUE; // energize solenoid to open and hold
+            END_IF;
+        END_REGION
+        
+        REGION Status mapping
+            #XY.STATUS.is_de_energized := (#XY.STATUS.state = #DE_ENERGIZED);
+            #XY.STATUS.is_energized := (#XY.STATUS.state = #ENERGIZED);
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION_BLOCK

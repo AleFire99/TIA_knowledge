@@ -1,0 +1,49 @@
+﻿MultiLingualTexts:
+  - id: MLC_3sW
+    it-IT: |2-
+       ============================================================
+        UDT_DS_Batch
+        Data structure for FB_BatchController
+        Mirror pattern of UDT_DS_Valve
+       ============================================================
+  - id: MLC_4en
+    it-IT: HMI - Ackowneldge errors
+  - id: MLC_ff
+    it-IT: HMI - Numeric input, target quantity to convey (kg)
+  - id: MLC_3FL
+    it-IT: HMI - Load cells tare request
+  - id: MLC_53b
+    it-IT: HMI - Start transporting procedure
+  - id: MLC_4ZD
+    it-IT: HMI - Stop transporting procedure
+  - id: MLC_3gw
+    it-IT: INPUT - Live net weight from scale controller (kg)
+  - id: MLC_59r
+    it-IT: INPUT - Any fault from scale controller
+  - id: MLC_3yC
+    it-IT: INPUT - Any fault from overall plant
+  - id: MLC_4Qy
+    it-IT: SETTING - Physical upper limit for loaded bag (kg)
+  - id: MLC_3zE
+    it-IT: SETTING - Weight drift between desired and actual conveyed material
+  - id: MLC_3Ld
+    it-IT: SETTING - Maximum allowed conveying time before INCOMPLETE
+  - id: MLC_3zk
+    en-US: STATUS - 0=fault, 1=normal
+  - id: MLC_3rf
+    en-US: STATUS - 1=idle, 2=loading
+  - id: MLC_3e5
+    en-US: STATUS - 0=fault, 1=idle, 2=conveying, 3=paused
+    it-IT: STATUS - Current top FSM state
+  - id: MLC_4iL
+    it-IT: STATUS - Scale in idle state
+  - id: MLC_49n
+    it-IT: STATUS - Material is beying conveyed
+  - id: MLC_4cg
+    it-IT: ERROR - Batch did not reach setpoint before timeout
+  - id: MLC_4Sv
+    it-IT: BATCH - Material conveyed this cycle (kg)
+  - id: MLC_ws
+    it-IT: BATCH - Captured initial weight
+  - id: MLC_VQ
+    it-IT: ALARM - Weight outside scale limits

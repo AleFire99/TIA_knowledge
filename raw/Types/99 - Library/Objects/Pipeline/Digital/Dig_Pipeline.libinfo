@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 41e9ed1a-e7f6-45f8-8352-7028c2fca0ac
+  Comment:
+    en-US: 'Converted the FB into an FC '
+LibraryVersion:
+  VersionNumber: 2.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: 'Converted the FB into an FC '

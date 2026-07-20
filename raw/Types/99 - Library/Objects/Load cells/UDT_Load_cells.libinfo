@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: af45b786-fc66-4ed0-899c-c89cf376989a
+  Comment:
+    it-IT: First commit
+LibraryVersion:
+  VersionNumber: 1.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added layer in loading FSM

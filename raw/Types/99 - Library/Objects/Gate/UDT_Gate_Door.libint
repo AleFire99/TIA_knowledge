@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: UDT_Gate_Door.s7dcl
+    Hash: kx6x57uPKKWL10RZx2sR38zSmVsmf2AHopoafqc4Ie0=
+  - FileName: UDT_Gate_Door.s7res
+    Hash: LdUwgIgR+dk72rm0IpiM+w30sOY+0/GQz1vUXgf5z1U=
+LibraryMetaFileHash: Hyvp3lVviWaWi5Gf0uMLukKq0gOqkyYqnvoSMm0sDJM=
+LibraryVersion:
+  Guid: 550381b7-d339-4207-b902-7297c6633a56
+  DependsOn:
+    - TypeName: UDT_Solenoid_valve
+      VersionNumber: 2.0.1

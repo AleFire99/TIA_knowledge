@@ -1,0 +1,15 @@
+﻿MultiLingualTexts:
+  - id: MLC_3Dd
+    en-US: COMMAND - Active mode
+  - id: MLC_jk
+    en-US: COMMAND - Manual command
+  - id: MLC_3hn
+    en-US: COMMAND - Automatic command
+  - id: MLC_56v
+    en-US: STATUS - 1=de-energized,3=energized
+  - id: MLC_3d9
+    en-US: STATUS - Solenoid is energized
+  - id: MLC_4ux
+    en-US: STATUS - Solenoid is de-energized
+  - id: MLC_4v8
+    en-US: OUT - Solenoid valve command

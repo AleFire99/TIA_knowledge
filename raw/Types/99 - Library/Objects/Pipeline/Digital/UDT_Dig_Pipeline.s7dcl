@@ -1,0 +1,43 @@
+﻿TYPE
+    UDT_Dig_Pipeline : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3pK"
+            }
+            PSL : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3s5"
+            }
+            PSH : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_sR"
+            }
+            is_empty : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3pS"
+            }
+            is_with_material : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4vS"
+            }
+            pipeline_clogged : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3wu"
+            }
+            sensor_mismatch : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

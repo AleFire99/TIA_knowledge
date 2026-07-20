@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: Dig_pipeline.s7dcl
+    Hash: EhuhV0PyOlnHzg0fPN7hMQmzQtgyIr/85kG7vydAYIo=
+LibraryMetaFileHash: n1laDOz4XGwbjNCs1fKy5yGwAWOLjfA/ENouM4Sb9Ec=
+LibraryVersion:
+  Guid: 773cb717-837a-422f-abeb-781c4d80a71a
+  DependsOn:
+    - TypeName: UDT_Dig_Pipeline
+      VersionNumber: 2.0.0

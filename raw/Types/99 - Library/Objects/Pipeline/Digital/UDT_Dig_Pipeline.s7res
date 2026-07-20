@@ -1,0 +1,13 @@
+﻿MultiLingualTexts:
+  - id: MLC_3pK
+    en-US: DEVICE - Low limit switch threshold
+  - id: MLC_3s5
+    en-US: DEVICE - High limit switch threshold
+  - id: MLC_sR
+    en-US: STATUS - Pipeline is empty
+  - id: MLC_3pS
+    en-US: STATUS - Pipeline has material in it
+  - id: MLC_4vS
+    en-US: ALARM - Pipeline clogged
+  - id: MLC_3wu
+    en-US: ALARM - Sensor mismatch

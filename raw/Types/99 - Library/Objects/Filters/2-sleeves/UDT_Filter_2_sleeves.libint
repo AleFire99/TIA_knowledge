@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: UDT_Filter_2_sleeves.s7dcl
+    Hash: ZoBR0JO86rdtyKrOCUQwET//XDwyCxWoeMzVH5kMpas=
+  - FileName: UDT_Filter_2_sleeves.s7res
+    Hash: +2VUI89yky7/PbsPyj26NeMPRUcUUCZCYnV9m2OdSm8=
+LibraryMetaFileHash: rcMDASCKuIBrVEKb6oYcXFZbJJwCSkD7CC2AJd/gbSg=
+LibraryVersion:
+  Guid: 0f049704-144e-4b8f-bf00-a162d72d59da
+  DependsOn:
+    - TypeName: UDT_Solenoid_valve
+      VersionNumber: 2.0.1
