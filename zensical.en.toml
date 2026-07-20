@@ -2,6 +2,7 @@
 site_name = "NTE Process PLC Library"
 docs_dir = "docs/en"
 site_dir = "site/en"
+extra_javascript = ["javascripts/lang-switch.js"]
 
 nav = [
   { "Home" = "index.md" },
