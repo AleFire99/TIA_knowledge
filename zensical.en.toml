@@ -6,35 +6,46 @@ site_dir = "site/en"
 nav = [
   { "Home" = "index.md" },
   { "Library" = [
-      { "Library" = "library/index.md" },
+      { "Overview" = "library/index.md" },
       { "Valves" = [
-          { "Valves" = "library/valves/index.md" },
-          { "Butterfly Valve — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
-          { "Butterfly Valve — Single Solenoid" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "Overview" = "library/valves/index.md" },
+          { "Solenoid Valve" = "library/valves/solenoid/index.md" },
           { "Pinch" = "library/valves/pinch/index.md" },
-          { "Sealed SS" = "library/valves/sealed/ss/index.md" },
-          { "Solenoid" = "library/valves/solenoid/index.md" },
+          { "Butterfly — Single Solenoid" = "library/valves/butterfly/single_solenoid/index.md" },
+          { "Butterfly — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
+          { "Sealed — Single Solenoid" = "library/valves/sealed/ss/index.md" },
       ] },
-      { "Diverters" = [
-          { "Diverters" = "library/diverters/index.md" },
-          { "Pinch Type" = "library/diverters/pinch_type/index.md" },
+      { "Access Devices" = [
+          { "Overview" = "library/access/index.md" },
+          { "Gate Leaf — Electric Lock" = "library/access/gate/index.md" },
       ] },
       { "Filters" = [
-          { "Filters" = "library/filters/index.md" },
-          { "1-Sleeve" = "library/filters/1-sleeve/index.md" },
-          { "2-Sleeves" = "library/filters/2-sleeves/index.md" },
+          { "Overview" = "library/filters/index.md" },
+          { "1 Sleeve" = "library/filters/1-sleeve/index.md" },
+          { "2 Sleeves" = "library/filters/2-sleeves/index.md" },
       ] },
-      { "Gate" = "library/gate/index.md" },
-      { "Load Cells" = "library/load-cells/index.md" },
-      { "Nolvac" = "library/nolvac/index.md" },
-      { "Pipeline" = [
-          { "Pipeline" = "library/pipeline/index.md" },
-          { "Analogic" = "library/pipeline/analogic/index.md" },
-          { "Digital" = "library/pipeline/digital/index.md" },
+      { "Diverters" = [
+          { "Overview" = "library/diverters/index.md" },
+          { "Pinch Type" = "library/diverters/pinch_type/index.md" },
       ] },
+      { "Nolvac" = [
+          { "Overview" = "library/nolvac/index.md" },
+          { "Timed Cycle" = "library/nolvac/timed-cycle/index.md" },
+      ] },
+      { "Load Cells" = [
+          { "Overview" = "library/load-cells/index.md" },
+          { "Loading and Unloading Cycle" = "library/load-cells/loading-unloading/index.md" },
+          { "Pavone DAT 1400 Interface" = "library/load-cells/pavone-dat-1400/index.md" },
+      ] },
+      { "Analog Signals" = "library/io/index.md" },
       { "Transporters" = [
-          { "Transporters" = "library/transporters/index.md" },
+          { "Overview" = "library/transporters/index.md" },
           { "Sealed Inlet Transporter" = "library/transporters/sealed-inlet/index.md" },
+      ] },
+      { "Pipeline" = [
+          { "Overview" = "library/pipeline/index.md" },
+          { "Analog" = "library/pipeline/analogic/index.md" },
+          { "Digital" = "library/pipeline/digital/index.md" },
       ] },
   ] },
 ]

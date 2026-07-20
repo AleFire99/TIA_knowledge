@@ -2,54 +2,106 @@
 
 ## Overview
 
-**Tier 2.** The pinch valve controls flow by mechanically compressing a flexible tube. Energizing the internal solenoid (`XY`) drives the pneumatic actuator to pinch the tube closed; de-energizing releases the tube and restores flow. A pressure switch (`PSL`) confirms the closed position — it's the device's only position sensor. The valve is normally open — it requires active energization to remain closed.
+**Level 2.** The pinch valve controls flow by mechanically compressing a flexible tube, using an internal solenoid valve (`XY`) as actuator and a pressure switch (`PSL`) as its only position sensor.
 
 ---
 
-## Composition
+## Interface
+
+### Composition
 
 | Tag | Type | Role |
 |-----|------|------|
-| `XY` | Solenoid Valve (Tier 1) | Actuator — energized = closed |
+| `XY` | Solenoid Valve (Level 1) | Actuator — energized = closed |
 
-Manual/automatic arbitration (`manual_mode`/`manual`/`auto`) follows the same pattern described in [Solenoid Valve](../solenoid/index.md).
+Manual/automatic arbitration (`manual_mode`/`manual`/`auto`) follows the common pattern described in [Library — Overview](../../index.md).
 
----
+### Data Structure
 
-## Control Signals
+```mermaid
+classDiagram
+    class UDT_Pinch_Valve
+    class DEVICES {
+        -Bool PSL
+        -UDT_Solenoid_valve XY
+    }
+    class CMD {
+        +Bool manual_mode
+        +Bool manual
+        -Bool auto
+        +Bool ack
+    }
+    class SETTING {
+        +Time actuator_timeout
+    }
+    class STATUS {
+        -Int state
+        -Int normal_state
+        -Bool is_fault
+        -Bool is_closed
+        -Bool is_opening
+        -Bool is_open
+        -Bool is_closing
+    }
+    class ALARMS {
+        -Bool sensor_mismatch
+        -Bool failed_to_close
+        -Bool failed_to_open
+    }
+    UDT_Pinch_Valve *-- DEVICES
+    UDT_Pinch_Valve *-- CMD
+    UDT_Pinch_Valve *-- SETTING
+    UDT_Pinch_Valve *-- STATUS
+    UDT_Pinch_Valve *-- ALARMS
+```
 
-| Signal | Type | Description |
-|--------|------|-------------|
-| `DEVICES.PSL` | Bool | INPUT — Pressure switch: TRUE = valve closed (tube pinched) |
-| `DEVICES.XY` | UDT_Solenoid_valve | OUTPUT — Actuator solenoid valve |
-| `CMD.manual_mode` | Bool | TRUE = HMI manual mode |
-| `CMD.manual` | Bool | Close command in manual mode |
-| `CMD.auto` | Bool | Close command from automation (ReadOnly external) |
-| `CMD.ack` | Bool | Acknowledges alarms and clears FAULT |
+`+` = writable by DCS/HMI, `-` = read-only.
 
----
+### Control Signals
 
-## Settings
+| Signal | Type | Direction | Description |
+|--------|------|-----------|--------------|
+| `DEVICES.PSL` | Bool | IN | Pressure switch: TRUE = valve closed (tube pinched) |
+| `DEVICES.XY` | UDT_Solenoid_valve | OUT | Actuator solenoid valve — commanded; this block does not read its state back |
+| `CMD.manual_mode` | Bool | IN | TRUE = HMI manual mode |
+| `CMD.manual` | Bool | IN | Close command in manual mode |
+| `CMD.auto` | Bool | IN | Close command in automatic mode |
+| `CMD.ack` | Bool | IN | Acknowledges alarms and clears FAULT |
+
+### Settings
 
 | Parameter | Default | Description |
-|-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Maximum time allowed to complete an opening or closing movement |
+|-----------|---------|--------------|
+| `SETTING.actuator_timeout` | T#2s | See the convention in [Valves — Overview](../index.md) |
 
 ---
 
-## States and Outputs
+## Behavior
 
-| State | `XY` | Expected `PSL` | Description |
-|-------|------|-----------------|-------------|
-| CLOSED | TRUE | TRUE | Tube pinched, flow blocked |
-| OPENING | FALSE | (transitioning) | Actuator releasing tube |
-| OPEN | FALSE | FALSE | Tube free, flow allowed |
-| CLOSING | TRUE | (transitioning) | Actuator pinching tube |
-| FAULT | — | — | Outputs frozen; operator acknowledgment required |
+### Operation
 
----
+Energizing `XY` drives the pneumatic actuator that pinches the tube shut; de-energizing releases the tube and restores flow. The valve is normally open — it requires active energization to remain closed. `PSL` confirms the closed position.
 
-## State Machine
+The desired command is resolved on every scan, the same pattern as [Solenoid Valve](../solenoid/index.md):
+
+```
+desired_open_command := manual_mode ? manual : auto
+```
+
+The pinch valve resolves manual/automatic arbitration at its own level and exposes only the already-resolved command to `XY.CMD.auto` — the internal solenoid valve does not arbitrate on its own.
+
+On return from `FAULT`, the block re-reads `PSL` to determine the stable state (`CLOSED` if TRUE, otherwise `OPEN`) — the same mechanism used on the first scan.
+
+In `FAULT`, `XY` is deliberately de-energized (tube open), regardless of how it was commanded before the fault: leaving the tube pinched indefinitely would accelerate wear on the material.
+
+### Alarms
+
+- [`XV-E01`](../index.md#valve-alarms) — current stable state (`CLOSED`/`OPEN`) not confirmed by `PSL`
+- [`XV-E03`](../index.md#valve-alarms) — `CLOSING` not completed within `actuator_timeout`
+- [`XV-E04`](../index.md#valve-alarms) — `OPENING` not completed within `actuator_timeout`
+- Not applicable: `XV-E02` (sensor conflict) — the pinch valve has only one position sensor
+
+### State Diagram
 
 ```mermaid
 stateDiagram-v2
@@ -75,59 +127,16 @@ state PINCH_VALVE{
 internal_error := sensor_mismatch OR failed_to_close OR failed_to_open;
 ```
 
-On return from `FAULT`, the block re-reads `PSL` to determine the stable state (`CLOSED` if TRUE, otherwise `OPEN`) — the same mechanism used on the first scan.
+| State | `XY` | Description |
+|-------|------|--------------|
+| CLOSED | TRUE | Tube pinched, flow blocked |
+| OPENING | FALSE | Actuator releases the tube |
+| OPEN | FALSE | Tube free, flow allowed |
+| CLOSING | TRUE | Actuator pinches the tube |
+| FAULT | FALSE | `XY` deliberately de-energized (tube open) — avoids leaving the tube pinched during the fault, preventing wear on the material; requires operator acknowledgment |
 
----
+### Timer
 
-## Alarms
-
-| ID | Device-specific condition |
-|----|----------------------------|
-| [`XV-E01`](../index.md#valve-alarms) | Current stable state (CLOSED/OPEN) not confirmed by `PSL` |
-| [`XV-E03`](../index.md#valve-alarms) | `CLOSING` not confirmed within `actuator_timeout` |
-| [`XV-E04`](../index.md#valve-alarms) | `OPENING` not confirmed within `actuator_timeout` |
-
-Not applicable: `XV-E02` (sensor conflict) — the Pinch valve has only one position sensor.
-
----
-
-## Data Structure
-
-```mermaid
-classDiagram
-    class UDT_Pinch_Valve
-    class DEVICES {
-        +Bool PSL
-        +UDT_Solenoid_valve XY
-    }
-    class CMD {
-        +Bool manual_mode
-        +Bool manual
-        +Bool auto
-        +Bool ack
-    }
-    class SETTING {
-        +Time actuator_timeout
-    }
-    class STATUS {
-        +Int state
-        +Int normal_state
-        +Bool is_fault
-        +Bool is_closed
-        +Bool is_opening
-        +Bool is_open
-        +Bool is_closing
-    }
-    class ALARMS {
-        +Bool sensor_mismatch
-        +Bool failed_to_close
-        +Bool failed_to_open
-    }
-    UDT_Pinch_Valve *-- DEVICES
-    UDT_Pinch_Valve *-- CMD
-    UDT_Pinch_Valve *-- SETTING
-    UDT_Pinch_Valve *-- STATUS
-    UDT_Pinch_Valve *-- ALARMS
-```
-
-`internal_error` is internal to the function block, not exposed via the UDT.
+| Timer | State it's active in | Threshold (parameter) |
+|-------|------------------------|-------------------------|
+| `movement_timer` | `OPENING` or `CLOSING` (within `NORMAL`) | `SETTING.actuator_timeout` |

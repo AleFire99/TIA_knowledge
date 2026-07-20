@@ -1,17 +1,17 @@
 # Diverters
 
-Route conveyed material between two or more discharge paths using a pneumatically actuated mechanism.
+Divert conveyed material between two or more discharge paths through a pneumatically actuated mechanism.
 
 ## Diverter Alarms
 
-| ID | Class | Title | Condition | Applies to |
-|----|-------|-------|-----------|------------|
-| `DIV-E01` | E | Routing mismatch | Current stable state (`ROUTE_A`/`ROUTE_B`) not confirmed by the corresponding sub-valve's sensor | Pinch Diverter |
+| ID | Title | Condition | Applies to |
+|----|--------|------------|----------------|
+| `DIV-E01` | Routing misalignment | The current stable state (`ROUTE_A`/`ROUTE_B`) is not confirmed by the corresponding sub-valve's sensor | Pinch-Type Diverter |
 
-Faults from the internal sub-valves (`XVA`/`XVB`) feed into `internal_error` but don't get their own ID at this level — they're already fully visible on the sub-valve's own page; see [Valve Alarms](../valves/index.md#valve-alarms).
+Faults from the internal sub-valves (`XVA`/`XVB`) contribute to `internal_error` but don't get their own ID at this level — it's already fully visible on the sub-valve's page; see the [valve alarms](../valves/index.md#valve-alarms).
 
 ## Modules
 
-| Module | Tier | Description |
+| Module | Level | Description |
 |--------|------|-------------|
-| [Pinch Diverter](pinch_type/index.md) | 3 | Dual pinch valves route material between two paths |
+| [Pinch-Type Diverter](pinch_type/index.md) | 3 | Dual pinch valve that diverts material between two paths |

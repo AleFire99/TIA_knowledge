@@ -2,162 +2,53 @@
 
 ## Overview
 
-**Tier 3 — composite.** `Sealed_inlet_Transporter` orchestrates a complete pressurised pneumatic conveying cycle: it loads material into a vessel, seals it, pressurises it above line pressure, conveys the material into the process line, then depressurises the vessel before the next cycle.
+**Level 4 — composite.** `Sealed_inlet_Transporter` manages a complete pressure pneumatic conveying cycle: it loads material into a vessel, seals it, pressurizes it above line pressure, conveys the material to the line, and finally depressurizes the vessel before a new cycle.
 
-The block coordinates five valves (`XV01`–`XV05`), a pressurisation solenoid (`XY`), a load cell assembly (`WT01`), and two analogue pressure transmitters (`PT01` vessel, `PT02` line). Two digital pressure switches (`PSL`, `LSH`) enforce safety constraints.
+The block coordinates five valves (`XV01`–`XV05`), a pressurization solenoid valve (`XY`), a scale (`WT01`), and two analog pressure transmitters (`PT01` vessel, `PT02` line). A line pressure switch (`PSL`) checks the availability of compressed air for valve actuation and vessel pressurization; a high-level sensor (`LSH`) instead protects against vessel overfilling — two different conditions, not both "safety" in the same sense.
 
-The FSM is two-level: `NORMAL`/`FAULT` at the top; `IDLE`→`FILLING`→`CLEANING`→`SEALING`→`PRESSURIZING`→`CONVEYING`→`DEPRESSURIZING` at the operating level.
+The state machine has two levels: `NORMAL`/`FAULT` at the top level; `IDLE`→`FILLING`→`CLEANING`→`SEALING`→`PRESSURIZING`→`CONVEYING`→`DEPRESSURIZING` at the operational level.
 
----
-
-## Composition
-
-| Tag | Type | Role |
-|-----|------|------|
-| `XV01` | SS Sealed Valve (Tier 3) | Inlet valve; sealed at rest |
-| `XV02` | DS Butterfly Valve (Tier 3) | Vent valve; open in IDLE, FILLING, FAULT |
-| `XV03` | SS Butterfly Valve (Tier 2) | Orifice valve; open during FILLING |
-| `XV04` | SS Butterfly Valve (Tier 2) | Discharge valve; open during PRESSURIZING and CONVEYING |
-| `XV05` | SS Butterfly Valve (Tier 2) | Line valve; open during CONVEYING |
-| `XY` | Solenoid Valve (Tier 1) | Pressurisation solenoid; energised during PRESSURIZING and CONVEYING |
-| `WT01` | Load Cells (Tier 3) | Load cell assembly; driven by internal `Loading` and `Unloading` — see [Load Cells](../../load-cells/index.md) |
-| `PT01` | UDT_Analogic_signal | Vessel pressure transmitter |
-| `PT02` | UDT_Analogic_signal | Line pressure transmitter |
-| `PSL` | Bool | Safety pressure switch: TRUE = pressure within safe limits |
-| `LSH` | Bool | High-level sensor: TRUE = vessel over-filled (fault condition) |
+`XV01` is currently bound to `UDT_SS_Sealed_Valve`: a future revision could reduce this slot to a minimal contract (`auto` command + fault status), via polymorphism or a dedicated adapter FC, to make it replaceable with any type of inlet valve.
 
 ---
 
-## I/O Signals
+## Interface
 
-### Commands (`CMD`)
+### Composition
 
-| Signal | Type | Description |
-|--------|------|-------------|
-| `CMD.ack` | Bool | Acknowledge alarms; propagated to all sub-devices |
-| `CMD.start_loading` | Bool | Start the loading sequence (IDLE → FILLING) |
-| `CMD.start_convey` | Bool | Start conveying without loading (IDLE → SEALING) |
-| `CMD.stop` | Bool | Operator stop; drives toward DEPRESSURIZING or IDLE |
+| Tag | Type | Direction | Role |
+|-----|------|-----------|-------|
+| `XV01` | Sealed Valve — SS (Level 3) | IN/OUT | Inlet valve; sealed at rest |
+| `XV02` | Butterfly Valve — DS (Level 2) | IN/OUT | Vent valve; open in IDLE, FILLING, FAULT |
+| `XV03` | Butterfly Valve — SS (Level 2) | IN/OUT | Orifice valve; open during FILLING |
+| `XV04` | Butterfly Valve — SS (Level 2) | IN/OUT | Discharge valve; open during PRESSURIZING and CONVEYING |
+| `XV05` | Butterfly Valve — SS (Level 2) | IN/OUT | Line valve; open during CONVEYING |
+| `XY` | Solenoid Valve (Level 1) | OUT | Pressurization solenoid valve; energized during PRESSURIZING and CONVEYING |
+| `WT01` | Load Cells (Level 1) | IN/OUT | Scale; managed by the internal `Loading` and `Unloading` — see [Loading and Unloading Cycle](../../load-cells/loading-unloading/index.md) |
+| `PT01` | [UDT_Analogic_signal](../../io/index.md) | IN | Vessel pressure transmitter |
+| `PT02` | [UDT_Analogic_signal](../../io/index.md) | IN | Line pressure transmitter |
+| `PSL` | Bool | IN | Line air pressure switch: TRUE = compressed air available for actuation and pressurization |
+| `LSH` | Bool | IN | High-level sensor: TRUE = vessel full (fault condition) |
 
-### Settings (`SETTING`)
+`XV01`–`XV05` and `WT01` are IN/OUT: the transporter writes their `CMD` (auto/ack, and for `WT01` also stop/reset/loading_start/unloading_start) and reads back their `STATUS`/`ALARMS`/`BATCH` for its own state machine and `internal_error`. `XY` is OUT-only, like every Solenoid Valve commanded without reading back its own state. `PT01`/`PT02`/`PSL`/`LSH` are pure sensors, with no `CMD` to write.
 
-| Signal | Type | Description |
-|--------|------|-------------|
-| `SETTING.cleaning_timer` | Time | Duration of the CLEANING phase |
-| `SETTING.pressurizing_timeout` | Time | Maximum time to reach conveying pressure |
-| `SETTING.depressurizing_timeout` | Time | Maximum time to return to atmospheric pressure |
-| `SETTING.pressure_delta` | Real | Minimum vessel overpressure above line pressure to open XV05 [bar] |
-| `SETTING.vessel_empty_thresh` | Real | PT01 threshold to consider vessel at atmospheric pressure [bar] |
-| `SETTING.line_empty_thresh` | Real | PT02 threshold to consider line at atmospheric pressure [bar] |
-
-### Status (`STATUS`)
-
-| Signal | Type | Description |
-|--------|------|-------------|
-| `STATUS.state` | Int | 0=FAULT, 1=NORMAL |
-| `STATUS.normal_state` | Int | 10=IDLE, 20=FILLING, 30=CLEANING, 40=SEALING, 50=PRESSURIZING, 60=CONVEYING, 70=DEPRESSURIZING |
-| `STATUS.is_fault` | Bool | TRUE in FAULT |
-| `STATUS.is_idle` | Bool | TRUE in IDLE |
-| `STATUS.is_filling` | Bool | TRUE in FILLING |
-| `STATUS.is_cleaning` | Bool | TRUE in CLEANING |
-| `STATUS.is_sealing` | Bool | TRUE in SEALING |
-| `STATUS.is_pressurizing` | Bool | TRUE in PRESSURIZING |
-| `STATUS.is_conveying` | Bool | TRUE in CONVEYING |
-| `STATUS.is_depressurizing` | Bool | TRUE in DEPRESSURIZING |
-
-### Outputs (`OUT`)
-
-| Signal | Type | Description |
-|--------|------|-------------|
-| `OUT.loading_finished` | Bool | 1-scan pulse on entering SEALING from CLEANING (load complete) |
-| `OUT.conveying_done` | Bool | 1-scan pulse on entering IDLE (full cycle complete) |
-| `OUT.filter_cleaner_command` | Bool | TRUE during CLEANING — enables external filter cleaning system |
-| `OUT.last_transferred` | Real | Quantity conveyed in the last CONVEYING phase [kg] |
-
-### Alarms (`ALARMS`)
-
-| Signal | Type | Description |
-|--------|------|-------------|
-| `ALARMS.pressurization_timeout` | Bool | Pressurisation not completed within `pressurizing_timeout` |
-| `ALARMS.depressurization_timeout` | Bool | Depressurisation not completed within `depressurizing_timeout` |
-
-`internal_error` (OR of all internal faults: valves, load cell, PSL, LSH, plus the two alarms above) is internal to the function block — it is not a UDT field.
-
----
-
-## Operating Routine
-
-### Derived conditions (every scan)
-
-- **`all_loading_closed`** — XV01, XV02, XV03 all confirmed closed (prerequisite for SEALING → PRESSURIZING)
-- **`pressure_gate_met`** — `PT01 ≥ PT02 + pressure_delta` (vessel sufficiently over-pressured above line)
-- **`depressurized`** — `PT01 ≤ vessel_empty_thresh AND PT02 ≤ line_empty_thresh`
-- **`internal_error`** — fault on XV01–05, load cell timeout, `NOT PSL` (safety pressure lost), or `LSH` (high level)
-
-### Loading sequence
-
-1. **IDLE** → `CMD.start_loading` → **FILLING**: XV01 (inlet), XV02 (vent), XV03 (orifice) open; internal `Loading` FB manages the scale.
-2. **FILLING** → scale reaches setpoint (`loading_finished`) → **CLEANING**: inlet filter regenerated for `cleaning_timer`.
-3. **CLEANING** → timer expires → **SEALING**: all inlet valves close.
-4. **SEALING** → `all_loading_closed` → **PRESSURIZING**: XY energised + XV04 (discharge) open to pressurise vessel.
-5. **PRESSURIZING** → `pressure_gate_met` → **CONVEYING**: XV05 (line) opens; internal `Unloading` FB manages the scale.
-6. **CONVEYING** → scale empty or `CMD.stop` → **DEPRESSURIZING**: XV02 (vent) opens to relieve pressure.
-7. **DEPRESSURIZING** → `depressurized` → **IDLE**: `OUT.conveying_done` 1-scan pulse.
-
-### Direct conveying sequence
-
-`CMD.start_convey` in IDLE jumps directly to SEALING (skipping FILLING and CLEANING), for conveying material already present in the vessel.
-
-### FAULT behaviour
-
-In FAULT: XV02 (vent) opens for passive safety; scale stopped and reset. `CMD.ack` with `NOT internal_error` returns to NORMAL/IDLE.
-
----
-
-## Alarms
-
-| ID | Device-specific condition |
-|----|----------------------------|
-| [`TR-E01`](../index.md#transporter-alarms) | `ALARMS.pressurization_timeout` — check air supply, XV04, PT01/02 |
-| [`TR-E02`](../index.md#transporter-alarms) | `ALARMS.depressurization_timeout` — check XV02, PT01/02 |
-| [`TR-E03`](../index.md#transporter-alarms) | Fault on an internal valve (`XV01`–`XV05`) — see [Valve Alarms](../../valves/index.md#valve-alarms) |
-| [`TR-E04`](../index.md#transporter-alarms) | Loading or Unloading timeout on `WT01` — see [Load Cell Alarms](../../load-cells/index.md#load-cell-alarms) |
-| [`TR-E05`](../index.md#transporter-alarms) | `NOT PSL` — safety pressure lost |
-| [`TR-E06`](../index.md#transporter-alarms) | `LSH` — high level in vessel |
-
----
-
-## Settings
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `SETTING.cleaning_timer` | T#2M | Duration of the CLEANING phase |
-| `SETTING.pressurizing_timeout` | T#1M | Maximum duration of PRESSURIZING phase |
-| `SETTING.depressurizing_timeout` | T#1M | Maximum duration of DEPRESSURIZING phase |
-| `SETTING.pressure_delta` | 0.2 | Minimum vessel-to-line overpressure [bar] |
-| `SETTING.vessel_empty_thresh` | 0.2 | PT01 threshold for `depressurized` condition [bar] |
-| `SETTING.line_empty_thresh` | 0.2 | PT02 threshold for `depressurized` condition [bar] |
-| `SETTING.actuator_timeout` | T#2s | Actuator timeout propagated to all valves XV01–05 |
-
----
-
-## Data Structure
+### Data Structure
 
 ```mermaid
 classDiagram
     class UDT_Sealed_inlet_Transporter
     class DEVICES {
-        +UDT_SS_Sealed_Valve XV01
-        +UDT_DS_Valve XV02
-        +UDT_SS_Valve XV03
-        +UDT_SS_Valve XV04
-        +UDT_SS_Valve XV05
-        +UDT_Solenoid_valve XY
-        +UDT_Load_cells WT01
-        +UDT_Analogic_signal PT01
-        +UDT_Analogic_signal PT02
-        +Bool PSL
-        +Bool LSH
+        -UDT_SS_Sealed_Valve XV01
+        -UDT_DS_Valve XV02
+        -UDT_SS_Valve XV03
+        -UDT_SS_Valve XV04
+        -UDT_SS_Valve XV05
+        -UDT_Solenoid_valve XY
+        -UDT_Load_cells WT01
+        -UDT_Analogic_signal PT01
+        -UDT_Analogic_signal PT02
+        -Bool PSL
+        -Bool LSH
     }
     class CMD {
         +Bool ack
@@ -175,26 +66,26 @@ classDiagram
         +Real line_empty_thresh
     }
     class STATUS {
-        +Int state
-        +Int normal_state
-        +Bool is_fault
-        +Bool is_idle
-        +Bool is_filling
-        +Bool is_cleaning
-        +Bool is_sealing
-        +Bool is_pressurizing
-        +Bool is_conveying
-        +Bool is_depressurizing
+        -Int state
+        -Int normal_state
+        -Bool is_fault
+        -Bool is_idle
+        -Bool is_filling
+        -Bool is_cleaning
+        -Bool is_sealing
+        -Bool is_pressurizing
+        -Bool is_conveying
+        -Bool is_depressurizing
     }
     class ALARMS {
-        +Bool pressurization_timeout
-        +Bool depressurization_timeout
+        -Bool pressurization_timeout
+        -Bool depressurization_timeout
     }
     class OUT {
-        +Bool loading_finished
-        +Bool conveying_done
-        +Bool filter_cleaner_command
-        +Real last_transferred
+        -Bool loading_finished
+        -Bool conveying_done
+        -Bool filter_cleaner_command
+        -Real last_transferred
     }
     UDT_Sealed_inlet_Transporter *-- DEVICES
     UDT_Sealed_inlet_Transporter *-- CMD
@@ -204,9 +95,74 @@ classDiagram
     UDT_Sealed_inlet_Transporter *-- OUT
 ```
 
+`+` = writable by DCS/HMI, `-` = read-only.
+
+### Control Signals
+
+| Signal | Type | Direction | Description |
+|---------|------|-----------|-------------|
+| `CMD.ack` | Bool | IN | Alarm acknowledgment; propagated to all sub-devices |
+| `CMD.start_loading` | Bool | IN | Starts the loading sequence (IDLE → FILLING) |
+| `CMD.start_convey` | Bool | IN | Starts the conveying sequence without loading (IDLE → SEALING) |
+| `CMD.stop` | Bool | IN | Operator stop; drives toward DEPRESSURIZING or IDLE |
+| `STATUS.state` | Int | OUT | 0=FAULT, 1=NORMAL |
+| `STATUS.normal_state` | Int | OUT | 1=IDLE, 2=FILLING, 3=CLEANING, 4=SEALING, 5=PRESSURIZING, 6=CONVEYING, 7=DEPRESSURIZING |
+| `STATUS.is_fault` | Bool | OUT | TRUE in FAULT |
+| `STATUS.is_idle` | Bool | OUT | TRUE in IDLE |
+| `STATUS.is_filling` | Bool | OUT | TRUE in FILLING |
+| `STATUS.is_cleaning` | Bool | OUT | TRUE in CLEANING |
+| `STATUS.is_sealing` | Bool | OUT | TRUE in SEALING |
+| `STATUS.is_pressurizing` | Bool | OUT | TRUE in PRESSURIZING |
+| `STATUS.is_conveying` | Bool | OUT | TRUE in CONVEYING |
+| `STATUS.is_depressurizing` | Bool | OUT | TRUE in DEPRESSURIZING |
+| `OUT.loading_finished` | Bool | OUT | 1-scan pulse on entry into SEALING from CLEANING (loading completed) |
+| `OUT.conveying_done` | Bool | OUT | 1-scan pulse on entry into IDLE (cycle finished) |
+| `OUT.filter_cleaner_command` | Bool | OUT | TRUE during CLEANING — enables the external filter cleaning system |
+| `OUT.last_transferred` | Real | OUT | Quantity conveyed in the last CONVEYING cycle [kg] |
+
+### Settings
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `SETTING.cleaning_timer` | T#2M | Duration of the CLEANING phase |
+| `SETTING.pressurizing_timeout` | T#1M | Maximum timeout for the PRESSURIZING phase |
+| `SETTING.depressurizing_timeout` | T#1M | Maximum timeout for the DEPRESSURIZING phase |
+| `SETTING.pressure_delta` | 0.2 | Minimum vessel-to-line overpressure [bar] |
+| `SETTING.vessel_empty_thresh` | 0.2 | PT01 threshold for `depressurized` [bar] |
+| `SETTING.line_empty_thresh` | 0.2 | PT02 threshold for `depressurized` [bar] |
+| `SETTING.actuator_timeout` | T#2s | Timeout forwarded to all valves XV01–05 |
+
 ---
 
-## State Machine (FSM)
+## Behavior
+
+### Operation
+
+#### Derived Conditions (every scan)
+
+- **`all_loading_closed`** — XV01, XV02, XV03 all confirmed closed (prerequisite for SEALING → PRESSURIZING)
+- **`pressure_gate_met`** — `PT01 ≥ PT02 + pressure_delta` (vessel sufficiently overpressurized relative to the line)
+- **`depressurized`** — `PT01 ≤ vessel_empty_thresh AND PT02 ≤ line_empty_thresh`
+- **`internal_error`** — a fault on XV01/02/03/04/05, a scale timeout, `NOT PSL` (line air absent — no air available to actuate the valves or pressurize the vessel), `LSH` (high level), `ALARMS.pressurization_timeout`, or `ALARMS.depressurization_timeout`
+
+The cycle conveys a batch of material from the loading point to the process line, passing through a filter cleaning phase and a pressurization phase that brings the vessel to a pressure higher than the line before opening the connecting valve: the material flows toward the line by pressure differential, not by direct mechanical action.
+
+Loading (FILLING) opens the inlet (XV01), the vent (XV02), and the orifice (XV03) while the `Loading` FB fills the vessel to the setpoint; completion automatically starts the filter cleaning phase (CLEANING, timed), which regenerates the filtering element before the vessel is sealed. Once all inlet valves are closed (SEALING → PRESSURIZING), `XY` and XV04 pressurize the vessel until the required overpressure relative to the line (`pressure_delta`) is reached — only then does the line valve (XV05) open for conveying (CONVEYING), preventing material from flowing back from the line into the vessel due to insufficient pressure. `CMD.start_convey` allows the entire loading/cleaning phase to be skipped when the vessel already contains material from a previous cycle, going directly to SEALING.
+
+The cycle ends by venting the residual pressure (DEPRESSURIZING, XV02 open) before returning to IDLE, ready for a new load.
+
+In FAULT, both the vent (XV02) and the discharge (XV04) remain open — a passively safe configuration that doesn't require actuation air to be maintained, useful since a fault can specifically include the loss of line air (`NOT PSL`). The scale is stopped and reset; `CMD.ack` with the error cleared brings the transporter back to NORMAL/IDLE.
+
+### Alarms
+
+- [`TR-E01`](../index.md#transporter-alarms) — `ALARMS.pressurization_timeout`, latched by the timer and cleared only by `CMD.ack`; check the air supply, XV04, PT01/02
+- [`TR-E02`](../index.md#transporter-alarms) — `ALARMS.depressurization_timeout`, same latch behavior; check XV02, PT01/02
+- [`TR-E03`](../index.md#transporter-alarms) — `NOT PSL`, line air absent
+- [`TR-E04`](../index.md#transporter-alarms) — `LSH`, high level in the vessel
+
+A fault on one of the internal valves (`XV01`–`XV05`) or a Loading/Unloading timeout on `WT01` contributes to `internal_error` without an ID of its own at this level — see the [valve alarms](../../valves/index.md#valve-alarms) and the [load cell alarms](../../load-cells/index.md#load-cell-alarms) for the specific cause.
+
+### State Diagram
 
 ```mermaid
 stateDiagram-v2
@@ -230,17 +186,33 @@ stateDiagram-v2
     }
 ```
 
-### Output table by operating state
+| State | XV01 | XV02 | XV03 | XV04 | XV05 | XY | WT01 | Filter Cleaning |
+|-------|------|------|------|------|------|----|------|-----------------|
+| IDLE | FALSE | TRUE | FALSE | FALSE | FALSE | FALSE | — | FALSE |
+| FILLING | TRUE | TRUE | TRUE | FALSE | FALSE | FALSE | Loading | FALSE |
+| CLEANING | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | — | TRUE |
+| SEALING | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | — | FALSE |
+| PRESSURIZING | FALSE | FALSE | FALSE | TRUE | FALSE | TRUE | — | FALSE |
+| CONVEYING | FALSE | FALSE | FALSE | TRUE | TRUE | TRUE | Unloading | FALSE |
+| DEPRESSURIZING | FALSE | TRUE | FALSE | FALSE | FALSE | FALSE | — | FALSE |
+| FAULT | FALSE | TRUE | FALSE | TRUE | FALSE | FALSE | stop+reset | FALSE |
 
-| State | XV01 | XV02 | XV03 | XV04 | XV05 | XY | WT01 | OUT.filter_cleaner |
-|-------|------|------|------|------|------|----|------|--------------------|
-| IDLE | — | open | — | — | — | — | — | FALSE |
-| FILLING | open | open | open | — | — | — | Loading | FALSE |
-| CLEANING | — |open | open  | — | — | — | — | TRUE |
-| SEALING | — | — | — | — | — | — | — | FALSE |
-| PRESSURIZING | — | — | — | open | — | energised | — | FALSE |
-| CONVEYING | — | — | — | open | open | energised | Unloading | FALSE |
-| DEPRESSURIZING | — | open | — | — | — | — | — | FALSE |
-| FAULT | — | open | — | — | — | — | stop+reset | FALSE |
+### Entry Actions
 
-Valves not listed for a given state are closed (CMD.auto = FALSE). XV01–05 and XY each have their own sub-FB running continuously; the orchestrator writes only `CMD.auto`.
+| State reached | Entry action |
+|------------------|----------------------|
+| IDLE | `WT01.CMD.stop`/`CMD.reset` pulsed (stops a loading in progress, brings a paused unloading back to IDLE); `OUT.conveying_done` 1-scan pulse |
+| FILLING | `WT01.CMD.loading_start` pulsed |
+| SEALING | `OUT.loading_finished` 1-scan pulse |
+| CONVEYING | `WT01.CMD.unloading_start` pulsed |
+| DEPRESSURIZING | `WT01.CMD.stop` pulsed |
+
+### Timer
+
+| Timer | Active in state | Threshold (parameter) |
+|-------|------------------|------------------------|
+| `filter_cleaning_timer` | NORMAL/CLEANING | `SETTING.cleaning_timer` |
+| `pressurizing_timer` | NORMAL/PRESSURIZING | `SETTING.pressurizing_timeout` |
+| `depressurizing_timer` | NORMAL/DEPRESSURIZING | `SETTING.depressurizing_timeout` |
+
+XV01–05 and XY each have their own sub-FB controller always running; the outer block only writes `CMD.auto`.
