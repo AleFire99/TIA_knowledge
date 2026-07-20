@@ -23,8 +23,8 @@ tia-knowledge/
 │
 │  ── MANUAL ─────────────────────────────────────────────────────────────────
 ├── library/                     [H] TIA Portal global library binary
-│   └── AleFire-Library/
-│       └── AleFire-Library.al20     ← tracked in git; released as Gitea asset
+│   └── AleFire-Library_V21/
+│       └── AleFire-Library_V21.al21 ← tracked in git; released as Gitea asset
 ├── Library_export/              [H] staging project — clean after each export run
 │   └── Library_export.ap20
 ├── config.toml                  [H] TIA paths + sim_overrides
@@ -590,7 +590,7 @@ On every `release/<version>` merge to `main`:
 
 1. Tag `main`: `git tag v<version> && git push origin v<version>`
 2. Create release on Gitea from the tag
-3. Attach `library/AleFire-Library/AleFire-Library.al20` as downloadable binary asset
+3. Attach `library/AleFire-Library_V21/AleFire-Library_V21.al21` as downloadable binary asset
 4. Back-merge `main` → `develop`
 
 ### Archived
