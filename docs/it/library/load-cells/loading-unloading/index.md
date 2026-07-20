@@ -113,8 +113,8 @@ classDiagram
 |-----------|---------|-------------|
 | `SETTING.min_weight` | 0.0 | Soglia inferiore peso valido [kg] (usata anche per la transizione UNLOADING → PAUSED) |
 | `SETTING.max_weight` | 1000.0 | Soglia superiore peso valido [kg] |
-| `SETTING.loading_tail` | — | Anticipazione fine carico rispetto al setpoint [kg] |
-| `SETTING.unloading_tail` | — | Anticipazione fine scarico rispetto al setpoint [kg] |
+| `SETTING.loading_tail` | 0.0 | Anticipazione fine carico rispetto al setpoint [kg] |
+| `SETTING.unloading_tail` | 0.0 | Anticipazione fine scarico rispetto al setpoint [kg] |
 | `SETTING.loading_timeout` | T#10M | Durata massima ciclo LOADING prima di FAULT |
 | `SETTING.unloading_timeout` | T#10M | Durata massima ciclo UNLOADING prima di FAULT |
 
@@ -126,23 +126,19 @@ classDiagram
 
 #### FB Loading
 
-**NORMAL/IDLE** — Attende `CMD.loading_start` con peso valido (`NOT weight_invalid`). All'ingresso in IDLE: `BATCH.transferred := 0`, impulso `loading_finished`.
+Il ciclo riempie il contenitore fino a `loading_setpoint`, con un'anticipazione (`loading_tail`) che ferma il carico un po' prima del target per compensare il materiale ancora in caduta dopo l'interruzione del comando: senza questo margine il peso finale assestato supererebbe il setpoint. `BATCH.transferred` è ricalcolato ogni scan come differenza dal peso acquisito all'ingresso in `LOADING` (`weight_at_start`), clampato a 0 per evitare letture negative dovute a rumore/drift del sensore vicino allo zero.
 
-**NORMAL/LOADING** — Calcola ogni scan: `BATCH.transferred := current_weight − weight_at_start` (clampato a 0). Torna a IDLE quando `CMD.stop OR (current_weight ≥ loading_setpoint − loading_tail)`. `weight_at_start` viene acquisito all'ingresso in LOADING.
-
-**FAULT** — Si entra da NORMAL quando `internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error`. `CMD.ack AND NOT internal_error` riporta a NORMAL, ripartendo da IDLE.
+Un guasto (`internal_error`: timeout, errore trasmettitore o d'impianto) porta sempre a `FAULT`; la conferma (`CMD.ack`) riparte sempre da `IDLE` — un carico interrotto da guasto non viene ripreso a metà, si riavvia da zero.
 
 #### FB Unloading
 
-**IDLE** — Attende `CMD.unloading_start` con peso valido. All'ingresso in IDLE: `BATCH.transferred := 0`, impulso `unloading_finished`.
+Il ciclo scarica il contenitore fino a `unloading_setpoint`, con la stessa anticipazione (`unloading_tail`) di Loading: il cutoff arriva un po' prima del target per compensare il materiale ancora in transito dopo l'interruzione del comando.
 
-**UNLOADING** — Calcola ogni scan: `BATCH.transferred := weight_at_start − current_weight` (clampato a 0). Priorità delle uscite, in ordine: `internal_error` → FAULT; altrimenti `CMD.stop OR current_weight ≤ min_weight` → PAUSED; altrimenti `transferred ≥ unloading_setpoint − unloading_tail` → IDLE.
+A differenza di Loading, lo scarico può essere sospeso e ripreso invece che solo avviato/fermato. Due condizioni distinte portano a `PAUSED` invece di terminare il ciclo: l'operatore preme `CMD.stop`, oppure il peso scende fino a `min_weight` — la stessa soglia usata per `weight_invalid`, qui applicata come limite di sicurezza per non continuare a scaricare da una lettura ormai vicina al fondo scala (rischio di lettura inaffidabile o contenitore vuoto).
 
-Alla ripresa (PAUSED → UNLOADING): `weight_at_start := current_weight + transferred` — l'ancora viene ricalcolata così il contatore `transferred` prosegue senza scatti.
+Alla ripresa (`PAUSED` → `UNLOADING`), l'ancora `weight_at_start` non viene semplicemente riletta dal peso corrente: viene ricalcolata come `current_weight + transferred`, dove `transferred` è il valore congelato durante la pausa. Così il calcolo di `transferred` nel prossimo scan (`weight_at_start − current_weight`) riparte esattamente dal valore congelato, senza un salto visibile all'operatore.
 
-**PAUSED** — `BATCH.transferred` congelato. `CMD.unloading_start` riprende (→ UNLOADING); `CMD.reset` torna a IDLE.
-
-**FAULT** — `internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error`. `CMD.ack` passa a PAUSED (non direttamente a IDLE).
+Un guasto (`internal_error`) porta sempre a `FAULT`. Ma la conferma (`CMD.ack`) riporta a `PAUSED`, non a `IDLE` come in Loading: un guasto a metà scarico non deve far perdere il progresso del batch già trasferito. L'operatore decide poi se riprendere lo scarico o abbandonarlo del tutto con `CMD.reset` (torna a `IDLE`).
 
 ### Allarmi
 

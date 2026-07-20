@@ -255,6 +255,17 @@ here, not in Panoramica, even for simple atomic modules. When trimming an existi
 Panoramica, move the displaced operating-principle sentence to the top of Funzionamento
 rather than deleting it.
 
+**Funzionamento explains the process and the reasoning behind it, not a second copy of the
+state diagram.** Diagramma di stato (mermaid + state table) already shows every transition
+mechanically — a Funzionamento that just walks "State X — does Y, goes to Z when W" restates
+that with no new information. Instead explain *why* a parameter or formula is shaped the way
+it is: what a tail/anticipation parameter compensates for, why a value is clamped, why an
+anchor gets recomputed on resume instead of just reread, why two sibling FSMs recover from
+FAULT differently. Ground this in the raw source's own comments where they exist (e.g.
+`Loading.s7dcl`/`Unloading.s7dcl`'s clamp-to-zero and resume-anchor comments) — state names
+can still appear inline for clarity, but the paragraph should be organized around the process
+narrative, not a per-state walkthrough.
+
 **Allarmi is its own heading again, omit-if-empty** (like Parametri) — it was briefly folded
 into Funzionamento as a sub-heading with no heading of its own, which made that heading
 dishonest (a "Funzionamento" section whose tail was just an alarm-ID bullet list, no behavior

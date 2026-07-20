@@ -1,8 +1,8 @@
 ﻿LibraryType:
   Guid: a4991cac-abd8-44c4-a0af-ef3dc096af9c
 LibraryVersion:
-  VersionNumber: 1.0.0
+  VersionNumber: 1.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated scale UDT
+    en-US: 'Replaced 16#4 with 16#2 for auto tare'

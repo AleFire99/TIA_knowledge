@@ -17,7 +17,7 @@ FUNCTION "Pavone_DAT_1400" : Void
         magnitude : Real;
     END_VAR
     VAR CONSTANT
-        ZERO_CALIBRATION : Word := 16#4;
+        ZERO_CALIBRATION : Word := 16#2;
     END_VAR
 
     { S7_Language := "SCL" }
