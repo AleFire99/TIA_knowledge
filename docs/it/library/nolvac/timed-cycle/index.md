@@ -106,7 +106,7 @@ state NOLVAC{
         ACTIVE --> IDLE : !desired_command
     }
     NORMAL_BEHAVIOUR --> FAULT : internal_error
-    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error → IDLE
 }
 ```
 
@@ -125,5 +125,5 @@ internal_error := XV01.STATUS.is_fault;
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |
 |-------|------------------------|---------------------|
-| `suction_timer` | ACTIVE/SUCTION (in NORMAL) | `SETTING.suction_time` |
-| `cleaning_timer` | ACTIVE/CLEANING (in NORMAL) | `SETTING.cleaning_time` |
+| `suction_timer` | `SUCTION` (in `NORMAL_BEHAVIOUR.ACTIVE`) | `SETTING.suction_time` |
+| `cleaning_timer` | `CLEANING` (in `NORMAL_BEHAVIOUR.ACTIVE`) | `SETTING.cleaning_time` |

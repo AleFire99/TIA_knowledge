@@ -166,9 +166,10 @@ A fault on one of the internal valves (`XV01`–`XV05`) or a Loading/Unloading t
 
 ```mermaid
 stateDiagram-v2
+state SEALED_INLET_TRANSPORTER{
     [*] --> NORMAL
-    NORMAL --> FAULT : internal_error OR pressurization_timeout OR depressurization_timeout
-    FAULT --> NORMAL : CMD.ack AND NOT internal_error → IDLE
+    NORMAL --> FAULT : internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> IDLE
@@ -184,7 +185,17 @@ stateDiagram-v2
         CONVEYING --> DEPRESSURIZING : unloading_finished OR is_paused OR CMD.stop
         DEPRESSURIZING --> IDLE : depressurized
     }
+}
 ```
+
+```Pascal
+all_loading_closed := XV01.STATUS.is_closed AND XV02.STATUS.is_closed AND XV03.STATUS.is_closed;
+pressure_gate_met := PT01.Scaled_value >= PT02.Scaled_value + SETTING.pressure_delta;
+depressurized := PT01.Scaled_value <= SETTING.vessel_empty_thresh AND PT02.Scaled_value <= SETTING.line_empty_thresh;
+internal_error := XV01.STATUS.is_fault OR XV02.STATUS.is_fault OR XV03.STATUS.is_fault OR XV04.STATUS.is_fault OR XV05.STATUS.is_fault OR WT01.ALARMS.loading_timeout OR WT01.ALARMS.unloading_timeout OR NOT PSL OR LSH OR ALARMS.pressurization_timeout OR ALARMS.depressurization_timeout;
+```
+
+`pressurization_timeout`/`depressurization_timeout` are not a second, independent condition on the NORMAL → FAULT edge — both are already OR'd into `internal_error`'s own expression above, so the single `internal_error` guard already covers them.
 
 | State | XV01 | XV02 | XV03 | XV04 | XV05 | XY | WT01 | Filter Cleaning |
 |-------|------|------|------|------|------|----|------|-----------------|

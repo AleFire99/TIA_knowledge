@@ -97,8 +97,8 @@ In `FAULT`, `XY` is deliberately energized (unlocked): a PLC fault must never tr
 ```mermaid
 stateDiagram-v2
 state GATE_DOOR {
-    [*] --> NORMAL_BEHAVIOUR
-    state NORMAL_BEHAVIOUR {
+    [*] --> NORMAL
+    state NORMAL {
         [*] --> CLOSED : ZSL
         [*] --> OPEN : !ZSL
 
@@ -108,13 +108,13 @@ state GATE_DOOR {
         CLOSING --> OPEN : CMD.open
         CLOSING --> CLOSED : ZSL
     }
-    NORMAL_BEHAVIOUR --> FAULT : internal_error
-    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+    NORMAL --> FAULT : internal_error
+    FAULT --> NORMAL : ack & !internal_error
 }
 ```
 
 ```Pascal
-internal_error := failed_to_unlock;
+internal_error := ALARMS.failed_to_unlock;
 ```
 
 | State | `XY` | Description |
@@ -123,7 +123,7 @@ internal_error := failed_to_unlock;
 | OPENING | TRUE | Unlock commanded, not yet confirmed |
 | OPEN | TRUE | Unlock confirmed — the physical position beyond this point is known only to the operator |
 | CLOSING | FALSE | Re-lock commanded, waiting for the operator to physically close the leaf again — no deadline, this is normal wait |
-| FAULT | TRUE | Fault — deliberately unlocks (see above) |
+| FAULT | TRUE | Fault — `XY` deliberately unlocked (see above) |
 
 ### Timer
 

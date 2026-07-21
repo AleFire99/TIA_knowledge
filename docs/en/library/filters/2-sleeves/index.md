@@ -95,15 +95,19 @@ In **manual mode** (`manual_mode = TRUE`), the operator enables cleaning via `ma
 stateDiagram-v2
 state FILTER{
     [*] --> IDLE
-    IDLE --> ACTIVE : enable command
-    ACTIVE --> IDLE : command removed
+    IDLE --> ACTIVE : desired_command
+    ACTIVE --> IDLE : !desired_command
 
     state ACTIVE {
         [*] --> PULSING
-        PULSING --> WAITING : pulse timer expired
-        WAITING --> PULSING : interval timer expired (switch sleeve)
+        PULSING --> WAITING : pulse_timer expired
+        WAITING --> PULSING : interval_timer expired (switches sleeve)
     }
 }
+```
+
+```Pascal
+desired_command := (manual_mode AND manual) OR (NOT manual_mode AND auto);
 ```
 
 | State | `XYA` | `XYB` | Description |

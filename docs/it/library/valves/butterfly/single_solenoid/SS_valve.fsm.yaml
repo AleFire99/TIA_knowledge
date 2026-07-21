@@ -31,7 +31,7 @@ states:
     description: fault; awaiting ack with valid sensors
 
 transitions:
-  - { from: "[*]", to: NORMAL }
+  - { from: "[*]", to: NORMAL, guard: "ZSL XOR ZSH on first scan" }
   - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT

@@ -161,16 +161,20 @@ state LOADING_FB{
     state NORMAL {
         [*] --> IDLE
         IDLE --> LOADING : loading_start & !weight_invalid
-        LOADING --> IDLE : stop | peso >= setpoint - tail
+        LOADING --> IDLE : stop | current_weight >= loading_setpoint - loading_tail
     }
 }
 ```
 
+```Pascal
+internal_error := loading_timer.Q OR scale.IN.scale_error OR scale.IN.plant_error;
+```
+
 | Stato | Descrizione |
 |-------|-------------|
-| FAULT | `internal_error` attivo; attende `ack` |
-| NORMAL/IDLE | In attesa; `transferred=0` all'ingresso |
-| NORMAL/LOADING | Carico attivo; `transferred` aggiornato ogni scan |
+| NORMAL/IDLE | In attesa; `transferred` azzerato all'ingresso |
+| NORMAL/LOADING | Carico attivo; `transferred` ricalcolato ogni scan |
+| FAULT | `internal_error` attivo; `ack` riporta sempre a NORMAL/IDLE |
 
 #### Unloading
 
@@ -180,8 +184,8 @@ state UNLOADING_FB{
     [*] --> IDLE
 
     IDLE --> UNLOADING : unloading_start & !weight_invalid
-    UNLOADING --> IDLE : transferred >= setpoint - tail
-    UNLOADING --> PAUSED : stop | peso <= min_weight
+    UNLOADING --> IDLE : transferred >= unloading_setpoint - unloading_tail
+    UNLOADING --> PAUSED : stop | current_weight <= min_weight
     UNLOADING --> FAULT : internal_error
     PAUSED --> UNLOADING : unloading_start
     PAUSED --> IDLE : reset
@@ -189,12 +193,16 @@ state UNLOADING_FB{
 }
 ```
 
+```Pascal
+internal_error := unloading_timer.Q OR scale.IN.scale_error OR scale.IN.plant_error;
+```
+
 | Stato | Descrizione |
 |-------|-------------|
-| FAULT | `internal_error` attivo; `ack` → PAUSED (non IDLE) |
-| IDLE | In attesa; `transferred=0` all'ingresso |
-| UNLOADING | Scarico attivo; `transferred` aggiornato ogni scan |
-| PAUSED | Batch sospeso; `transferred` congelato |
+| IDLE | In attesa; `transferred` azzerato all'ingresso |
+| UNLOADING | Scarico attivo; `transferred` ricalcolato ogni scan |
+| PAUSED | Batch sospeso; `transferred` congelato all'ultimo valore calcolato |
+| FAULT | `internal_error` attivo; `ack` riporta a PAUSED, non a IDLE |
 
 ### Azioni di ingresso
 

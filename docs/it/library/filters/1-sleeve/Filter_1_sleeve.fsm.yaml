@@ -30,6 +30,10 @@ transitions:
   - { from: ACTIVE.WAITING, to: ACTIVE.PULSING, guard: interval_timer.Q }
   - { from: ACTIVE.PULSING, to: ACTIVE.WAITING, guard: pulse_timer.Q }
 
+guard_formulas:
+  - name: desired_command
+    expression: (manual_mode AND manual) OR (NOT manual_mode AND auto)
+
 timers:
   - name: interval_timer
     active_states: [ACTIVE.WAITING]
@@ -41,6 +45,5 @@ timers:
     raises: feeds the PULSING -> WAITING guard, ending the pulse
 
 notes:
-  - "ACTIVE always initializes its substate to WAITING — both on first scan and every time IDLE -> ACTIVE fires — so the cycle always opens with an interval wait before the first pulse, never an immediate pulse."
-  - "desired_command is a mux, not a plain input: (manual_mode AND manual) OR (NOT manual_mode AND auto) — CMD.manual_mode selects which of CMD.manual/CMD.auto drives the FSM, same arbitration pattern used across the rest of the valve/filter family."
+  - "ACTIVE always initializes its substate to WAITING — both on first scan and every time IDLE -> ACTIVE fires — so the cycle always opens with an interval wait before the first pulse, never an immediate pulse. This is a real behavioral difference from Filter_2_sleeves, which initializes to PULSING instead — confirmed in both FBs' raw source, not an authoring inconsistency."
   - "No ALARMS struct exists on this UDT: the cleaning cycle is open-loop (no position/pressure feedback on the sleeve), so there is no sensor state to base a fault detection on."

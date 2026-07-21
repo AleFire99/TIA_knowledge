@@ -105,7 +105,7 @@ desired_open_command := manual_mode ? manual : auto
 ```mermaid
 stateDiagram-v2
 state SS_VALVE{
-    [*] --> NORMAL
+    [*] --> NORMAL : ZSL XOR ZSH on first scan
     [*] --> FAULT : ambiguous sensors on first scan
 
     NORMAL --> FAULT : internal_error

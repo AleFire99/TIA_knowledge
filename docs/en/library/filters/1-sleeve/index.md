@@ -87,8 +87,8 @@ In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. 
 
 ```mermaid
 stateDiagram-v2
+state FILTER_1_SLEEVE{
     [*] --> IDLE
-
     IDLE --> ACTIVE : enable command
     ACTIVE --> IDLE : disable command
 
@@ -97,6 +97,11 @@ stateDiagram-v2
         WAITING --> PULSING : interval_timer expired
         PULSING --> WAITING : pulse_timer expired
     }
+}
+```
+
+```Pascal
+desired_command := (manual_mode AND manual) OR (NOT manual_mode AND auto);
 ```
 
 | State | Sub-state | `XY` | Description |

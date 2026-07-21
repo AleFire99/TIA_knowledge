@@ -95,15 +95,19 @@ In **modalità manuale** (`manual_mode = TRUE`), l'operatore abilita la pulizia 
 stateDiagram-v2
 state FILTER{
     [*] --> IDLE
-    IDLE --> ACTIVE : comando abilitazione
-    ACTIVE --> IDLE : comando rimosso
+    IDLE --> ACTIVE : desired_command
+    ACTIVE --> IDLE : !desired_command
 
     state ACTIVE {
         [*] --> PULSING
-        PULSING --> WAITING : timer impulso scaduto
-        WAITING --> PULSING : timer intervallo scaduto (cambia manica)
+        PULSING --> WAITING : pulse_timer scaduto
+        WAITING --> PULSING : interval_timer scaduto (cambia manica)
     }
 }
+```
+
+```Pascal
+desired_command := (manual_mode AND manual) OR (NOT manual_mode AND auto);
 ```
 
 | Stato | `XYA` | `XYB` | Descrizione |
