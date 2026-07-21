@@ -4,8 +4,23 @@
   "title": "AleFire-Library FB FSM definition",
   "description": "One file per controlling FB (not per UDT/device page). Captures states, transitions, guards, timers, entry actions and free-text notes for a single finite state machine, sourced from the FB's .s7dcl. Devices with a single FSM get one file; load-cells' Loading/Unloading FBs each get their own sibling file in the same device doc directory. Free text is English regardless of docs locale — IT/EN prose is generated from it, not stored per-locale.",
   "type": "object",
-  "required": ["schema_version", "fb", "udt", "source", "label", "states", "transitions"],
+  "required": ["schema_version", "fb", "udt", "source"],
   "additionalProperties": false,
+  "if": {
+    "required": ["delegates"],
+    "properties": {
+      "delegates": {
+        "type": "object",
+        "required": ["fsm"],
+        "properties": { "fsm": { "type": "string" } }
+      }
+    }
+  },
+  "then": {},
+  "else": {
+    "required": ["label", "states", "transitions"],
+    "$comment": "label/states/transitions are only required when this FB doesn't delegate its whole FSM to a child instance (delegates.fsm) — a fully-delegated FB (e.g. Sigillata SS -> XV) has nothing of its own to render."
+  },
   "properties": {
     "schema_version": {
       "type": "string",

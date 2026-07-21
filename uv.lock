@@ -117,11 +117,15 @@ name = "tia-knowledge"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pyyaml" },
     { name = "zensical" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "zensical", specifier = ">=0.0.40" }]
+requires-dist = [
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "zensical", specifier = ">=0.0.40" },
+]
 
 [[package]]
 name = "tomli"
