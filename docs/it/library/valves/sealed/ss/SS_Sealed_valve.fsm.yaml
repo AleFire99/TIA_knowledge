@@ -1,0 +1,28 @@
+# SS_Sealed_valve — see raw/Types/99 - Library/Objects/Valves/Sealed/SS/SS_Sealed_valve.s7dcl
+# and docs/it/library/valves/sealed/ss/index.md for the source and hand-written doc this mirrors.
+#
+# Ground-truth check against raw/.../SS_Sealed_valve.s7dcl and UDT_SS_Sealed_Valve.s7dcl:
+# the FB has no TON_TIME of its own, no own STATUS.state/normal_state computation (STATUS
+# is a direct field-for-field copy of XV.STATUS every scan: `#XV.STATUS := #XV.DEVICES.XV.STATUS;`),
+# and no state logic beyond one stateless combinational rule for the seal solenoid
+# (`XY_seal.CMD.auto := XV.STATUS.is_closed`). This matches the existing doc page's own
+# "Diagramma di stato" section, which states the state machine is entirely delegated to XV
+# with no states of its own — and matches schema/fsm.schema.json's own $comment, which names
+# this exact device ("Sigillata SS -> XV") as the canonical example of full FSM delegation.
+# So this file uses delegates.fsm (whole-FSM delegation), not delegates.timer alone — a
+# timer-only delegation would imply the FB owns states/transitions of its own gated by a
+# child's timer, which is not the case here: there is no own diagram to render at all.
+
+schema_version: "1.0"
+fb: SS_Sealed_valve
+udt: UDT_SS_Sealed_Valve
+source: Types/99 - Library/Objects/Valves/Sealed/SS/SS_Sealed_valve.s7dcl
+
+delegates:
+  fsm: XV
+
+notes:
+  - STATUS is a direct, full mirror of XV.STATUS every scan (state, normal_state, is_fault, is_closed, is_opening, is_open, is_closing) — this FB defines no state machine of its own.
+  - The seal solenoid (XY_seal) is driven by one stateless combinational rule, not a state machine — it is excited automatically as soon as XV.STATUS.is_closed is confirmed TRUE, and de-excited immediately once XV leaves CLOSED (OPENING/OPEN/CLOSING/FAULT all read as FALSE).
+  - SETTING.actuator_timeout is forwarded to XV.SETTING.actuator_timeout every scan; this FB has no TON_TIME of its own, so its own actuator timing is delegated to XV's movement_timer as a direct consequence of delegating the whole FSM to XV — not a separate, timer-only delegation case.
+  - CMD.ack is forwarded to XV.CMD.ack. This FB has no own ALARMS struct — alarms remain visible only through the embedded XV instance.

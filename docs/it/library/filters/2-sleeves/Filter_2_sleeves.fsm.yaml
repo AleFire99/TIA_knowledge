@@ -1,0 +1,53 @@
+# Filter_2_sleeves (2-sleeve filter cleaner) — see raw/Types/99 - Library/Objects/
+# Filters/2-sleeves/Filter_2_sleeves.s7dcl and docs/it/library/filters/2-sleeves/index.md
+# for the source and hand-written doc this mirrors.
+
+schema_version: "1.0"
+fb: Filter_2_sleeves
+udt: UDT_Filter_2_sleeves
+source: Types/99 - Library/Objects/Filters/2-sleeves/Filter_2_sleeves.s7dcl
+
+label: FILTER
+
+states:
+  - id: IDLE
+    outputs: { XYA: false, XYB: false }
+    description: standby, no cleaning, no solenoid energized
+  - id: ACTIVE
+    children:
+      - id: PULSING
+        outputs: { XYA: "true when active_sleeve = 0", XYB: "true when active_sleeve = 1" }
+        description: air pulse into the currently active sleeve
+      - id: WAITING
+        outputs: { XYA: false, XYB: false }
+        description: both solenoids de-energized, interval between pulses
+
+transitions:
+  - { from: "[*]", to: IDLE }
+  - { from: IDLE, to: ACTIVE, guard: desired_command }
+  - { from: ACTIVE, to: IDLE, guard: "!desired_command" }
+  - { from: "[*]", to: ACTIVE.PULSING }
+  - { from: ACTIVE.PULSING, to: ACTIVE.WAITING, guard: pulse_timer.Q }
+  - from: ACTIVE.WAITING
+    to: ACTIVE.PULSING
+    guard: interval_timer.Q
+    note: also toggles active_sleeve via (active_sleeve + 1) MOD 2, switching which solenoid pulses next
+
+guard_formulas:
+  - name: desired_command
+    expression: (manual_mode AND manual) OR (NOT manual_mode AND auto)
+
+timers:
+  - name: pulse_timer
+    active_states: [ACTIVE.PULSING]
+    param: SETTING.pulse_duration
+    raises: feeds the guard for ACTIVE.PULSING -> ACTIVE.WAITING
+  - name: interval_timer
+    active_states: [ACTIVE.WAITING]
+    param: SETTING.interval_duration
+    raises: feeds the guard for ACTIVE.WAITING -> ACTIVE.PULSING, which also switches active_sleeve
+
+notes:
+  - No position feedback exists in this UDT (no sensor fields in DEVICES/STATUS) — the system runs open-loop, with no FAULT state or sensor-mismatch guard like the valve FBs.
+  - "desired_command is a VAR_TEMP recomputed every scan from CMD.manual_mode ? CMD.manual : CMD.auto, not itself a persistent SETTING/STATUS field."
+  - active_sleeve alternates 0/1 via (active_sleeve + 1) MOD 2 each time WAITING's interval_timer expires, so XYA/XYB pulse in strict alternation, never simultaneously.

@@ -1,0 +1,59 @@
+# Per-device FSM definition for SS_valve (single-solenoid SS butterfly valve).
+# Verified line-by-line against raw/Types/99 - Library/Objects/Valves/Butterfly - gate/SS/
+# SS_valve.s7dcl and UDT_SS_Valve.s7dcl, and cross-checked against
+# docs/it/library/valves/butterfly/single_solenoid/index.md's Diagramma di stato and
+# Timer sections. No drift found against schema/fsm.example.yaml, which this mirrors.
+
+schema_version: "1.0"
+fb: SS_valve
+udt: UDT_SS_Valve
+source: Types/99 - Library/Objects/Valves/Butterfly - gate/SS/SS_valve.s7dcl
+
+label: SS_VALVE
+
+states:
+  - id: NORMAL
+    children:
+      - id: CLOSED
+        outputs: { XY: false }
+        description: disc closed, spring-held
+      - id: OPENING
+        outputs: { XY: true }
+        description: actuator pushes disc toward open
+      - id: OPEN
+        outputs: { XY: true }
+        description: disc open, solenoid holds against the spring
+      - id: CLOSING
+        outputs: { XY: false }
+        description: spring returns disc to closed
+  - id: FAULT
+    outputs: { XY: false }
+    description: fault; awaiting ack with valid sensors
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: ack & !internal_error
+    note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
+  - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
+  - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: desired_open_command }
+  - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }
+  - { from: NORMAL.CLOSING, to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
+
+guard_formulas:
+  - name: internal_error
+    expression: sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open
+
+timers:
+  - name: movement_timer
+    active_states: [NORMAL.OPENING, NORMAL.CLOSING]
+    param: SETTING.actuator_timeout
+    raises: ALARMS.failed_to_open when stuck in OPENING, ALARMS.failed_to_close when stuck in CLOSING
+
+notes:
+  - movement_timer ORs two sibling states (OPENING, CLOSING) — don't assume single-state activity from the timer's name alone.

@@ -1,0 +1,60 @@
+# Nolvac — Ciclo a Tempo. See raw/Types/99 - Library/Objects/Nolvac/Nolvac.s7dcl
+# and docs/it/library/nolvac/timed-cycle/index.md for the source and hand-written
+# doc this mirrors.
+
+schema_version: "1.0"
+fb: Nolvac
+udt: UDT_Nolvac
+source: Types/99 - Library/Objects/Nolvac/Nolvac.s7dcl
+
+label: NOLVAC
+
+states:
+  - id: NORMAL_BEHAVIOUR
+    children:
+      - id: IDLE
+        outputs: { XV01: false, XY02: false, XY03: false }
+        description: standby, waiting for the start command
+      - id: ACTIVE
+        children:
+          - id: SUCTION
+            outputs: { XV01: false, XY02: false, XY03: true }
+            description: material conveying suction path energized
+          - id: CLEANING
+            outputs: { XV01: true, XY02: true, XY03: false }
+            description: internal filter backwash, inlet valve opens to admit purge air
+  - id: FAULT
+    outputs: { XY02: false, XY03: false }
+    description: fault; awaiting operator acknowledgment
+
+transitions:
+  - { from: "[*]", to: NORMAL_BEHAVIOUR }
+  - { from: NORMAL_BEHAVIOUR, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL_BEHAVIOUR
+    guard: ack & !internal_error
+    note: recovery always re-enters NORMAL_BEHAVIOUR.IDLE, never the state active before the fault
+  - { from: "[*]", to: NORMAL_BEHAVIOUR.IDLE }
+  - { from: NORMAL_BEHAVIOUR.IDLE, to: NORMAL_BEHAVIOUR.ACTIVE, guard: desired_command }
+  - { from: NORMAL_BEHAVIOUR.ACTIVE, to: NORMAL_BEHAVIOUR.IDLE, guard: "!desired_command" }
+  - { from: "[*]", to: NORMAL_BEHAVIOUR.ACTIVE.SUCTION }
+  - { from: NORMAL_BEHAVIOUR.ACTIVE.SUCTION, to: NORMAL_BEHAVIOUR.ACTIVE.CLEANING, guard: suction_timer.Q }
+  - { from: NORMAL_BEHAVIOUR.ACTIVE.CLEANING, to: NORMAL_BEHAVIOUR.ACTIVE.SUCTION, guard: cleaning_timer.Q }
+
+guard_formulas:
+  - name: internal_error
+    expression: XV01.STATUS.is_fault
+
+timers:
+  - name: suction_timer
+    active_states: [NORMAL_BEHAVIOUR.ACTIVE.SUCTION]
+    param: SETTING.suction_time
+  - name: cleaning_timer
+    active_states: [NORMAL_BEHAVIOUR.ACTIVE.CLEANING]
+    param: SETTING.cleaning_time
+
+notes:
+  - "desired_command comes from CMD.manual when CMD.manual_mode is TRUE, otherwise from CMD.auto — the FB has no direct 'run' command of its own, it always reads one of the two depending on the mode flag."
+  - "The cycle has no level or material feedback of any kind: SUCTION and CLEANING durations are purely time-based (SETTING.suction_time/cleaning_time), never terminated early or extended by a sensor reading."
+  - "Removing desired_command at any point during ACTIVE (either sub-state) returns immediately to IDLE and de-energizes both XY02 and XY03 — there is no graceful finish-current-phase behavior."
+  - "internal_error is a straight pass-through of XV01.STATUS.is_fault: XY02/XY03 are plain solenoid valves with no feedback sensors of their own, so XV01 is the only possible fault source for this FB."

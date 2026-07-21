@@ -1,0 +1,54 @@
+schema_version: "1.0"
+fb: Pinch_valve
+udt: UDT_Pinch_Valve
+source: Types/99 - Library/Objects/Valves/Pinch/Pinch_valve.s7dcl
+
+label: PINCH_VALVE
+
+states:
+  - id: NORMAL
+    children:
+      - id: CLOSED
+        outputs: { XY: true }
+        description: tube pinched, flow blocked
+      - id: OPENING
+        outputs: { XY: false }
+        description: actuator releases the tube
+      - id: OPEN
+        outputs: { XY: false }
+        description: tube free, flow allowed
+      - id: CLOSING
+        outputs: { XY: true }
+        description: actuator pinches the tube
+  - id: FAULT
+    outputs: { XY: false }
+    description: XY deliberately de-energized (tube released) — avoids leaving the tube pinched during the fault, preventing material wear; awaiting operator ack
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: ack & !internal_error
+    note: destination normal_state (CLOSED vs OPEN) is re-derived from live PSL, not a fixed prior state
+  - { from: "[*]", to: NORMAL.CLOSED, guard: PSL }
+  - { from: "[*]", to: NORMAL.OPEN, guard: "!PSL" }
+  - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: desired_open_command }
+  - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "!PSL" }
+  - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }
+  - { from: NORMAL.CLOSING, to: NORMAL.CLOSED, guard: PSL }
+
+guard_formulas:
+  - name: internal_error
+    expression: sensor_mismatch OR failed_to_close OR failed_to_open
+
+timers:
+  - name: movement_timer
+    active_states: [NORMAL.OPENING, NORMAL.CLOSING]
+    param: SETTING.actuator_timeout
+    raises: ALARMS.failed_to_open when stuck in OPENING, ALARMS.failed_to_close when stuck in CLOSING
+
+notes:
+  - the valve is normally open — PSL is the sole position sensor (confirms the closed state only), so there is no sensor_conflict counterpart alarm here unlike two-sensor valves.
+  - FAULT deliberately de-energizes XY regardless of what was commanded before the fault, to avoid pinching the tube indefinitely and accelerating material wear.
+  - recovery from FAULT re-derives normal_state from live PSL exactly like the first-scan initialization, not a stored prior state.
