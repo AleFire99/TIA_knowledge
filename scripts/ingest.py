@@ -38,7 +38,7 @@ REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 import config as cfg
 
-MANIFEST_VERSION = "1.0.0"
+MANIFEST_VERSION = "2.0.0"
 
 # Matches _.TypeName or just TypeName (VCI uses _.prefix for cross-references)
 _TYPE_RE = re.compile(r'"([^"]+)"|(?:_\.)?(\w+)')
@@ -261,6 +261,9 @@ def parse_fb(path: Path) -> dict | None:
 
     fb_m = re.search(r'^FUNCTION_BLOCK\s+"([^"]+)"', text, re.MULTILINE)
     if not fb_m:
+        # Stateless FC — same VAR_IN_OUT-param idiom, no instance data of its own.
+        fb_m = re.search(r'^FUNCTION\s+"([^"]+)"', text, re.MULTILINE)
+    if not fb_m:
         return None
     fb_name = fb_m.group(1)
 
@@ -322,26 +325,27 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict],
     for fb in fbs:
         udt_key = fb["udt_type"]
         if udt_key not in fb_section:
-            fb_section[udt_key] = {"ctrl": None, "sim": None}
+            fb_section[udt_key] = {"ctrl": [], "sim": None}
         entry = {"name": fb["name"], "param": fb["param_name"]}
         if fb["is_sim"]:
             fb_section[udt_key]["sim"] = entry
         else:
-            fb_section[udt_key]["ctrl"] = entry
+            fb_section[udt_key]["ctrl"].append(entry)
 
     for override in sim_overrides:
         udt_key = override["udt"]
         if udt_key not in fb_section:
-            fb_section[udt_key] = {"ctrl": None, "sim": None}
+            fb_section[udt_key] = {"ctrl": [], "sim": None}
         if fb_section[udt_key]["sim"] is None:
             fb_section[udt_key]["sim"] = {"name": override["name"], "param": override["param"]}
 
     for override in (ctrl_overrides or []):
         udt_key = override["udt"]
         if udt_key not in fb_section:
-            fb_section[udt_key] = {"ctrl": None, "sim": None}
-        if fb_section[udt_key]["ctrl"] is None:
-            fb_section[udt_key]["ctrl"] = {"name": override["name"], "param": override["param"]}
+            fb_section[udt_key] = {"ctrl": [], "sim": None}
+        already = any(c["name"] == override["name"] for c in fb_section[udt_key]["ctrl"])
+        if not already:
+            fb_section[udt_key]["ctrl"].append({"name": override["name"], "param": override["param"]})
 
     return {
         "manifest_version": MANIFEST_VERSION,
@@ -396,12 +400,16 @@ def main() -> None:
     if s7dcl_files:
         for f in s7dcl_files:
             text = f.read_text(encoding="utf-8-sig")
-            if "FUNCTION_BLOCK" in text:
+            if "FUNCTION" in text:
                 fb = parse_fb(f)
                 if fb:
                     fbs.append(fb)
+                else:
+                    print(f"  [WARN] Unrecognized FUNCTION/FUNCTION_BLOCK layout, skipped: {f}")
             elif "TYPE" in text:
                 udts.append(parse_udt(f))
+            else:
+                print(f"  [WARN] Unrecognized .s7dcl content (no FUNCTION_BLOCK/FUNCTION/TYPE), skipped: {f}")
     else:
         # Fallback: old ExternalSource format
         udts = [parse_udt(f) for f in udt_files]

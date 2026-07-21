@@ -1,11 +1,11 @@
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "2.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-06-29T12:46:55Z",
+  "generated_at": "2026-07-21T13:10:35Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
-      "label": "",
+      "label": "Analogic signal",
       "has_out": false,
       "cmd_ack": false,
       "cmd_manual_mode": false,
@@ -27,22 +27,6 @@
           "description": ""
         }
       }
-    },
-    "UDT_DIGITAL_OUTPUT": {
-      "description": "Types / 99 - Library / Objects / Diverters / Plug_type_diverter",
-      "label": "",
-      "has_out": false,
-      "cmd_ack": false,
-      "cmd_manual_mode": false,
-      "devices": {}
-    },
-    "UDT_PTD_IO": {
-      "description": "First version",
-      "label": "Plug-type diverter",
-      "has_out": false,
-      "cmd_ack": false,
-      "cmd_manual_mode": false,
-      "devices": {}
     },
     "UDT_Filter_1_sleeve": {
       "description": "Uniformed filter states with other objects",
@@ -75,10 +59,10 @@
       }
     },
     "UDT_Gate_Door": {
-      "description": "Added automatic closing timeout",
+      "description": "Updated UDT",
       "label": "Gate / door",
       "has_out": false,
-      "cmd_ack": false,
+      "cmd_ack": true,
       "cmd_manual_mode": false,
       "devices": {
         "ZSL": {
@@ -93,7 +77,7 @@
     },
     "UDT_Pavone_IN": {
       "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
-      "label": "",
+      "label": "Pavone DAT 1400 (input)",
       "has_out": false,
       "cmd_ack": false,
       "cmd_manual_mode": false,
@@ -101,14 +85,14 @@
     },
     "UDT_Pavone_OUT": {
       "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
-      "label": "",
+      "label": "Pavone DAT 1400 (output)",
       "has_out": false,
       "cmd_ack": false,
       "cmd_manual_mode": false,
       "devices": {}
     },
     "UDT_Load_cells": {
-      "description": "Added flags for loaded finished and unloading finished routines",
+      "description": "Added layer in loading FSM",
       "label": "Load cells",
       "has_out": false,
       "cmd_ack": true,
@@ -137,7 +121,7 @@
       }
     },
     "UDT_An_Pipeline": {
-      "description": "Types / 99 - Library / Objects / Pipeline / Analogic",
+      "description": "Updated comments and added tag in alarm",
       "label": "Pipeline (analogic)",
       "has_out": false,
       "cmd_ack": false,
@@ -150,7 +134,7 @@
       }
     },
     "UDT_Dig_Pipeline": {
-      "description": "Types / 99 - Library / Objects / Pipeline / Digital",
+      "description": "Added tags for errors and modified comments",
       "label": "Pipeline (digital)",
       "has_out": false,
       "cmd_ack": false,
@@ -168,7 +152,7 @@
     },
     "UDT_Sealed_inlet_Transporter": {
       "description": "First version",
-      "label": "",
+      "label": "Sealed inlet transporter",
       "has_out": false,
       "cmd_ack": true,
       "cmd_manual_mode": false,
@@ -284,7 +268,7 @@
     },
     "UDT_SS_Sealed_Valve": {
       "description": "First version",
-      "label": "",
+      "label": "Sealed single solenoid valve",
       "has_out": false,
       "cmd_ack": true,
       "cmd_manual_mode": true,
@@ -309,134 +293,165 @@
     }
   },
   "fbs": {
+    "UDT_Analogic_signal": {
+      "ctrl": [
+        {
+          "name": "Scale_input",
+          "param": "analogic_signal"
+        }
+      ],
+      "sim": null
+    },
     "UDT_Pinch_diverter": {
-      "ctrl": {
-        "name": "Pinch_diverter",
-        "param": "DIV"
-      },
+      "ctrl": [
+        {
+          "name": "Pinch_diverter",
+          "param": "DIV"
+        }
+      ],
       "sim": {
         "name": "Pinch_diverter_simulator",
         "param": "DIV"
       }
     },
-    "UDT_PTD_IO": {
-      "ctrl": {
-        "name": "Plug_Type_Diverter",
-        "param": "ptd_Diverter"
-      },
-      "sim": null
-    },
     "UDT_Filter_1_sleeve": {
-      "ctrl": {
-        "name": "Filter_1_sleeve",
-        "param": "filter"
-      },
+      "ctrl": [
+        {
+          "name": "Filter_1_sleeve",
+          "param": "filter"
+        }
+      ],
       "sim": null
     },
     "UDT_Filter_2_sleeves": {
-      "ctrl": {
-        "name": "Filter_2_sleeves",
-        "param": "filter"
-      },
+      "ctrl": [
+        {
+          "name": "Filter_2_sleeves",
+          "param": "filter"
+        }
+      ],
       "sim": null
     },
     "UDT_Gate_Door": {
-      "ctrl": {
-        "name": "Gate_door",
-        "param": "gate_door"
-      },
+      "ctrl": [
+        {
+          "name": "Gate_door",
+          "param": "gate_door"
+        }
+      ],
       "sim": null
     },
     "UDT_Load_cells": {
-      "ctrl": {
-        "name": "Unloading",
-        "param": "scale"
-      },
+      "ctrl": [
+        {
+          "name": "Pavone_DAT_1400",
+          "param": "scale"
+        },
+        {
+          "name": "Loading",
+          "param": "scale"
+        },
+        {
+          "name": "Unloading",
+          "param": "scale"
+        }
+      ],
       "sim": null
     },
     "UDT_Nolvac": {
-      "ctrl": {
-        "name": "Nolvac",
-        "param": "VC"
-      },
+      "ctrl": [
+        {
+          "name": "Nolvac",
+          "param": "VC"
+        }
+      ],
       "sim": null
     },
-    "UDT_Pipeline": {
-      "ctrl": {
-        "name": "An_Pipeline",
-        "param": "pipeline"
-      },
+    "UDT_An_Pipeline": {
+      "ctrl": [
+        {
+          "name": "An_pipeline",
+          "param": "pipeline"
+        }
+      ],
       "sim": null
     },
     "UDT_Dig_Pipeline": {
-      "ctrl": {
-        "name": "Dig_Pipeline",
-        "param": "pipeline"
-      },
+      "ctrl": [
+        {
+          "name": "Dig_pipeline",
+          "param": "pipeline"
+        }
+      ],
       "sim": null
     },
     "UDT_Sealed_inlet_Transporter": {
-      "ctrl": {
-        "name": "Sealed_inlet_Transporter",
-        "param": "TR"
-      },
+      "ctrl": [
+        {
+          "name": "Sealed_inlet_Transporter",
+          "param": "TR"
+        }
+      ],
       "sim": {
         "name": "Sealed_inlet_Transporter_simulator",
         "param": "TR"
       }
     },
     "UDT_DS_Valve": {
-      "ctrl": {
-        "name": "DS_valve",
-        "param": "XV"
-      },
+      "ctrl": [
+        {
+          "name": "DS_valve",
+          "param": "XV"
+        }
+      ],
       "sim": {
         "name": "DS_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_SS_Valve": {
-      "ctrl": {
-        "name": "SS_valve",
-        "param": "XV"
-      },
+      "ctrl": [
+        {
+          "name": "SS_valve",
+          "param": "XV"
+        }
+      ],
       "sim": {
         "name": "SS_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_Pinch_Valve": {
-      "ctrl": {
-        "name": "Pinch_valve",
-        "param": "XV"
-      },
+      "ctrl": [
+        {
+          "name": "Pinch_valve",
+          "param": "XV"
+        }
+      ],
       "sim": {
         "name": "Pinch_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_SS_Sealed_Valve": {
-      "ctrl": {
-        "name": "SS_Sealed_valve",
-        "param": "XV"
-      },
+      "ctrl": [
+        {
+          "name": "SS_Sealed_valve",
+          "param": "XV"
+        }
+      ],
       "sim": {
         "name": "SS_Sealed_valve_simulator",
         "param": "XV"
       }
     },
     "UDT_Solenoid_valve": {
-      "ctrl": {
-        "name": "Solenoid_valve",
-        "param": "XY"
-      },
-      "sim": null
-    },
-    "UDT_An_Pipeline": {
-      "ctrl": {
-        "name": "An_Pipeline",
-        "param": "pipeline"
-      },
+      "ctrl": [
+        {
+          "name": "Solenoid_valve",
+          "param": "XY"
+        }
+      ],
       "sim": null
     }
   }

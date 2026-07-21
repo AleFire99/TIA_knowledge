@@ -538,19 +538,36 @@ sections defined in Module Page Format above):
 Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 **Never remove or rename fields. Bump `manifest_version` on structural changes.**
 
+`fbs.<UDT>.ctrl` is an **array**, not a single object — most UDTs have exactly one
+controlling FB, but a UDT can have more than one (e.g. `UDT_Load_cells`, driven by
+`Loading` + `Unloading` + the `Pavone_DAT_1400` transmitter-interface adapter, all sharing
+the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a single entry.
+
 ```json
 {
-  "manifest_version": "1.0.0",
+  "manifest_version": "2.0.0",
   "udts": {
     "UDT_SS_Valve": {
+      "description": "Uniformed states and variables visibility in HMI",
+      "label": "Single solenoid valve",
       "has_out": false,
-      "devices": { "ZSL": {"type": "Bool"}, "ZSH": {"type": "Bool"}, "XY": {"type": "UDT_Solenoid_valve"} }
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "devices": { "ZSL": {"type": "Bool", "description": ""}, "ZSH": {"type": "Bool", "description": ""}, "XY": {"type": "UDT_Solenoid_valve", "description": ""} }
     }
   },
   "fbs": {
     "UDT_SS_Valve": {
-      "ctrl": {"name": "SS_Butterfly_valve", "param": "XV"},
-      "sim":  {"name": "SS_valve_simulator",  "param": "XV"}
+      "ctrl": [{"name": "SS_valve", "param": "XV"}],
+      "sim":  {"name": "SS_valve_simulator", "param": "XV"}
+    },
+    "UDT_Load_cells": {
+      "ctrl": [
+        {"name": "Loading", "param": "scale"},
+        {"name": "Unloading", "param": "scale"},
+        {"name": "Pavone_DAT_1400", "param": "scale"}
+      ],
+      "sim": null
     }
   }
 }
@@ -569,13 +586,12 @@ Produced here; consumed by tia-automation's `pipeline/resolve.py`.
 | UDT_Solenoid_valve | Solenoid_valve | XY | — |
 | UDT_Gate_Door | Gate_door | gate_door | — |
 | UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator (DIV) |
-| UDT_PTD_IO | Plug_Type_Diverter | ptd_Diverter | — |
 | UDT_Filter_1_sleeve | Filter_1_sleeve | filter | — |
 | UDT_Filter_2_sleeves | Filter_2_sleeves | filter | — |
-| UDT_Load_cells | Loading + Unloading | scale | — |
+| UDT_Load_cells | Loading + Unloading + Pavone_DAT_1400 | scale | — |
 | UDT_Nolvac | Nolvac | VC | — |
-| UDT_An_Pipeline | An_Pipeline | pipeline | — |
-| UDT_Dig_Pipeline | Dig_Pipeline | pipeline | — |
+| UDT_An_Pipeline | An_pipeline | pipeline | — |
+| UDT_Dig_Pipeline | Dig_pipeline | pipeline | — |
 | UDT_Sealed_inlet_Transporter | Sealed_inlet_Transporter | TR | Sealed_inlet_Transporter_simulator (TR) |
 | UDT_Analogic_signal | — (`Scale_input` FC, utility not a device) | `analogic_signal` | — |
 | UDT_Pavone_IN / UDT_Pavone_OUT | Pavone_DAT_1400 (FC) | dat_IN / dat_OUT | — |
