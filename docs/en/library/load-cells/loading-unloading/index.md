@@ -156,21 +156,26 @@ state LOADING_FB{
     [*] --> NORMAL
 
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> IDLE
-        IDLE --> LOADING : loading_start & !weight_invalid
-        LOADING --> IDLE : stop | weight >= setpoint - tail
+        IDLE --> LOADING : CMD.loading_start & !ALARMS.weight_invalid
+        LOADING --> IDLE : loading_done
     }
 }
 ```
 
+```Pascal
+internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error;
+loading_done := CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail);
+```
+
 | State | Description |
 |-------|-------------|
-| FAULT | `internal_error` active; waits for `ack` |
-| NORMAL/IDLE | Waiting; `transferred=0` on entry |
-| NORMAL/LOADING | Loading active; `transferred` updated every scan |
+| NORMAL/IDLE | Waiting; `transferred` reset to 0 on entry |
+| NORMAL/LOADING | Loading active; `transferred` recomputed every scan |
+| FAULT | `internal_error` active; `CMD.ack` always returns to NORMAL/IDLE |
 
 #### Unloading
 
@@ -179,35 +184,41 @@ stateDiagram-v2
 state UNLOADING_FB{
     [*] --> IDLE
 
-    IDLE --> UNLOADING : unloading_start & !weight_invalid
-    UNLOADING --> IDLE : transferred >= setpoint - tail
-    UNLOADING --> PAUSED : stop | weight <= min_weight
+    IDLE --> UNLOADING : CMD.unloading_start & !ALARMS.weight_invalid
+    UNLOADING --> IDLE : unloading_done
+    UNLOADING --> PAUSED : unloading_paused
     UNLOADING --> FAULT : internal_error
-    PAUSED --> UNLOADING : unloading_start
-    PAUSED --> IDLE : reset
-    FAULT --> PAUSED : ack
+    PAUSED --> UNLOADING : CMD.unloading_start
+    PAUSED --> IDLE : CMD.reset
+    FAULT --> PAUSED : CMD.ack
 }
+```
+
+```Pascal
+internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error;
+unloading_done := BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail;
+unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 ```
 
 | State | Description |
 |-------|-------------|
-| FAULT | `internal_error` active; `ack` → PAUSED (not IDLE) |
-| IDLE | Waiting; `transferred=0` on entry |
-| UNLOADING | Unloading active; `transferred` updated every scan |
-| PAUSED | Batch suspended; `transferred` frozen |
+| IDLE | Waiting; `transferred` reset to 0 on entry |
+| UNLOADING | Unloading active; `transferred` recomputed every scan |
+| PAUSED | Batch suspended; `transferred` frozen at its last computed value |
+| FAULT | `internal_error` active; `CMD.ack` returns to PAUSED, not IDLE |
 
 ### Entry Actions
 
 #### Loading
 
-| State reached | Action on entry |
+| State reached | Entry action |
 |------------------|----------------------|
 | NORMAL/IDLE | `BATCH.transferred := 0`; `STATUS.LOADING.loading_finished` 1-scan pulse |
 | NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (anchor snapshot) |
 
 #### Unloading
 
-| State reached | Action on entry |
+| State reached | Entry action |
 |------------------|----------------------|
 | IDLE | `BATCH.transferred := 0`; `STATUS.UNLOADING.unloading_finished` 1-scan pulse |
 | UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (recalculates the anchor — covers both the first start, with `transferred=0`, and resuming from pause) |
@@ -216,12 +227,12 @@ state UNLOADING_FB{
 
 #### Loading
 
-| Timer | State in which it's active | Threshold (parameter) |
+| Timer | Active in state | Threshold (parameter) |
 |-------|------------------------|---------------------|
 | `loading_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
 
 #### Unloading
 
-| Timer | State in which it's active | Threshold (parameter) |
+| Timer | Active in state | Threshold (parameter) |
 |-------|------------------------|---------------------|
 | `unloading_timer` | UNLOADING | `SETTING.unloading_timeout` |

@@ -156,21 +156,26 @@ state LOADING_FB{
     [*] --> NORMAL
 
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> IDLE
-        IDLE --> LOADING : loading_start & !weight_invalid
-        LOADING --> IDLE : stop | peso >= setpoint - tail
+        IDLE --> LOADING : CMD.loading_start & !ALARMS.weight_invalid
+        LOADING --> IDLE : loading_done
     }
 }
 ```
 
+```Pascal
+internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error;
+loading_done := CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail);
+```
+
 | Stato | Descrizione |
 |-------|-------------|
-| FAULT | `internal_error` attivo; attende `ack` |
-| NORMAL/IDLE | In attesa; `transferred=0` all'ingresso |
-| NORMAL/LOADING | Carico attivo; `transferred` aggiornato ogni scan |
+| NORMAL/IDLE | In attesa; `transferred` azzerato all'ingresso |
+| NORMAL/LOADING | Carico attivo; `transferred` ricalcolato ogni scan |
+| FAULT | `internal_error` attivo; `CMD.ack` riporta sempre a NORMAL/IDLE |
 
 #### Unloading
 
@@ -179,22 +184,28 @@ stateDiagram-v2
 state UNLOADING_FB{
     [*] --> IDLE
 
-    IDLE --> UNLOADING : unloading_start & !weight_invalid
-    UNLOADING --> IDLE : transferred >= setpoint - tail
-    UNLOADING --> PAUSED : stop | peso <= min_weight
+    IDLE --> UNLOADING : CMD.unloading_start & !ALARMS.weight_invalid
+    UNLOADING --> IDLE : unloading_done
+    UNLOADING --> PAUSED : unloading_paused
     UNLOADING --> FAULT : internal_error
-    PAUSED --> UNLOADING : unloading_start
-    PAUSED --> IDLE : reset
-    FAULT --> PAUSED : ack
+    PAUSED --> UNLOADING : CMD.unloading_start
+    PAUSED --> IDLE : CMD.reset
+    FAULT --> PAUSED : CMD.ack
 }
+```
+
+```Pascal
+internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error;
+unloading_done := BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail;
+unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 ```
 
 | Stato | Descrizione |
 |-------|-------------|
-| FAULT | `internal_error` attivo; `ack` → PAUSED (non IDLE) |
-| IDLE | In attesa; `transferred=0` all'ingresso |
-| UNLOADING | Scarico attivo; `transferred` aggiornato ogni scan |
-| PAUSED | Batch sospeso; `transferred` congelato |
+| IDLE | In attesa; `transferred` azzerato all'ingresso |
+| UNLOADING | Scarico attivo; `transferred` ricalcolato ogni scan |
+| PAUSED | Batch sospeso; `transferred` congelato all'ultimo valore calcolato |
+| FAULT | `internal_error` attivo; `CMD.ack` riporta a PAUSED, non a IDLE |
 
 ### Azioni di ingresso
 

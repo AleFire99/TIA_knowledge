@@ -71,15 +71,15 @@ classDiagram
 
 ### Operation
 
-When enabled, the cycle always starts with a wait interval (`interval_duration`) before the first pulse, then alternates between wait and pulse indefinitely.
+When enabled, the cycle always starts with an immediate cleaning pulse, then alternates between pulse and wait indefinitely.
 
-**IDLE** — The filter is inactive. `XY` is de-energized. When an enable command arrives (manual or automatic), the state transitions to ACTIVE with `active_state = WAITING`.
+**IDLE** — The filter is inactive. `XY` is de-energized. When an enable command arrives (manual or automatic), the state transitions to ACTIVE with `active_state = PULSING`.
 
-**ACTIVE / WAITING** — The filter is active but paused between one pulse and the next. `XY` is de-energized. The interval timer (`interval_duration`) is running. On expiry, the internal state moves to PULSING.
+**ACTIVE / PULSING** — `XY` is energized for the whole pulse duration (`pulse_duration`). On expiry of the pulse timer, the internal state moves to WAITING.
 
-**ACTIVE / PULSING** — `XY` is energized for the whole pulse duration (`pulse_duration`). On expiry of the pulse timer, the internal state returns to WAITING.
+**ACTIVE / WAITING** — The filter is active but paused between one pulse and the next. `XY` is de-energized. The interval timer (`interval_duration`) is running. On expiry, the internal state returns to PULSING.
 
-The WAITING → PULSING → WAITING cycle repeats as long as the command stays active. Disabling the command at any point returns the filter to IDLE.
+The PULSING → WAITING → PULSING cycle repeats as long as the command stays active. Disabling the command at any point returns the filter to IDLE.
 
 In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. In **automatic mode**, from `CMD.auto`.
 
@@ -87,23 +87,28 @@ In **manual mode** (`manual_mode = TRUE`), the command comes from `CMD.manual`. 
 
 ```mermaid
 stateDiagram-v2
+state FILTER_1_SLEEVE{
     [*] --> IDLE
-
     IDLE --> ACTIVE : enable command
     ACTIVE --> IDLE : disable command
 
     state ACTIVE {
-        [*] --> WAITING
-        WAITING --> PULSING : interval_timer expired
+        [*] --> PULSING
         PULSING --> WAITING : pulse_timer expired
+        WAITING --> PULSING : interval_timer expired
     }
+}
+```
+
+```Pascal
+desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
 ```
 
 | State | Sub-state | `XY` | Description |
 |-------|-------------|------|-------------|
 | IDLE | — | FALSE | Filter inactive |
-| ACTIVE | WAITING | FALSE | Paused between pulses; `interval_timer` running |
 | ACTIVE | PULSING | TRUE | Cleaning pulse active; `pulse_timer` running |
+| ACTIVE | WAITING | FALSE | Paused between pulses; `interval_timer` running |
 
 ### Timer
 

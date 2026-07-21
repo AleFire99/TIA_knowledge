@@ -1,0 +1,17 @@
+# SS_Sealed_valve — sealed variant of the single-solenoid SS butterfly valve; fully delegates its FSM to the embedded XV instance.
+# Source: raw/Types/99 - Library/Objects/Valves/Sealed/SS/SS_Sealed_valve.s7dcl. Doc: docs/it/library/valves/sealed/ss/index.md.
+
+schema_version: "1.0"
+fb: SS_Sealed_valve
+udt: UDT_SS_Sealed_Valve
+source: Types/99 - Library/Objects/Valves/Sealed/SS/SS_Sealed_valve.s7dcl
+
+delegates:
+  fsm: XV
+
+notes:
+  - STATUS is a direct, full mirror of XV.STATUS every scan (state, normal_state, is_fault, is_closed, is_opening, is_open, is_closing) — this FB defines no state machine of its own.
+  - The seal solenoid (XY_seal) is driven by one stateless combinational rule, not a state machine — it is excited automatically as soon as XV.STATUS.is_closed is confirmed TRUE, and de-excited immediately once XV leaves CLOSED (OPENING/OPEN/CLOSING/FAULT all read as FALSE).
+  - SETTING.actuator_timeout is forwarded to XV.SETTING.actuator_timeout every scan; this FB has no TON_TIME of its own, so its own actuator timing is delegated to XV's movement_timer as a direct consequence of delegating the whole FSM to XV — not a separate, timer-only delegation case.
+  - CMD.ack is forwarded to XV.CMD.ack. This FB has no own ALARMS struct — alarms remain visible only through the embedded XV instance.
+  - "delegates.fsm (not delegates.timer) is correct here: the FB has no own STATUS.state/normal_state computation and no state logic beyond the one stateless seal-solenoid rule above — there is no own diagram to render at all, matching schema/fsm.schema.json's own canonical example of full FSM delegation."

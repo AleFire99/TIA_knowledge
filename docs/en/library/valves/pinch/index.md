@@ -109,7 +109,7 @@ state PINCH_VALVE{
     [*] --> NORMAL
 
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> CLOSED : PSL
@@ -124,7 +124,7 @@ state PINCH_VALVE{
 ```
 
 ```Pascal
-internal_error := sensor_mismatch OR failed_to_close OR failed_to_open;
+internal_error := ALARMS.sensor_mismatch OR ALARMS.failed_to_close OR ALARMS.failed_to_open;
 ```
 
 | State | `XY` | Description |

@@ -97,8 +97,8 @@ In `FAULT`, `XY` viene deliberatamente energizzato (sbloccato): un guasto del PL
 ```mermaid
 stateDiagram-v2
 state GATE_DOOR {
-    [*] --> NORMAL_BEHAVIOUR
-    state NORMAL_BEHAVIOUR {
+    [*] --> NORMAL
+    state NORMAL {
         [*] --> CLOSED : ZSL
         [*] --> OPEN : !ZSL
 
@@ -108,13 +108,13 @@ state GATE_DOOR {
         CLOSING --> OPEN : CMD.open
         CLOSING --> CLOSED : ZSL
     }
-    NORMAL_BEHAVIOUR --> FAULT : internal_error
-    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error
+    NORMAL --> FAULT : internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 }
 ```
 
 ```Pascal
-internal_error := failed_to_unlock;
+internal_error := ALARMS.failed_to_unlock;
 ```
 
 | Stato | `XY` | Descrizione |
@@ -122,8 +122,8 @@ internal_error := failed_to_unlock;
 | CLOSED | FALSE | Anta chiusa e bloccata, confermata da `ZSL` |
 | OPENING | TRUE | Sblocco comandato, non ancora confermato |
 | OPEN | TRUE | Sblocco confermato — la posizione fisica oltre questo punto è nota solo all'operatore |
-| CLOSING | FALSE | Ri-blocco comandato, in attesa che l'operatore richiuda fisicamente — nessuna scadenza, è attesa normale |
-| FAULT | TRUE | Guasto — sblocca deliberatamente (vedere sopra) |
+| CLOSING | FALSE | Ri-blocco comandato, in attesa che l'operatore richiuda fisicamente l'anta — nessuna scadenza, l'attesa indefinita è normale |
+| FAULT | TRUE | Guasto — `XY` deliberatamente sbloccato (vedere sopra) |
 
 ### Timer
 

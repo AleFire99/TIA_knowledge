@@ -1,0 +1,58 @@
+# Loading — load-cells fill cycle (one of two FBs sharing UDT_Load_cells).
+# Source: raw/Types/99 - Library/Objects/Load cells/Scale loading/Loading.s7dcl. Doc: docs/it/library/load-cells/loading-unloading/index.md.
+
+schema_version: "1.0"
+fb: Loading
+udt: UDT_Load_cells
+source: Types/99 - Library/Objects/Load cells/Scale loading/Loading.s7dcl
+
+label: LOADING_FB
+
+states:
+  - id: NORMAL
+    children:
+      - id: IDLE
+        description: waiting; transferred reset to 0 on entry
+      - id: LOADING
+        description: active fill; transferred recomputed every scan
+  - id: FAULT
+    description: internal_error active; awaiting ack, always recovers to NORMAL.IDLE
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: CMD.ack & !internal_error
+    note: also forces normal_state back to IDLE — recovery never resumes mid-load
+  - { from: "[*]", to: NORMAL.IDLE }
+  - { from: NORMAL.IDLE, to: NORMAL.LOADING, guard: "CMD.loading_start & !ALARMS.weight_invalid" }
+  - { from: NORMAL.LOADING, to: NORMAL.IDLE, guard: loading_done }
+
+guard_formulas:
+  - name: internal_error
+    expression: loading_timer.Q OR IN.scale_error OR IN.plant_error
+  - name: loading_done
+    expression: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail)
+
+timers:
+  - name: loading_timer
+    active_states: [NORMAL.LOADING]
+    param: SETTING.loading_timeout
+    raises: feeds internal_error, which sets ALARMS.loading_timeout and drives the NORMAL -> FAULT transition
+
+entry_actions:
+  - state: NORMAL.IDLE
+    shadow_var: prev_normal_state
+    actions:
+      - "BATCH.transferred reset to 0.0"
+      - "STATUS.LOADING.loading_finished reset to FALSE every scan at the top of the region; pulses TRUE for one scan on entry to NORMAL.IDLE"
+  - state: NORMAL.LOADING
+    shadow_var: prev_normal_state
+    actions:
+      - "BATCH.weight_at_start snapshots IN.current_weight (anchor for the loaded-quantity computation)"
+
+notes:
+  - "loading_tail creates an anticipation margin: the LOADING -> IDLE transition fires before current_weight actually reaches loading_setpoint, compensating for material still falling after the stop command — without this margin the settled weight would overshoot the setpoint."
+  - "BATCH.transferred is recomputed every scan while in NORMAL.LOADING as current_weight - weight_at_start, clamped to zero to avoid a negative reading from sensor noise/drift near zero. Outside NORMAL.LOADING (IDLE or FAULT) this region makes no assignment at all, so transferred holds its last computed value until the IDLE entry action resets it to 0."
+  - "FAULT recovery (ack & !internal_error) always returns to NORMAL.IDLE, never resumes mid-load — a load interrupted by a fault restarts from scratch rather than continuing from where it stopped. This is the asymmetric counterpart to Unloading, whose FAULT recovery goes to PAUSED instead, to preserve batch progress."

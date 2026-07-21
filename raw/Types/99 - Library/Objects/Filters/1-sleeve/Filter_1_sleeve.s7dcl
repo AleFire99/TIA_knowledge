@@ -55,7 +55,7 @@ FUNCTION_BLOCK "Filter_1_sleeve"
             IF #first_scan THEN
                 #first_scan := FALSE;
                 #filter.STATUS.state := #IDLE;
-                #filter.STATUS.active_state := #WAITING;
+                #filter.STATUS.active_state := #PULSING;
             END_IF;
         END_REGION
         
@@ -84,7 +84,7 @@ FUNCTION_BLOCK "Filter_1_sleeve"
                 #IDLE:
                     IF #desired_command THEN
                         #filter.STATUS.state := #ACTIVE;
-                        #filter.STATUS.active_state := #WAITING;
+                        #filter.STATUS.active_state := #PULSING;
                     END_IF;
                     
                 #ACTIVE:

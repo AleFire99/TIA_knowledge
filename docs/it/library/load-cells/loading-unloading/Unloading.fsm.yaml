@@ -1,0 +1,64 @@
+# Unloading — load-cells discharge cycle (one of two FBs sharing UDT_Load_cells).
+# Source: raw/Types/99 - Library/Objects/Load cells/Scale unloading/Unloading.s7dcl. Doc: docs/it/library/load-cells/loading-unloading/index.md.
+
+schema_version: "1.0"
+fb: Unloading
+udt: UDT_Load_cells
+source: Types/99 - Library/Objects/Load cells/Scale unloading/Unloading.s7dcl
+
+label: UNLOADING_FB
+
+states:
+  - id: IDLE
+    description: waiting; transferred reset to 0 on entry
+  - id: UNLOADING
+    description: active discharge; transferred recomputed every scan
+  - id: PAUSED
+    description: batch suspended; transferred frozen at its last computed value
+  - id: FAULT
+    description: internal_error active; ack recovers to PAUSED, not IDLE
+
+transitions:
+  - { from: "[*]", to: IDLE }
+  - { from: IDLE, to: UNLOADING, guard: "CMD.unloading_start & !ALARMS.weight_invalid" }
+  - { from: UNLOADING, to: IDLE, guard: unloading_done }
+  - { from: UNLOADING, to: PAUSED, guard: unloading_paused }
+  - { from: UNLOADING, to: FAULT, guard: internal_error }
+  - { from: PAUSED, to: UNLOADING, guard: CMD.unloading_start }
+  - { from: PAUSED, to: IDLE, guard: CMD.reset }
+  - from: FAULT
+    to: PAUSED
+    guard: CMD.ack
+    note: recovers to PAUSED rather than IDLE, unlike Loading's FAULT -> NORMAL.IDLE — preserves the batch progress already transferred so the operator can later resume or abandon the cycle explicitly via reset
+
+guard_formulas:
+  - name: internal_error
+    expression: unloading_timer.Q OR IN.scale_error OR IN.plant_error
+  - name: unloading_done
+    expression: BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail
+  - name: unloading_paused
+    expression: CMD.stop OR (IN.current_weight <= SETTING.min_weight)
+
+timers:
+  - name: unloading_timer
+    active_states: [UNLOADING]
+    param: SETTING.unloading_timeout
+    raises: feeds internal_error, which sets ALARMS.unloading_timeout and drives the UNLOADING -> FAULT transition
+
+entry_actions:
+  - state: IDLE
+    shadow_var: prev_state
+    actions:
+      - "BATCH.transferred reset to 0.0"
+      - "STATUS.UNLOADING.unloading_finished reset to FALSE every scan at the top of the region; pulses TRUE for one scan on entry to IDLE"
+  - state: UNLOADING
+    shadow_var: prev_state
+    actions:
+      - "BATCH.weight_at_start recomputed as IN.current_weight + BATCH.transferred — covers both a first start (transferred=0, reduces to a plain snapshot) and a resume from PAUSED (transferred holds the frozen value, so the anchor is back-calculated to continue from it)"
+
+notes:
+  - "Unlike Loading, whose FAULT recovery always returns to NORMAL.IDLE and restarts from scratch, Unloading's FAULT recovery (ack) goes to PAUSED, not IDLE — a fault mid-discharge must not discard the batch progress already transferred. The operator then either resumes (unloading_start) or abandons the cycle explicitly via CMD.reset (PAUSED -> IDLE)."
+  - "BATCH.transferred is recomputed every scan while in UNLOADING as weight_at_start - current_weight, clamped to zero to avoid a negative reading from sensor noise/drift near zero. In PAUSED or FAULT this region makes no assignment, so transferred holds its last frozen value."
+  - "On resume from PAUSED, weight_at_start is recalculated as current_weight + transferred (the frozen value) rather than simply reread from current_weight, so next scan's transferred computation (weight_at_start - current_weight) continues exactly from the frozen value with no visible jump to the operator."
+  - "UNLOADING -> PAUSED also fires when current_weight drops to min_weight — the same threshold used for weight_invalid, applied here as a safety limit against continuing to unload from a reading close to the scale's bottom of range (risk of an unreliable reading or an already-empty container)."
+  - "unloading_tail creates the same kind of anticipation margin as Loading's loading_tail: the UNLOADING -> IDLE transition fires before transferred actually reaches unloading_setpoint, compensating for material still in transit after the stop command."

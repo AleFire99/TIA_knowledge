@@ -1,0 +1,57 @@
+# DS_valve — bistable double-solenoid butterfly valve.
+# Source: raw/Types/99 - Library/Objects/Valves/Butterfly - gate/DS/DS_valve.s7dcl. Doc: docs/it/library/valves/butterfly/double_solenoid/index.md.
+
+schema_version: "1.0"
+fb: DS_valve
+udt: UDT_DS_Valve
+source: Types/99 - Library/Objects/Valves/Butterfly - gate/DS/DS_valve.s7dcl
+
+label: DS_VALVE
+
+states:
+  - id: NORMAL
+    children:
+      - id: CLOSED
+        outputs: { XYA: false, XYB: false }
+        description: disc closed; no excitation needed (bistable)
+      - id: OPENING
+        outputs: { XYA: true, XYB: false }
+        description: XYA pushes disc toward open
+      - id: OPEN
+        outputs: { XYA: false, XYB: false }
+        description: disc open; no excitation needed
+      - id: CLOSING
+        outputs: { XYA: false, XYB: true }
+        description: XYB returns disc to closed
+  - id: FAULT
+    outputs: { XYA: false, XYB: false }
+    description: fault; bistable disc holds its last physical position
+
+transitions:
+  - { from: "[*]", to: NORMAL, guard: ZSL XOR ZSH on first scan }
+  - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: CMD.ack & !internal_error
+    note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
+  - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
+  - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: desired_open_command }
+  - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }
+  - { from: NORMAL.CLOSING, to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
+
+guard_formulas:
+  - name: internal_error
+    expression: ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_close OR ALARMS.failed_to_open
+
+timers:
+  - name: movement_timer
+    active_states: [NORMAL.OPENING, NORMAL.CLOSING]
+    param: SETTING.actuator_timeout
+    raises: ALARMS.failed_to_open when stuck in OPENING, ALARMS.failed_to_close when stuck in CLOSING
+
+notes:
+  - XYA/XYB are excited only during movement (OPENING/CLOSING) — the bistable actuator needs no holding excitation in CLOSED/OPEN; it holds position with both solenoids de-energized (no spring return).
+  - movement_timer ORs two sibling states (OPENING, CLOSING) — don't assume single-state activity from the timer's name alone.

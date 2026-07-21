@@ -1,0 +1,55 @@
+# Pinch_diverter — pinch-tube two-way diverter.
+# Source: raw/Types/99 - Library/Objects/Diverters/Pinch/Pinch_diverter.s7dcl. Doc: docs/it/library/diverters/pinch_type/index.md.
+
+schema_version: "1.0"
+fb: Pinch_diverter
+udt: UDT_Pinch_diverter
+source: Types/99 - Library/Objects/Diverters/Pinch/Pinch_diverter.s7dcl
+
+label: DIVERTER
+
+states:
+  - id: NORMAL
+    children:
+      - id: ROUTE_A
+        outputs: { XVA: open, XVB: closed }
+        description: route A established
+      - id: A_TO_B
+        outputs: { XVA: closed, XVB: open }
+        description: transitioning from A to B
+      - id: ROUTE_B
+        outputs: { XVA: closed, XVB: open }
+        description: route B established
+      - id: B_TO_A
+        outputs: { XVA: open, XVB: closed }
+        description: transitioning from B to A
+  - id: FAULT
+    outputs: { XVA: closed, XVB: closed }
+    description: fault; no explicit open command issued to either valve (fail-safe)
+
+transitions:
+  - { from: "[*]", to: NORMAL, guard: "XVA.is_open XOR XVB.is_open on first scan" }
+  - { from: "[*]", to: FAULT, guard: "ambiguous positions on first scan" }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: CMD.ack & !internal_error
+    note: destination route (ROUTE_A vs ROUTE_B) is re-derived from live XVA/XVB sensor feedback, not a saved prior route — same mechanism as the first-scan derivation
+  - { from: "[*]", to: NORMAL.ROUTE_A, guard: XVA.is_open }
+  - { from: "[*]", to: NORMAL.ROUTE_B, guard: XVB.is_open }
+  - { from: NORMAL.ROUTE_A, to: NORMAL.A_TO_B, guard: desired_route_B }
+  - { from: NORMAL.A_TO_B, to: NORMAL.ROUTE_B, guard: "XVA.is_closed & XVB.is_open" }
+  - { from: NORMAL.ROUTE_B, to: NORMAL.B_TO_A, guard: "!desired_route_B" }
+  - { from: NORMAL.B_TO_A, to: NORMAL.ROUTE_A, guard: "XVA.is_open & XVB.is_closed" }
+
+guard_formulas:
+  - name: internal_error
+    expression: ALARMS.valve_mismatch OR XVA.is_fault OR XVB.is_fault
+
+delegates:
+  timer: ["XVA", "XVB"]
+
+notes:
+  - internal_error also trips when either child valve (XVA/XVB) reports its own fault, propagating a child valve fault into the parent's FAULT state without raising a diverter-specific alarm ID of its own — see the valve family's own alarms for the source ID.
+  - Only one route is open at a time; the non-selected valve is always commanded closed rather than the two instances arbitrating independently — desired_route_B (FALSE = route A, TRUE = route B) is the single decision point, resolved from CMD.manual_mode/manual/auto.
+  - SETTING.actuator_timeout is forwarded to both XVA.SETTING.actuator_timeout and XVB.SETTING.actuator_timeout every scan before calling them — the diverter has no TON_TIME of its own, both children's own movement timers gate the actual open/close confirmation.

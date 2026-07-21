@@ -1,0 +1,25 @@
+# Solenoid_valve — atomic solenoid actuator (Livello 1, no sub-components).
+# Source: raw/Types/99 - Library/Objects/Valves/Solenoid/Solenoid_valve.s7dcl. Doc: docs/it/library/valves/solenoid/index.md.
+
+schema_version: "1.0"
+fb: Solenoid_valve
+udt: UDT_Solenoid_valve
+source: Types/99 - Library/Objects/Valves/Solenoid/Solenoid_valve.s7dcl
+
+label: SOLENOID
+
+states:
+  - id: DE_ENERGIZED
+    outputs: { out: false }
+    description: coil de-energized
+  - id: ENERGIZED
+    outputs: { out: true }
+    description: coil energized
+
+transitions:
+  - { from: "[*]", to: DE_ENERGIZED }
+  - { from: DE_ENERGIZED, to: ENERGIZED, guard: desired_command }
+  - { from: ENERGIZED, to: DE_ENERGIZED, guard: "!desired_command" }
+
+notes:
+  - "desired_command is resolved every scan (manual_mode ? manual : auto) before the FSM runs, and out follows the resulting state with no delay — there is no physical confirmation to wait for, so the transition is immediate."

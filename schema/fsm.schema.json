@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tia-knowledge/schema/fsm.schema.json",
+  "title": "AleFire-Library FB FSM definition",
+  "description": "One file per controlling FB (not per UDT/device page). Captures states, transitions, guards, timers, entry actions and free-text notes for a single finite state machine, sourced from the FB's .s7dcl. Devices with a single FSM get one file; load-cells' Loading/Unloading FBs each get their own sibling file in the same device doc directory. Free text is English regardless of docs locale — IT/EN prose is generated from it, not stored per-locale.",
+  "type": "object",
+  "required": ["schema_version", "fb", "udt", "source"],
+  "additionalProperties": false,
+  "if": {
+    "required": ["delegates"],
+    "properties": {
+      "delegates": {
+        "type": "object",
+        "required": ["fsm"],
+        "properties": { "fsm": { "type": "string" } }
+      }
+    }
+  },
+  "then": {},
+  "else": {
+    "required": ["label", "states", "transitions"],
+    "$comment": "label/states/transitions are only required when this FB doesn't delegate its whole FSM to a child instance (delegates.fsm) — a fully-delegated FB (e.g. Sigillata SS -> XV) has nothing of its own to render."
+  },
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version this file conforms to, e.g. \"1.0\". Bump on structural changes."
+    },
+    "fb": {
+      "type": "string",
+      "description": "Controlling FB name, e.g. \"SS_valve\". Matches dist/library_manifest.json fbs.<UDT>.ctrl.name."
+    },
+    "udt": {
+      "type": "string",
+      "pattern": "^UDT_",
+      "description": "UDT this FB operates on via its VAR_IN_OUT param. Matches a dist/library_manifest.json udts key."
+    },
+    "source": {
+      "type": "string",
+      "description": "Path to the FB's .s7dcl, relative to raw/, for traceability back to the SCL this was derived from."
+    },
+    "delegates": {
+      "type": "object",
+      "description": "Present only when this FB hands its whole FSM or just its timer off to an embedded child instance (e.g. Sigillata SS delegates its FSM to XV; Deviatore delegates actuator_timeout to XVA/XVB). Omit entirely when the FB owns both.",
+      "additionalProperties": false,
+      "properties": {
+        "fsm": {
+          "type": ["string", "null"],
+          "description": "Tag of the child instance the whole FSM delegates to (e.g. \"XV\"). When set, this file has no states/transitions/timers of its own — the doc generator omits Diagramma di stato and Timer entirely and cross-references the named child instead."
+        },
+        "timer": {
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Tag(s) of the child instance(s) the timer delegates to (e.g. [\"XVA\", \"XVB\"]). When set (and fsm is not), the doc generator omits only the Timer section."
+        }
+      }
+    },
+    "label": {
+      "type": "string",
+      "description": "Mermaid composite-state label wrapping the whole diagram, ALL CAPS by convention (e.g. \"SS_VALVE\", \"LOADING_FB\")."
+    },
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/state" },
+      "description": "Top-level state tree. Nesting mirrors mermaid's `state X { ... }` composite states. Not every FB nests two levels deep — flat FBs (e.g. Unloading, Solenoid_valve) just have one level."
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/transition" },
+      "description": "Flat list of edges. \"from\" may be the literal \"[*]\" (initial pseudostate); \"to\"/\"from\" state references use dot-separated paths for nested states (e.g. \"NORMAL.CLOSED\")."
+    },
+    "guard_formulas": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/guard_formula" },
+      "description": "Named composite guards (e.g. internal_error := A OR B OR ...). Rendered as the standalone ```Pascal code block that adjoins the diagram. Omit when the FB has no such named composite guard (e.g. load-cells inlines plain-language guards directly on transitions instead)."
+    },
+    "timers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/timer" },
+      "description": "Omit (or leave empty) when this FB has no TON_TIME of its own — either it has none at all (e.g. Solenoid_valve, immediate transition) or it delegates timing to a child (see delegates.timer)."
+    },
+    "entry_actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry_action" },
+      "description": "Omit (or leave empty) when this FB has no REGION Entry actions — most FBs don't; today only Loading/Unloading do."
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-text FB-level \"why\" notes worth surfacing in the Funzionamento prose (e.g. a timer ORing two sibling states, an asymmetric FAULT-recovery path, an acknowledged bug comment in the source). English, one note per list item."
+    }
+  },
+  "$defs": {
+    "state": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Symbolic state name, matching the FB's own VAR CONSTANT name (e.g. \"CLOSED\", \"OPENING\"). Never a raw numeric value — per-file integer values aren't meaningful across FBs."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short English description of what this state means physically. Optional — omit for states that are self-explanatory (e.g. pure routing intermediates)."
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Map of physical output device tag -> value while in this state (e.g. {\"XY\": true}). Only meaningful for states with a fixed, deterministic output; omit for states where output isn't a simple constant.",
+          "additionalProperties": { "type": ["boolean", "string", "number"] }
+        },
+        "children": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/state" },
+          "description": "Nested substates, only present for composite states (e.g. NORMAL containing CLOSED/OPENING/OPEN/CLOSING)."
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source state path (dot-separated for nested states), or the literal \"[*]\" for an initial pseudostate edge."
+        },
+        "to": {
+          "type": "string",
+          "description": "Destination state path (dot-separated for nested states)."
+        },
+        "guard": {
+          "type": "string",
+          "description": "Guard condition as boolean-expression-like text (e.g. \"ZSL & !ZSH\") or, for edges with no single boolean (e.g. an ambiguous-first-scan case), a short plain-language condition. Omit for unconditional transitions."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional free-text explaining a non-obvious transition, e.g. FAULT recovery re-deriving the destination from live sensors rather than returning to a fixed prior state."
+        }
+      }
+    },
+    "guard_formula": {
+      "type": "object",
+      "required": ["name", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Symbolic name of the composite guard, as declared/computed in the FB (e.g. \"internal_error\")."
+        },
+        "expression": {
+          "type": "string",
+          "description": "The boolean expression exactly as it reads in source (e.g. \"sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open\")."
+        }
+      }
+    },
+    "timer": {
+      "type": "object",
+      "required": ["name", "active_states", "param"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Timer instance name (e.g. \"movement_timer\")."
+        },
+        "active_states": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "State path(s) the timer's IN condition evaluates true for. A list because IN frequently ORs multiple sibling states together (e.g. active during both OPENING and CLOSING) — never assume single-state activity from the timer's name."
+        },
+        "param": {
+          "type": "string",
+          "description": "Dotted path to the SETTING field bound to the timer's PT (e.g. \"SETTING.actuator_timeout\")."
+        },
+        "raises": {
+          "type": "string",
+          "description": "Optional free text describing what the timer's .Q output drives (e.g. an ALARMS field it sets, or a guard it feeds into)."
+        }
+      }
+    },
+    "entry_action": {
+      "type": "object",
+      "required": ["state", "actions"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "description": "State path this one-shot entry action fires for (e.g. \"NORMAL.IDLE\")."
+        },
+        "shadow_var": {
+          "type": "string",
+          "description": "Name of the prev_state/prev_normal_state shadow variable gating this action, for traceability back to source (e.g. \"prev_normal_state\")."
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Free-text description of each one-shot write fired on entering this state (e.g. \"BATCH.transferred := 0\", \"STATUS.LOADING.loading_finished pulses 1 scan TRUE\")."
+        }
+      }
+    }
+  }
+}

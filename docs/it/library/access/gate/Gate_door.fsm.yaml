@@ -1,0 +1,67 @@
+# Gate_door — electric-lock gate access device.
+# Source: raw/Types/99 - Library/Objects/Gate/Gate_door.s7dcl. Doc: docs/it/library/access/gate/index.md.
+
+schema_version: "1.0"
+fb: Gate_door
+udt: UDT_Gate_Door
+source: Types/99 - Library/Objects/Gate/Gate_door.s7dcl
+
+label: GATE_DOOR
+
+states:
+  - id: NORMAL
+    children:
+      - id: CLOSED
+        outputs: { XY: false }
+        description: door closed and locked, confirmed by ZSL
+      - id: OPENING
+        outputs: { XY: true }
+        description: unlock commanded, not yet confirmed
+      - id: OPEN
+        outputs: { XY: true }
+        description: unlock confirmed — physical position beyond this point is known only to the operator
+      - id: CLOSING
+        outputs: { XY: false }
+        description: re-lock commanded, waiting for the operator to physically close the door — no timeout, indefinite wait is normal
+  - id: FAULT
+    outputs: { XY: true }
+    description: fault; XY deliberately unlocked (see notes)
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: CMD.ack & !internal_error
+    note: destination (CLOSED vs OPEN) is re-derived from the live ZSL sensor, same single-signal limitation as the first-scan case — can only distinguish CLOSED from OPEN, never an intermediate condition
+  - { from: "[*]", to: NORMAL.CLOSED, guard: ZSL }
+  - { from: "[*]", to: NORMAL.OPEN, guard: "!ZSL" }
+  - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: "CMD.open & CMD.safe_to_open" }
+  - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "!ZSL" }
+  - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "CMD.close | inactivity_timer.Q" }
+  - from: NORMAL.CLOSING
+    to: NORMAL.OPEN
+    guard: CMD.open
+    note: door was never actually re-secured (ZSL never returned true) — a fresh open request cancels the incomplete re-lock, it isn't a new permission, so it skips OPENING and doesn't re-check CMD.safe_to_open
+  - { from: NORMAL.CLOSING, to: NORMAL.CLOSED, guard: ZSL }
+
+guard_formulas:
+  - name: internal_error
+    expression: ALARMS.failed_to_unlock
+
+timers:
+  - name: unlock_timer
+    active_states: [NORMAL.OPENING]
+    param: SETTING.unlock_timeout
+    raises: ALARMS.failed_to_unlock when stuck in OPENING past the timeout
+  - name: inactivity_timer
+    active_states: [NORMAL.OPEN]
+    param: SETTING.inactivity_timeout
+    raises: feeds the OPEN -> CLOSING guard (automatic re-lock after inactivity, alongside CMD.close)
+
+notes:
+  - "CMD.open during CLOSING returns directly to OPEN, skipping OPENING entirely and without re-checking CMD.safe_to_open: the door was never actually re-locked (ZSL never went back true), so this is cancelling an incomplete re-lock, not granting a new permission."
+  - "Re-entry from FAULT re-evaluates the same ZSL sensor as the first-scan logic — with only one combined signal, it can only distinguish CLOSED from OPEN, never an intermediate condition."
+  - "In FAULT, XY is deliberately energized (unlocked): a PLC fault must never trap an operator behind a locked door. The real safety barrier is the electrical interlock wired upstream of XY, not this FB — CMD.safe_to_open here is a coordination/HMI-level permission, not the safety barrier itself."
+  - "No timeout alarm exists on re-locking (CLOSING): an indefinite wait is normal behavior there, since completion depends on the operator physically closing the door, not on the PLC."
+  - "Doesn't use the manual_mode/manual/auto arbitration common to the rest of the library — CMD.open/CMD.close are direct commands, and XY.CMD.auto is driven by the FB's own state (door position), not a separate manual/auto source."
