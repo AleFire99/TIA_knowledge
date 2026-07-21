@@ -71,15 +71,15 @@ classDiagram
 
 ### Funzionamento
 
-Quando abilitato, il ciclo parte sempre da un intervallo di attesa (`interval_duration`) prima del primo impulso, poi alterna attesa e impulso indefinitamente.
+Quando abilitato, il ciclo parte sempre con un impulso di pulizia immediato, poi alterna impulso e attesa indefinitamente.
 
-**IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di abilitazione (manuale o automatico), lo stato transita verso ACTIVE con `active_state = WAITING`.
+**IDLE** — Il filtro è inattivo. `XY` è diseccitata. Quando arriva un comando di abilitazione (manuale o automatico), lo stato transita verso ACTIVE con `active_state = PULSING`.
 
-**ACTIVE / WAITING** — Il filtro è attivo ma in pausa tra un impulso e l'altro. `XY` è diseccitata. Il timer intervallo (`interval_duration`) è in esecuzione. Alla scadenza, lo stato interno passa a PULSING.
+**ACTIVE / PULSING** — `XY` viene eccitata per tutta la durata dell'impulso (`pulse_duration`). Alla scadenza del timer impulso, lo stato interno passa a WAITING.
 
-**ACTIVE / PULSING** — `XY` viene eccitata per tutta la durata dell'impulso (`pulse_duration`). Alla scadenza del timer impulso, lo stato interno torna a WAITING.
+**ACTIVE / WAITING** — Il filtro è attivo ma in pausa tra un impulso e l'altro. `XY` è diseccitata. Il timer intervallo (`interval_duration`) è in esecuzione. Alla scadenza, lo stato interno torna a PULSING.
 
-Il ciclo WAITING → PULSING → WAITING si ripete finché il comando rimane attivo. La disabilitazione del comando in qualsiasi momento riporta il filtro in IDLE.
+Il ciclo PULSING → WAITING → PULSING si ripete finché il comando rimane attivo. La disabilitazione del comando in qualsiasi momento riporta il filtro in IDLE.
 
 In **modalità manuale** (`manual_mode = TRUE`), il comando proviene da `CMD.manual`. In **modalità automatica**, da `CMD.auto`.
 
@@ -93,22 +93,22 @@ state FILTER_1_SLEEVE{
     ACTIVE --> IDLE : comando disabilitazione
 
     state ACTIVE {
-        [*] --> WAITING
-        WAITING --> PULSING : interval_timer scaduto
+        [*] --> PULSING
         PULSING --> WAITING : pulse_timer scaduto
+        WAITING --> PULSING : interval_timer scaduto
     }
 }
 ```
 
 ```Pascal
-desired_command := (manual_mode AND manual) OR (NOT manual_mode AND auto);
+desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
 ```
 
 | Stato | Sotto-stato | `XY` | Descrizione |
 |-------|-------------|------|-------------|
 | IDLE | — | FALSE | Filtro inattivo |
-| ACTIVE | WAITING | FALSE | In pausa tra impulsi; `interval_timer` in esecuzione |
 | ACTIVE | PULSING | TRUE | Impulso di pulizia attivo; `pulse_timer` in esecuzione |
+| ACTIVE | WAITING | FALSE | In pausa tra impulsi; `interval_timer` in esecuzione |
 
 ### Timer
 

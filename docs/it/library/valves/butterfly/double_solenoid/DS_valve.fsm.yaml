@@ -1,6 +1,5 @@
-# Illustrative header retained for traceability: see raw/Types/99 - Library/Objects/
-# Valves/Butterfly - gate/DS/DS_valve.s7dcl and docs/it/library/valves/butterfly/
-# double_solenoid/index.md for the source and hand-written doc this mirrors.
+# DS_valve — bistable double-solenoid butterfly valve.
+# Source: raw/Types/99 - Library/Objects/Valves/Butterfly - gate/DS/DS_valve.s7dcl. Doc: docs/it/library/valves/butterfly/double_solenoid/index.md.
 
 schema_version: "1.0"
 fb: DS_valve
@@ -34,7 +33,7 @@ transitions:
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
   - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
@@ -45,7 +44,7 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open
+    expression: ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_close OR ALARMS.failed_to_open
 
 timers:
   - name: movement_timer

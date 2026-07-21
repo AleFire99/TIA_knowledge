@@ -1,8 +1,5 @@
-# Per-device FSM definition for SS_valve (single-solenoid SS butterfly valve).
-# Verified line-by-line against raw/Types/99 - Library/Objects/Valves/Butterfly - gate/SS/
-# SS_valve.s7dcl and UDT_SS_Valve.s7dcl, and cross-checked against
-# docs/it/library/valves/butterfly/single_solenoid/index.md's Diagramma di stato and
-# Timer sections. No drift found against schema/fsm.example.yaml, which this mirrors.
+# SS_valve — monostable single-solenoid butterfly valve.
+# Source: raw/Types/99 - Library/Objects/Valves/Butterfly - gate/SS/SS_valve.s7dcl. Doc: docs/it/library/valves/butterfly/single_solenoid/index.md.
 
 schema_version: "1.0"
 fb: SS_valve
@@ -31,12 +28,12 @@ states:
     description: fault; awaiting ack with valid sensors
 
 transitions:
-  - { from: "[*]", to: NORMAL, guard: "ZSL XOR ZSH on first scan" }
+  - { from: "[*]", to: NORMAL, guard: ZSL XOR ZSH on first scan }
   - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
   - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
@@ -47,7 +44,7 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open
+    expression: ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_close OR ALARMS.failed_to_open
 
 timers:
   - name: movement_timer

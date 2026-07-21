@@ -1,5 +1,5 @@
-# Sealed_inlet_Transporter FSM definition — see schema/fsm.schema.json and
-# schema/fsm.example.yaml for the schema/style this file conforms to.
+# Sealed_inlet_Transporter — sealed-inlet pneumatic transporter (Livello 4, most complex device in the library).
+# Source: raw/Types/99 - Library/Objects/Transporters/Sealed inlet/Sealed_inlet_Transporter.s7dcl. Doc: docs/it/library/transporters/sealed-inlet/index.md.
 
 schema_version: "1.0"
 fb: Sealed_inlet_Transporter
@@ -12,28 +12,28 @@ states:
   - id: NORMAL
     children:
       - id: IDLE
-        outputs: { XV01: false, XV02: true, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", filter_cleaner_command: false }
+        outputs: { XV01: false, XV02: true, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vessel empty, vent open, awaiting a start command
       - id: FILLING
-        outputs: { XV01: true, XV02: true, XV03: true, XV04: false, XV05: false, XY: false, WT01: loading, filter_cleaner_command: false }
+        outputs: { XV01: true, XV02: true, XV03: true, XV04: false, XV05: false, XY: false, WT01: loading, OUT.filter_cleaner_command: false }
         description: inlet/vent/orifice open, Loading FB fills the vessel to its setpoint
       - id: CLEANING
-        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", filter_cleaner_command: true }
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: true }
         description: all valves closed, external filter-cleaning system enabled for a fixed duration
       - id: SEALING
-        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", filter_cleaner_command: false }
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vessel sealed, waiting for all loading-side valves to confirm closed before pressurizing
       - id: PRESSURIZING
-        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: false, XY: true, WT01: "-", filter_cleaner_command: false }
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: false, XY: true, WT01: "-", OUT.filter_cleaner_command: false }
         description: pressurization solenoid and discharge valve open, building vessel pressure above line pressure
       - id: CONVEYING
-        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: true, XY: true, WT01: unloading, filter_cleaner_command: false }
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: true, XY: true, WT01: unloading, OUT.filter_cleaner_command: false }
         description: line valve open, material flows to the line under the pressure differential while Unloading FB tracks the batch
       - id: DEPRESSURIZING
-        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", filter_cleaner_command: false }
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vent open, releasing residual vessel pressure before returning to IDLE
   - id: FAULT
-    outputs: { XV01: false, XV02: true, XV03: false, XV04: true, XV05: false, XY: false, WT01: "stop+reset", filter_cleaner_command: false }
+    outputs: { XV01: false, XV02: true, XV03: false, XV04: true, XV05: false, XY: false, WT01: "stop+reset", OUT.filter_cleaner_command: false }
     description: fault; vent and discharge held open as a passively-safe state, scale stopped and reset, awaiting ack
 
 transitions:
@@ -47,9 +47,9 @@ transitions:
   - { from: NORMAL.IDLE, to: NORMAL.FILLING, guard: CMD.start_loading }
   - { from: NORMAL.IDLE, to: NORMAL.SEALING, guard: CMD.start_convey }
   - { from: NORMAL.FILLING, to: NORMAL.IDLE, guard: CMD.stop }
-  - { from: NORMAL.FILLING, to: NORMAL.CLEANING, guard: "WT01.STATUS.LOADING.loading_finished" }
+  - { from: NORMAL.FILLING, to: NORMAL.CLEANING, guard: WT01.STATUS.LOADING.loading_finished }
   - { from: NORMAL.CLEANING, to: NORMAL.IDLE, guard: CMD.stop }
-  - { from: NORMAL.CLEANING, to: NORMAL.SEALING, guard: "filter_cleaning_timer.Q" }
+  - { from: NORMAL.CLEANING, to: NORMAL.SEALING, guard: filter_cleaning_timer.Q }
   - { from: NORMAL.SEALING, to: NORMAL.PRESSURIZING, guard: all_loading_closed }
   - { from: NORMAL.PRESSURIZING, to: NORMAL.DEPRESSURIZING, guard: CMD.stop }
   - { from: NORMAL.PRESSURIZING, to: NORMAL.CONVEYING, guard: pressure_gate_met }
@@ -70,7 +70,7 @@ timers:
   - name: filter_cleaning_timer
     active_states: [NORMAL.CLEANING]
     param: SETTING.cleaning_timer
-    raises: gates the CLEANING -> SEALING transition directly via its own Q output, not an alarm
+    raises: gates the CLEANING -> SEALING transition directly via its own Q output, not an alarm — note SETTING.cleaning_timer is the real raw-source field name (not SETTING.cleaning_timeout like every other timer's PT setting), confirmed against source, not a doc typo
   - name: pressurizing_timer
     active_states: [NORMAL.PRESSURIZING]
     param: SETTING.pressurizing_timeout
@@ -106,9 +106,9 @@ entry_actions:
 
 notes:
   - internal_error aggregates faults from all five internal valves (XV01-XV05), WT01's own loading/unloading timeouts, loss of line air (NOT PSL), vessel over-level (LSH), and the transporter's own two timeout alarms — a single guard with many possible root causes, each documented at its own source (valves, load-cells) rather than duplicated here.
-  - the top-level NORMAL -> FAULT guard is internal_error alone in source; pressurization_timeout/depressurization_timeout are already OR'd into internal_error's own expression, not a second independent condition, even though the hand-written doc spells both out again on the transition label for readability.
-  - in FAULT, XV02 (vent) and XV04 (discharge) are both held open — a passively-safe state that needs no actuation air to maintain, which matters because a fault may itself be the loss of line air (NOT PSL).
+  - The top-level NORMAL -> FAULT guard is internal_error alone in source; pressurization_timeout/depressurization_timeout are already OR'd into internal_error's own expression, not a second independent condition, even though the hand-written doc spells both out again on the transition label for readability.
+  - In FAULT, XV02 (vent) and XV04 (discharge) are both held open — a passively-safe state that needs no actuation air to maintain, which matters because a fault may itself be the loss of line air (NOT PSL).
   - CMD.start_convey lets the cycle skip FILLING/CLEANING entirely (IDLE -> SEALING) when the vessel already holds material carried over from a previous cycle.
   - pressure_gate_met (PT01 >= PT02 + pressure_delta) is what gates CONVEYING — the line valve XV05 never opens until the vessel is sufficiently overpressured relative to the line, preventing backflow of material from the line into the vessel.
-  - material moves from vessel to line by the pressure differential built during PRESSURIZING, not by any mechanical conveying action — the whole point of the pressurize-then-open-line-valve sequence.
+  - Material moves from vessel to line by the pressure differential built during PRESSURIZING, not by any mechanical conveying action — the whole point of the pressurize-then-open-line-valve sequence.
   - WT01's Loading/Unloading sub-FBs (fb_loading/fb_unloading) run every scan regardless of the transporter's own state; only the loading_start/unloading_start pulses fired on entering FILLING/CONVEYING actually engage them.

@@ -1,3 +1,6 @@
+# Pinch_diverter — pinch-tube two-way diverter.
+# Source: raw/Types/99 - Library/Objects/Diverters/Pinch/Pinch_diverter.s7dcl. Doc: docs/it/library/diverters/pinch_type/index.md.
+
 schema_version: "1.0"
 fb: Pinch_diverter
 udt: UDT_Pinch_diverter
@@ -25,12 +28,12 @@ states:
     description: fault; no explicit open command issued to either valve (fail-safe)
 
 transitions:
-  - { from: "[*]", to: NORMAL, guard: "XVA open, XVB closed (or vice versa) at first scan" }
-  - { from: "[*]", to: FAULT, guard: "ambiguous positions at first scan" }
+  - { from: "[*]", to: NORMAL, guard: "XVA.is_open XOR XVB.is_open on first scan" }
+  - { from: "[*]", to: FAULT, guard: "ambiguous positions on first scan" }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination route (ROUTE_A vs ROUTE_B) is re-derived from live XVA/XVB sensor feedback, not a saved prior route — same mechanism as the first-scan derivation
   - { from: "[*]", to: NORMAL.ROUTE_A, guard: XVA.is_open }
   - { from: "[*]", to: NORMAL.ROUTE_B, guard: XVB.is_open }
@@ -41,7 +44,7 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: valve_mismatch OR XVA.is_fault OR XVB.is_fault
+    expression: ALARMS.valve_mismatch OR XVA.is_fault OR XVB.is_fault
 
 delegates:
   timer: ["XVA", "XVB"]

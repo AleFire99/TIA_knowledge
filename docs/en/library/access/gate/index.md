@@ -109,7 +109,7 @@ state GATE_DOOR {
         CLOSING --> CLOSED : ZSL
     }
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 }
 ```
 

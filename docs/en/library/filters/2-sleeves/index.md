@@ -107,7 +107,7 @@ state FILTER{
 ```
 
 ```Pascal
-desired_command := (manual_mode AND manual) OR (NOT manual_mode AND auto);
+desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
 ```
 
 | State | `XYA` | `XYB` | Description |

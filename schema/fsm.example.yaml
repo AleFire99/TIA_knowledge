@@ -30,12 +30,12 @@ states:
     description: fault; awaiting ack with valid sensors
 
 transitions:
-  - { from: "[*]", to: NORMAL, guard: "ZSL XOR ZSH on first scan" }
+  - { from: "[*]", to: NORMAL, guard: ZSL XOR ZSH on first scan }
   - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
   - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
@@ -46,7 +46,7 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open
+    expression: ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_close OR ALARMS.failed_to_open
 
 timers:
   - name: movement_timer

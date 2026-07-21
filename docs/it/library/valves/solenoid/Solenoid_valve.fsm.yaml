@@ -1,3 +1,6 @@
+# Solenoid_valve — atomic solenoid actuator (Livello 1, no sub-components).
+# Source: raw/Types/99 - Library/Objects/Valves/Solenoid/Solenoid_valve.s7dcl. Doc: docs/it/library/valves/solenoid/index.md.
+
 schema_version: "1.0"
 fb: Solenoid_valve
 udt: UDT_Solenoid_valve

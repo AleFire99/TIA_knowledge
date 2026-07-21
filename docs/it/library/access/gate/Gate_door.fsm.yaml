@@ -1,6 +1,5 @@
 # Gate_door — electric-lock gate access device.
-# Source: raw/Types/99 - Library/Objects/Gate/Gate_door.s7dcl
-# Doc page: docs/it/library/access/gate/index.md (ground truth for structure, IT prose)
+# Source: raw/Types/99 - Library/Objects/Gate/Gate_door.s7dcl. Doc: docs/it/library/access/gate/index.md.
 
 schema_version: "1.0"
 fb: Gate_door
@@ -33,7 +32,7 @@ transitions:
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination (CLOSED vs OPEN) is re-derived from the live ZSL sensor, same single-signal limitation as the first-scan case — can only distinguish CLOSED from OPEN, never an intermediate condition
   - { from: "[*]", to: NORMAL.CLOSED, guard: ZSL }
   - { from: "[*]", to: NORMAL.OPEN, guard: "!ZSL" }

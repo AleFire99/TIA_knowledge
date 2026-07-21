@@ -1,3 +1,6 @@
+# Loading — load-cells fill cycle (one of two FBs sharing UDT_Load_cells).
+# Source: raw/Types/99 - Library/Objects/Load cells/Scale loading/Loading.s7dcl. Doc: docs/it/library/load-cells/loading-unloading/index.md.
+
 schema_version: "1.0"
 fb: Loading
 udt: UDT_Load_cells
@@ -20,15 +23,17 @@ transitions:
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: also forces normal_state back to IDLE — recovery never resumes mid-load
   - { from: "[*]", to: NORMAL.IDLE }
-  - { from: NORMAL.IDLE, to: NORMAL.LOADING, guard: "loading_start & !weight_invalid" }
-  - { from: NORMAL.LOADING, to: NORMAL.IDLE, guard: "stop | current_weight >= loading_setpoint - loading_tail" }
+  - { from: NORMAL.IDLE, to: NORMAL.LOADING, guard: "CMD.loading_start & !ALARMS.weight_invalid" }
+  - { from: NORMAL.LOADING, to: NORMAL.IDLE, guard: loading_done }
 
 guard_formulas:
   - name: internal_error
-    expression: loading_timer.Q OR scale.IN.scale_error OR scale.IN.plant_error
+    expression: loading_timer.Q OR IN.scale_error OR IN.plant_error
+  - name: loading_done
+    expression: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail)
 
 timers:
   - name: loading_timer

@@ -1,3 +1,6 @@
+# Pinch_valve — single-sensor pinch-tube valve.
+# Source: raw/Types/99 - Library/Objects/Valves/Pinch/Pinch_valve.s7dcl. Doc: docs/it/library/valves/pinch/index.md.
+
 schema_version: "1.0"
 fb: Pinch_valve
 udt: UDT_Pinch_Valve
@@ -29,7 +32,7 @@ transitions:
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: destination normal_state (CLOSED vs OPEN) is re-derived from live PSL, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: PSL }
   - { from: "[*]", to: NORMAL.OPEN, guard: "!PSL" }
@@ -40,7 +43,7 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: sensor_mismatch OR failed_to_close OR failed_to_open
+    expression: ALARMS.sensor_mismatch OR ALARMS.failed_to_close OR ALARMS.failed_to_open
 
 timers:
   - name: movement_timer
@@ -49,6 +52,6 @@ timers:
     raises: ALARMS.failed_to_open when stuck in OPENING, ALARMS.failed_to_close when stuck in CLOSING
 
 notes:
-  - the valve is normally open — PSL is the sole position sensor (confirms the closed state only), so there is no sensor_conflict counterpart alarm here unlike two-sensor valves.
+  - The valve is normally open — PSL is the sole position sensor (confirms the closed state only), so there is no sensor_conflict counterpart alarm here unlike two-sensor valves.
   - FAULT deliberately de-energizes XY regardless of what was commanded before the fault, to avoid pinching the tube indefinitely and accelerating material wear.
-  - recovery from FAULT re-derives normal_state from live PSL exactly like the first-scan initialization, not a stored prior state.
+  - Recovery from FAULT re-derives normal_state from live PSL exactly like the first-scan initialization, not a stored prior state.

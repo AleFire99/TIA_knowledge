@@ -1,6 +1,5 @@
-# Filter_2_sleeves (2-sleeve filter cleaner) — see raw/Types/99 - Library/Objects/
-# Filters/2-sleeves/Filter_2_sleeves.s7dcl and docs/it/library/filters/2-sleeves/index.md
-# for the source and hand-written doc this mirrors.
+# Filter_2_sleeves — two-sleeve filter cleaner (open-loop pulse cleaning, alternating sleeves).
+# Source: raw/Types/99 - Library/Objects/Filters/2-sleeves/Filter_2_sleeves.s7dcl. Doc: docs/it/library/filters/2-sleeves/index.md.
 
 schema_version: "1.0"
 fb: Filter_2_sleeves
@@ -35,7 +34,7 @@ transitions:
 
 guard_formulas:
   - name: desired_command
-    expression: (manual_mode AND manual) OR (NOT manual_mode AND auto)
+    expression: (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto)
 
 timers:
   - name: pulse_timer

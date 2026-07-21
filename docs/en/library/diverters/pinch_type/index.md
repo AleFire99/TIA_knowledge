@@ -93,11 +93,11 @@ On return from `FAULT`, the block rereads the state of the two sub-valves to det
 ```mermaid
 stateDiagram-v2
 state DIVERTER{
-    [*] --> NORMAL : XVA open, XVB closed (or vice versa) at first scan
-    [*] --> FAULT : ambiguous positions at first scan
+    [*] --> NORMAL : XVA.is_open XOR XVB.is_open on first scan
+    [*] --> FAULT : ambiguous positions on first scan
 
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> ROUTE_A : XVA.is_open
@@ -113,7 +113,7 @@ state DIVERTER{
 ```
 
 ```Pascal
-internal_error := valve_mismatch OR XVA.is_fault OR XVB.is_fault;
+internal_error := ALARMS.valve_mismatch OR XVA.is_fault OR XVB.is_fault;
 ```
 
 | State | `XVA` (commanded) | `XVB` (commanded) | Description |

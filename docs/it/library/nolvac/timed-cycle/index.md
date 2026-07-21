@@ -106,7 +106,7 @@ state NOLVAC{
         ACTIVE --> IDLE : !desired_command
     }
     NORMAL_BEHAVIOUR --> FAULT : internal_error
-    FAULT --> NORMAL_BEHAVIOUR : ack & !internal_error → IDLE
+    FAULT --> NORMAL_BEHAVIOUR : CMD.ack & !internal_error → IDLE
 }
 ```
 

@@ -1,6 +1,5 @@
-# Nolvac — Ciclo a Tempo. See raw/Types/99 - Library/Objects/Nolvac/Nolvac.s7dcl
-# and docs/it/library/nolvac/timed-cycle/index.md for the source and hand-written
-# doc this mirrors.
+# Nolvac — timed-cycle vacuum conveyor.
+# Source: raw/Types/99 - Library/Objects/Nolvac/Nolvac.s7dcl. Doc: docs/it/library/nolvac/timed-cycle/index.md.
 
 schema_version: "1.0"
 fb: Nolvac
@@ -32,7 +31,7 @@ transitions:
   - { from: NORMAL_BEHAVIOUR, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL_BEHAVIOUR
-    guard: ack & !internal_error
+    guard: CMD.ack & !internal_error
     note: recovery always re-enters NORMAL_BEHAVIOUR.IDLE, never the state active before the fault
   - { from: "[*]", to: NORMAL_BEHAVIOUR.IDLE }
   - { from: NORMAL_BEHAVIOUR.IDLE, to: NORMAL_BEHAVIOUR.ACTIVE, guard: desired_command }

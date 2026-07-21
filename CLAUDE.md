@@ -443,7 +443,8 @@ Key modeling decisions (rationale for extending the schema correctly later):
   top-level.
 - **`transitions[].guard` is free text, not a formal grammar** — mirrors the SCL `IF`
   condition or, for guard-formula composites, the formula name itself (see
-  `guard_formulas`).
+  `guard_formulas`). See "Guard text and field-namespacing convention" below for the exact
+  style rules.
 - **Timers' `active_states` is always a list** — a timer's `IN` frequently ORs multiple
   sibling states together (e.g. `movement_timer` active in both `OPENING` and `CLOSING`);
   never assume single-state activity from the timer's name.
@@ -457,6 +458,60 @@ Key modeling decisions (rationale for extending the schema correctly later):
   `XVA`/`XVB` for `actuator_timeout`). `label`/`states`/`transitions` are only required by
   the schema when `delegates.fsm` is absent — a fully-delegated FB has no diagram of its own
   to supply, so it doesn't need a placeholder one just to satisfy the schema.
+
+**Guard text and field-namespacing convention** — applies to `transitions[].guard` and
+`guard_formulas[].expression` everywhere. Established after an audit of all 13 files found
+real contradictions, not just style drift (e.g. a `guard_formulas` expression referencing a
+bare `failed_to_close` while that same file's `timers[].raises` called the identical field
+`ALARMS.failed_to_close` two lines later):
+
+- **Field namespacing, three tiers**:
+  1. *Bare, no prefix*: the FB's own top-level `DEVICES` sensor/actuator tags used as the
+     page's primary signal vocabulary (`ZSL`, `ZSH`, `PSL`, `LSH`, already tabulated in every
+     page's Segnali di controllo table); FB-local computed booleans with no backing struct
+     field (`desired_command`, `desired_open_command`, `desired_route_B`); and a
+     `guard_formulas` name referenced by a transition (`internal_error`, `loading_done`).
+  2. *Struct-prefixed, always*: any other own-FB field — `CMD.*`, `STATUS.*`, `SETTING.*`,
+     `ALARMS.*`, `IN.*`, `BATCH.*`, `OUT.*` — but **never** prefixed with the FB's own
+     top-level VAR_IN_OUT parameter name (`XV`, `filter`, `scale`, `gate_door`, `VC`, `DIV`,
+     `TR`...) — that self-reference is always dropped. This is what a bare `ack` or a
+     self-prefixed `scale.IN.scale_error` both get wrong: the field is `CMD.ack`/`IN.scale_error`,
+     never bare `ack` (it's a `CMD` field, not FB-local) and never `scale.IN.*` (dropping the
+     FB's own VAR_IN_OUT self-reference, same as never writing `XV.ALARMS.sensor_mismatch` in
+     SS_valve).
+  3. *Child-tag-prefixed*: a genuinely embedded child instance's own fields keep their tag
+     (`XV01.STATUS.is_fault`, `XVA.is_open`, `WT01.STATUS.LOADING.loading_finished`) — these
+     are real `DEVICES.<tag>` sub-instances, not the FB's own struct.
+  When in doubt which tier a field belongs to, check the raw `.s7dcl`/UDT source rather than
+  guessing from an existing file — several of the contradictions above were only caught by
+  reading the actual struct declaration.
+- **Operator style is split by rendering context, not a single global choice**:
+  `transitions[].guard` renders as a mermaid edge label (needs to stay short) and uses
+  symbolic operators `&`/`!`/`|`, a bare identifier, or a bare `guard_formulas` name.
+  `guard_formulas[].expression` renders as a literal Pascal-styled code block (presented as
+  authoritative reference code) and uses keyword operators `AND`/`OR`/`NOT`, matching real
+  SCL.
+- **Never inline a relational/arithmetic expression** (`>=`, `<=`, `+`, `-`) directly in a
+  `transitions[].guard` — promote it to a named `guard_formulas` entry instead, then
+  reference that entry's bare name from the transition (e.g. Loading's
+  `stop | current_weight >= loading_setpoint - loading_tail` becomes the transition guard
+  `loading_done`, with `loading_done: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint
+  - SETTING.loading_tail)` as its own `guard_formulas` entry). This keeps every mermaid edge
+  label short and gives the actual formula one authoritative place to live.
+- **First-scan ambiguous-pair guards share one template**, domain word substituted:
+  `"<predicate A> XOR <predicate B> on first scan"` / `"ambiguous <domain noun> on first
+  scan"` (e.g. `ZSL XOR ZSH on first scan` / `ambiguous sensors on first scan` for a
+  two-sensor valve; `XVA.is_open XOR XVB.is_open on first scan` / `ambiguous positions on
+  first scan` for a two-valve diverter — "positions" because it's valve state, not a sensor).
+- **Quoting**: only quote a guard/expression string when YAML syntax actually requires it
+  (leading `!`, embedded `|`/`:`). Don't quote defensively — a bare dotted path or a phrase
+  with no special character never needs quotes.
+- **Header comment**: two lines, every file — `# <FB name> — <one-line device description>.`
+  / `# Source: raw/<path>. Doc: docs/it/library/<category>/<device>/index.md.` Anything more
+  discursive (e.g. a delegation rationale) belongs in `notes`, not the header.
+- **Notes casing**: sentence case when a note's first word is genuine English prose; leave a
+  note as-is (lowercase) when its first word is a literal code identifier — capitalizing part
+  of a snake_case token would be incorrect, not a style improvement.
 
 **Rendering-mapping rules** (for the future generator — how this yaml turns into the doc
 sections defined in Module Page Format above):

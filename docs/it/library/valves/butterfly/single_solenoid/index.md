@@ -109,7 +109,7 @@ state SS_VALVE{
     [*] --> FAULT : sensori ambigui al primo scan
 
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : ack & !internal_error
+    FAULT --> NORMAL : CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> CLOSED : ZSL & !ZSH
@@ -124,7 +124,7 @@ state SS_VALVE{
 ```
 
 ```Pascal
-internal_error := sensor_mismatch OR sensor_conflict OR failed_to_close OR failed_to_open;
+internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_close OR ALARMS.failed_to_open;
 ```
 
 | Stato | `XY` | Descrizione |

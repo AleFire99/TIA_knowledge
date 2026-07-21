@@ -1,6 +1,5 @@
 # Filter_1_sleeve — single-sleeve filter cleaner (open-loop pulse cleaning).
-# Source: raw/Types/99 - Library/Objects/Filters/1-sleeve/Filter_1_sleeve.s7dcl
-# Doc page: docs/it/library/filters/1-sleeve/index.md (ground truth for structure, IT prose)
+# Source: raw/Types/99 - Library/Objects/Filters/1-sleeve/Filter_1_sleeve.s7dcl. Doc: docs/it/library/filters/1-sleeve/index.md.
 
 schema_version: "1.0"
 fb: Filter_1_sleeve
@@ -26,13 +25,13 @@ transitions:
   - { from: "[*]", to: IDLE }
   - { from: IDLE, to: ACTIVE, guard: desired_command }
   - { from: ACTIVE, to: IDLE, guard: "!desired_command" }
-  - { from: "[*]", to: ACTIVE.WAITING }
-  - { from: ACTIVE.WAITING, to: ACTIVE.PULSING, guard: interval_timer.Q }
+  - { from: "[*]", to: ACTIVE.PULSING }
   - { from: ACTIVE.PULSING, to: ACTIVE.WAITING, guard: pulse_timer.Q }
+  - { from: ACTIVE.WAITING, to: ACTIVE.PULSING, guard: interval_timer.Q }
 
 guard_formulas:
   - name: desired_command
-    expression: (manual_mode AND manual) OR (NOT manual_mode AND auto)
+    expression: (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto)
 
 timers:
   - name: interval_timer
@@ -45,5 +44,5 @@ timers:
     raises: feeds the PULSING -> WAITING guard, ending the pulse
 
 notes:
-  - "ACTIVE always initializes its substate to WAITING — both on first scan and every time IDLE -> ACTIVE fires — so the cycle always opens with an interval wait before the first pulse, never an immediate pulse. This is a real behavioral difference from Filter_2_sleeves, which initializes to PULSING instead — confirmed in both FBs' raw source, not an authoring inconsistency."
+  - "ACTIVE always initializes its substate to PULSING — both on first scan and every time IDLE -> ACTIVE fires — so the cycle always opens with an immediate cleaning pulse, matching Filter_2_sleeves' behavior exactly (this FB previously initialized to WAITING instead; the raw source was corrected to align the two filter FBs)."
   - "No ALARMS struct exists on this UDT: the cleaning cycle is open-loop (no position/pressure feedback on the sleeve), so there is no sensor state to base a fault detection on."
