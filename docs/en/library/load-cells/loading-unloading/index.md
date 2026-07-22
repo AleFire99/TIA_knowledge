@@ -151,8 +151,8 @@ A fault (`internal_error`) always leads to `FAULT`. But the acknowledge (`CMD.ac
 ### Alarms
 
 - [`LC-W01`](../index.md#load-cell-alarms) — `weight_invalid`, shared by Loading and Unloading; prevents starting a new cycle in either block. Check the load cells, wiring, and transmitter
-- [`LC-E01`](../index.md#load-cell-alarms) — loading cycle exceeded `loading_timeout`, or transmitter/plant fault during LOADING
-- [`LC-E02`](../index.md#load-cell-alarms) — unloading cycle exceeded `unloading_timeout`, or transmitter/plant fault during UNLOADING
+- [`LC-E01`](../index.md#load-cell-alarms) — no weight progress for `loading_timeout` during LOADING (stalled), or transmitter/plant fault
+- [`LC-E02`](../index.md#load-cell-alarms) — no weight progress for `unloading_timeout` during UNLOADING (stalled), or transmitter/plant fault
 
 ### State Diagrams
 

@@ -151,8 +151,8 @@ Un guasto (`internal_error`) porta sempre a `FAULT`. Ma la conferma (`CMD.ack`) 
 ### Allarmi
 
 - [`LC-W01`](../index.md#allarmi-delle-celle-di-carico) — `weight_invalid`, condiviso da Loading e Unloading; impedisce l'avvio di un nuovo ciclo in entrambi i blocchi. Verificare celle, cablaggio e trasmettitore
-- [`LC-E01`](../index.md#allarmi-delle-celle-di-carico) — ciclo di carico durato oltre `loading_timeout`, o guasto trasmettitore/impianto durante LOADING
-- [`LC-E02`](../index.md#allarmi-delle-celle-di-carico) — ciclo di scarico durato oltre `unloading_timeout`, o guasto trasmettitore/impianto durante UNLOADING
+- [`LC-E01`](../index.md#allarmi-delle-celle-di-carico) — nessun progresso di peso per `loading_timeout` durante LOADING (stallo), o guasto trasmettitore/impianto
+- [`LC-E02`](../index.md#allarmi-delle-celle-di-carico) — nessun progresso di peso per `unloading_timeout` durante UNLOADING (stallo), o guasto trasmettitore/impianto
 
 ### Diagrammi di stato
 

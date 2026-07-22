@@ -7,8 +7,8 @@ The weighing system is built around `UDT_Load_cells`, which holds all cycle logi
 | ID | Title | Condition | Applies to |
 |----|-------|-----------|------------|
 | `LC-W01` | Weight out of range | `ALARMS.weight_invalid` — doesn't cause a transition to ERROR, only blocks starting a cycle | Load Cells |
-| `LC-E01` | Loading timeout | `ALARMS.loading_timeout` — drives `Loading` to ERROR | Load Cells |
-| `LC-E02` | Unloading timeout | `ALARMS.unloading_timeout` — drives `Unloading` to ERROR | Load Cells |
+| `LC-E01` | Loading stalled | `ALARMS.loading_timeout` — no weight progress for `loading_timeout`; drives `Loading` to ERROR | Load Cells |
+| `LC-E02` | Unloading stalled | `ALARMS.unloading_timeout` — no weight progress for `unloading_timeout`; drives `Unloading` to ERROR | Load Cells |
 
 `LC-W01` is a warning (no state transition) because it only blocks entry into `LOADING`/`CONVEYING` from `IDLE` — unlike `LC-E01`/`LC-E02`, genuine errors each with their own transition to `ERROR` on their respective state machine.
 
