@@ -39,8 +39,10 @@
             { S7_MLC := "MLC_4Qy" }
             max_weight : Real := 1000.0;
             loading_tail : Real;
-            { S7_MLC := "MLC_3zE" }
+            { S7_MLC := "MLC_4MJ" }
             unloading_tail : Real;
+            loading_stalled_treshold : Real;
+            unloading_stalled_treshold : Real;
             loading_timeout : Time := T#10M;
             { S7_MLC := "MLC_3Ld" }
             unloading_timeout : Time := T#10M;

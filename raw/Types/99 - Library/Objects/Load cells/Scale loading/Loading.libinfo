@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 1.0.1
+  VersionNumber: 1.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added plant error as error condition
+    en-US: Added stall logic replacing old timeout

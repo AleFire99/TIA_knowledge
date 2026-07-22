@@ -35,6 +35,8 @@ classDiagram
         +Real max_weight
         +Real loading_tail
         +Real unloading_tail
+        +Real loading_stalled_treshold
+        +Real unloading_stalled_treshold
         +Time loading_timeout
         +Time unloading_timeout
     }
@@ -115,8 +117,10 @@ classDiagram
 | `SETTING.max_weight` | 1000.0 | Upper valid-weight threshold [kg] |
 | `SETTING.loading_tail` | 0.0 | Early cutoff for loading, relative to the setpoint [kg] |
 | `SETTING.unloading_tail` | 0.0 | Early cutoff for unloading, relative to the setpoint [kg] |
-| `SETTING.loading_timeout` | T#10M | Maximum LOADING cycle duration before FAULT |
-| `SETTING.unloading_timeout` | T#10M | Maximum UNLOADING cycle duration before FAULT |
+| `SETTING.loading_stalled_treshold` | 0.0 | Minimum weight change [kg] required within `loading_timeout` for the load to not be considered stalled |
+| `SETTING.unloading_stalled_treshold` | 0.0 | Minimum weight change [kg] required within `unloading_timeout` for the unload to not be considered stalled |
+| `SETTING.loading_timeout` | T#10M | Maximum time with no weight progress in LOADING before FAULT |
+| `SETTING.unloading_timeout` | T#10M | Maximum time with no weight progress in UNLOADING before FAULT |
 
 ---
 
@@ -128,7 +132,9 @@ classDiagram
 
 The cycle fills the container up to `loading_setpoint`, with an early cutoff (`loading_tail`) that stops loading a bit before the target to compensate for material still falling after the command is cut — without this margin the final settled weight would overshoot the setpoint. `BATCH.transferred` is recalculated every scan as the difference from the weight captured on entering `LOADING` (`weight_at_start`), clamped to 0 to avoid negative readings caused by sensor noise/drift near zero.
 
-A fault (`internal_error`: timeout, transmitter error, or plant error) always leads to `FAULT`; the acknowledge (`CMD.ack`) always restarts from `IDLE` — a load interrupted by a fault is never resumed midway, it starts over from scratch.
+The timer that feeds `internal_error` (`stall_timer`) doesn't measure the total loading duration — it measures time since the last significant weight progress: every scan where `current_weight` has risen by at least `loading_stalled_treshold` since the last check, the anchor re-aligns and the timer resets to zero. A slow but still-progressing load therefore never nuisance-trips `internal_error` — only a genuine stall (jammed feed, empty hopper) with no progress for the entire `loading_timeout` duration leads to `FAULT`.
+
+A fault (`internal_error`: stall, transmitter error, or plant error) always leads to `FAULT`; the acknowledge (`CMD.ack`) always restarts from `IDLE` — a load interrupted by a fault is never resumed midway, it starts over from scratch.
 
 #### Unloading FB
 
@@ -137,6 +143,8 @@ The cycle unloads the container down to `unloading_setpoint`, with the same earl
 Unlike Loading, unloading can be suspended and resumed rather than just started/stopped. Two distinct conditions lead to `PAUSED` instead of ending the cycle: the operator presses `CMD.stop`, or the weight drops to `min_weight` — the same threshold used for `weight_invalid`, applied here as a safety limit to avoid continuing to unload from a reading that's already near the bottom of the scale (risk of an unreliable reading or an empty container).
 
 On resuming (`PAUSED` → `UNLOADING`), the `weight_at_start` anchor isn't simply re-read from the current weight: it's recalculated as `current_weight + transferred`, where `transferred` is the value frozen during the pause. This way the `transferred` calculation on the next scan (`weight_at_start − current_weight`) picks up exactly from the frozen value, with no jump visible to the operator.
+
+As in Loading, the timer that feeds `internal_error` (`stall_timer`) measures time since the last significant weight progress, not the total unloading duration: every scan where `current_weight` has dropped by at least `unloading_stalled_treshold` since the last check, the anchor re-aligns and the timer resets to zero. A slow but still-progressing unload never nuisance-trips `internal_error`; only a genuine stall (stuck valve, already-empty container) with no progress for the entire `unloading_timeout` duration leads to `FAULT`.
 
 A fault (`internal_error`) always leads to `FAULT`. But the acknowledge (`CMD.ack`) returns to `PAUSED`, not to `IDLE` as in Loading: a fault mid-unload must not lose the progress of the batch already transferred. The operator then decides whether to resume unloading or abandon it entirely with `CMD.reset` (returns to `IDLE`).
 
@@ -167,7 +175,7 @@ state LOADING_FB{
 ```
 
 ```Pascal
-internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error;
+internal_error := stall_timer.Q OR IN.scale_error OR IN.plant_error;
 loading_done := CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail);
 ```
 
@@ -195,7 +203,7 @@ state UNLOADING_FB{
 ```
 
 ```Pascal
-internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error;
+internal_error := stall_timer.Q OR IN.scale_error OR IN.plant_error;
 unloading_done := BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail;
 unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 ```
@@ -214,14 +222,14 @@ unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 | State reached | Entry action |
 |------------------|----------------------|
 | NORMAL/IDLE | `BATCH.transferred := 0`; `STATUS.LOADING.loading_finished` 1-scan pulse |
-| NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (anchor snapshot) |
+| NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (anchor snapshot); `last_checked_weight := IN.current_weight` (re-anchors the stall watchdog) |
 
 #### Unloading
 
 | State reached | Entry action |
 |------------------|----------------------|
 | IDLE | `BATCH.transferred := 0`; `STATUS.UNLOADING.unloading_finished` 1-scan pulse |
-| UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (recalculates the anchor — covers both the first start, with `transferred=0`, and resuming from pause) |
+| UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (recalculates the anchor — covers both the first start, with `transferred=0`, and resuming from pause); `last_checked_weight := IN.current_weight` (re-anchors the stall watchdog) |
 
 ### Timer
 
@@ -229,10 +237,10 @@ unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 
 | Timer | Active in state | Threshold (parameter) |
 |-------|------------------------|---------------------|
-| `loading_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
+| `stall_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
 
 #### Unloading
 
 | Timer | Active in state | Threshold (parameter) |
 |-------|------------------------|---------------------|
-| `unloading_timer` | UNLOADING | `SETTING.unloading_timeout` |
+| `stall_timer` | UNLOADING | `SETTING.unloading_timeout` |

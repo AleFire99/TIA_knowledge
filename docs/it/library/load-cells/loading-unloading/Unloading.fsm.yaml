@@ -33,14 +33,14 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: unloading_timer.Q OR IN.scale_error OR IN.plant_error
+    expression: stall_timer.Q OR IN.scale_error OR IN.plant_error
   - name: unloading_done
     expression: BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail
   - name: unloading_paused
     expression: CMD.stop OR (IN.current_weight <= SETTING.min_weight)
 
 timers:
-  - name: unloading_timer
+  - name: stall_timer
     active_states: [UNLOADING]
     param: SETTING.unloading_timeout
     raises: feeds internal_error, which sets ALARMS.unloading_timeout and drives the UNLOADING -> FAULT transition
@@ -55,9 +55,11 @@ entry_actions:
     shadow_var: prev_state
     actions:
       - "BATCH.weight_at_start recomputed as IN.current_weight + BATCH.transferred — covers both a first start (transferred=0, reduces to a plain snapshot) and a resume from PAUSED (transferred holds the frozen value, so the anchor is back-calculated to continue from it)"
+      - "last_checked_weight re-anchored to IN.current_weight — so a value left over from a previous run/pause can't be mistaken for 'no progress' the instant UNLOADING is (re)entered"
 
 notes:
   - "Unlike Loading, whose FAULT recovery always returns to NORMAL.IDLE and restarts from scratch, Unloading's FAULT recovery (ack) goes to PAUSED, not IDLE — a fault mid-discharge must not discard the batch progress already transferred. The operator then either resumes (unloading_start) or abandons the cycle explicitly via CMD.reset (PAUSED -> IDLE)."
+  - "stall_timer no longer measures total time spent in UNLOADING — it measures time since the last significant weight drop. Every scan where current_weight has dropped by at least SETTING.unloading_stalled_treshold since last_checked_weight, last_checked_weight re-anchors to the new value and the timer's IN drops for that scan, resetting it to zero. So a slow-but-still-progressing unload never nuisance-trips internal_error, while a genuinely stalled one (stuck valve, empty container) still faults once no progress is seen for the full unloading_timeout duration."
   - "BATCH.transferred is recomputed every scan while in UNLOADING as weight_at_start - current_weight, clamped to zero to avoid a negative reading from sensor noise/drift near zero. In PAUSED or FAULT this region makes no assignment, so transferred holds its last frozen value."
   - "On resume from PAUSED, weight_at_start is recalculated as current_weight + transferred (the frozen value) rather than simply reread from current_weight, so next scan's transferred computation (weight_at_start - current_weight) continues exactly from the frozen value with no visible jump to the operator."
   - "UNLOADING -> PAUSED also fires when current_weight drops to min_weight — the same threshold used for weight_invalid, applied here as a safety limit against continuing to unload from a reading close to the scale's bottom of range (risk of an unreliable reading or an already-empty container)."

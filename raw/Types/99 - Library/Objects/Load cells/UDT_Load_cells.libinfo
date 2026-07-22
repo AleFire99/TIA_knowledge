@@ -3,8 +3,8 @@
   Comment:
     it-IT: First commit
 LibraryVersion:
-  VersionNumber: 1.0.0
+  VersionNumber: 1.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Added layer in loading FSM
+    en-US: Added stalled weight check

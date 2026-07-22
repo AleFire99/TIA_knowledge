@@ -35,6 +35,8 @@ classDiagram
         +Real max_weight
         +Real loading_tail
         +Real unloading_tail
+        +Real loading_stalled_treshold
+        +Real unloading_stalled_treshold
         +Time loading_timeout
         +Time unloading_timeout
     }
@@ -115,8 +117,10 @@ classDiagram
 | `SETTING.max_weight` | 1000.0 | Soglia superiore peso valido [kg] |
 | `SETTING.loading_tail` | 0.0 | Anticipazione fine carico rispetto al setpoint [kg] |
 | `SETTING.unloading_tail` | 0.0 | Anticipazione fine scarico rispetto al setpoint [kg] |
-| `SETTING.loading_timeout` | T#10M | Durata massima ciclo LOADING prima di FAULT |
-| `SETTING.unloading_timeout` | T#10M | Durata massima ciclo UNLOADING prima di FAULT |
+| `SETTING.loading_stalled_treshold` | 0.0 | Variazione minima di peso [kg] richiesta entro `loading_timeout` per non considerare il carico stallato |
+| `SETTING.unloading_stalled_treshold` | 0.0 | Variazione minima di peso [kg] richiesta entro `unloading_timeout` per non considerare lo scarico stallato |
+| `SETTING.loading_timeout` | T#10M | Tempo massimo senza progresso di peso in LOADING prima di FAULT |
+| `SETTING.unloading_timeout` | T#10M | Tempo massimo senza progresso di peso in UNLOADING prima di FAULT |
 
 ---
 
@@ -128,7 +132,9 @@ classDiagram
 
 Il ciclo riempie il contenitore fino a `loading_setpoint`, con un'anticipazione (`loading_tail`) che ferma il carico un po' prima del target per compensare il materiale ancora in caduta dopo l'interruzione del comando: senza questo margine il peso finale assestato supererebbe il setpoint. `BATCH.transferred` è ricalcolato ogni scan come differenza dal peso acquisito all'ingresso in `LOADING` (`weight_at_start`), clampato a 0 per evitare letture negative dovute a rumore/drift del sensore vicino allo zero.
 
-Un guasto (`internal_error`: timeout, errore trasmettitore o d'impianto) porta sempre a `FAULT`; la conferma (`CMD.ack`) riparte sempre da `IDLE` — un carico interrotto da guasto non viene ripreso a metà, si riavvia da zero.
+Il timer che alimenta `internal_error` (`stall_timer`) non misura la durata totale del carico, ma il tempo trascorso dall'ultimo progresso di peso significativo: ogni scan in cui `current_weight` è salito di almeno `loading_stalled_treshold` rispetto all'ultimo controllo, l'ancora si riallinea e il timer si azzera. Un carico lento ma che avanza non fa quindi scattare `internal_error` per nessuna ragione — solo uno stallo genuino (alimentazione bloccata, tramoggia vuota) senza alcun progresso per l'intera durata di `loading_timeout` porta a `FAULT`.
+
+Un guasto (`internal_error`: stallo, errore trasmettitore o d'impianto) porta sempre a `FAULT`; la conferma (`CMD.ack`) riparte sempre da `IDLE` — un carico interrotto da guasto non viene ripreso a metà, si riavvia da zero.
 
 #### FB Unloading
 
@@ -137,6 +143,8 @@ Il ciclo scarica il contenitore fino a `unloading_setpoint`, con la stessa antic
 A differenza di Loading, lo scarico può essere sospeso e ripreso invece che solo avviato/fermato. Due condizioni distinte portano a `PAUSED` invece di terminare il ciclo: l'operatore preme `CMD.stop`, oppure il peso scende fino a `min_weight` — la stessa soglia usata per `weight_invalid`, qui applicata come limite di sicurezza per non continuare a scaricare da una lettura ormai vicina al fondo scala (rischio di lettura inaffidabile o contenitore vuoto).
 
 Alla ripresa (`PAUSED` → `UNLOADING`), l'ancora `weight_at_start` non viene semplicemente riletta dal peso corrente: viene ricalcolata come `current_weight + transferred`, dove `transferred` è il valore congelato durante la pausa. Così il calcolo di `transferred` nel prossimo scan (`weight_at_start − current_weight`) riparte esattamente dal valore congelato, senza un salto visibile all'operatore.
+
+Come in Loading, il timer che alimenta `internal_error` (`stall_timer`) misura il tempo dall'ultimo progresso di peso significativo, non la durata totale dello scarico: ogni scan in cui `current_weight` è sceso di almeno `unloading_stalled_treshold` rispetto all'ultimo controllo, l'ancora si riallinea e il timer si azzera. Uno scarico lento ma che avanza non fa scattare `internal_error`; solo uno stallo genuino (valvola bloccata, contenitore già vuoto) senza progresso per l'intera durata di `unloading_timeout` porta a `FAULT`.
 
 Un guasto (`internal_error`) porta sempre a `FAULT`. Ma la conferma (`CMD.ack`) riporta a `PAUSED`, non a `IDLE` come in Loading: un guasto a metà scarico non deve far perdere il progresso del batch già trasferito. L'operatore decide poi se riprendere lo scarico o abbandonarlo del tutto con `CMD.reset` (torna a `IDLE`).
 
@@ -167,7 +175,7 @@ state LOADING_FB{
 ```
 
 ```Pascal
-internal_error := loading_timer.Q OR IN.scale_error OR IN.plant_error;
+internal_error := stall_timer.Q OR IN.scale_error OR IN.plant_error;
 loading_done := CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail);
 ```
 
@@ -195,7 +203,7 @@ state UNLOADING_FB{
 ```
 
 ```Pascal
-internal_error := unloading_timer.Q OR IN.scale_error OR IN.plant_error;
+internal_error := stall_timer.Q OR IN.scale_error OR IN.plant_error;
 unloading_done := BATCH.transferred >= CMD.unloading_setpoint - SETTING.unloading_tail;
 unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 ```
@@ -214,14 +222,14 @@ unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 | Stato raggiunto | Azione all'ingresso |
 |------------------|----------------------|
 | NORMAL/IDLE | `BATCH.transferred := 0`; `STATUS.LOADING.loading_finished` impulso 1-scan |
-| NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (snapshot dell'ancora) |
+| NORMAL/LOADING | `BATCH.weight_at_start := IN.current_weight` (snapshot dell'ancora); `last_checked_weight := IN.current_weight` (riallinea il watchdog di stallo) |
 
 #### Unloading
 
 | Stato raggiunto | Azione all'ingresso |
 |------------------|----------------------|
 | IDLE | `BATCH.transferred := 0`; `STATUS.UNLOADING.unloading_finished` impulso 1-scan |
-| UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (ricalcola l'ancora — copre sia il primo avvio, con `transferred=0`, sia la ripresa da pausa) |
+| UNLOADING | `BATCH.weight_at_start := IN.current_weight + BATCH.transferred` (ricalcola l'ancora — copre sia il primo avvio, con `transferred=0`, sia la ripresa da pausa); `last_checked_weight := IN.current_weight` (riallinea il watchdog di stallo) |
 
 ### Timer
 
@@ -229,10 +237,10 @@ unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |
 |-------|------------------------|---------------------|
-| `loading_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
+| `stall_timer` | NORMAL/LOADING | `SETTING.loading_timeout` |
 
 #### Unloading
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |
 |-------|------------------------|---------------------|
-| `unloading_timer` | UNLOADING | `SETTING.unloading_timeout` |
+| `stall_timer` | UNLOADING | `SETTING.unloading_timeout` |
