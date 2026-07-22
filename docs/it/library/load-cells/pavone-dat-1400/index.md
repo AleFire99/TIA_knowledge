@@ -56,7 +56,7 @@ classDiagram
 
 `-` = sola lettura — entrambi gli UDT sono interamente read-only da DCS/HMI, incluso `Command_register`, che pure viene scritto da questo stesso FC ogni scan: l'attributo governa l'accesso esterno DCS/HMI, non le scritture interne del FC che possiede l'istanza.
 
-`Status_register` corrisponde bit a bit allo Status Register Modbus documentato dal manuale del trasmettitore (Holding Register 0001):
+`Status_register` corrisponde bit a bit allo Status Register documentato dal manuale del trasmettitore, scambiato come dato di processo PROFINET:
 
 | Bit | Campo | Significato (da manuale) |
 |-----|-------|---------------------------|
