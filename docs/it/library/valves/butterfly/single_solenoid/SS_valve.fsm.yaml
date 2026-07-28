@@ -28,15 +28,17 @@ states:
     description: fault; awaiting ack with valid sensors
 
 transitions:
-  - { from: "[*]", to: NORMAL, guard: ZSL XOR ZSH on first scan }
-  - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
+  - { from: "[*]", to: NORMAL, guard: "!(ZSL & ZSH) on first scan" }
+  - { from: "[*]", to: FAULT, guard: ZSL & ZSH on first scan }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
     guard: CMD.ack & !internal_error
-    note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
+    note: destination (CLOSED/OPEN/OPENING/CLOSING) is re-derived from live ZSL/ZSH sensors and desired_open_command, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
   - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: "[*]", to: NORMAL.OPENING, guard: "!ZSL & !ZSH & desired_open_command" }
+  - { from: "[*]", to: NORMAL.CLOSING, guard: "!ZSL & !ZSH & !desired_open_command" }
   - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: desired_open_command }
   - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
   - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }

@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: SS_valve.s7dcl
-    Hash: vFWiqBURplQ3Ejd3MSxtvaccnWlvWXOEoHEXCNdQe+M=
+    Hash: tOiBP/8hlO8CwnW+KitL+NYT/+o/JEIEcsusB8NLFRw=
   - FileName: SS_valve.s7res
     Hash: +QY7MzEAFfwGt5zkqRJ7p3+UQLg+AKFMwK/ochaw1e0=
-LibraryMetaFileHash: jNcEHYwDAryd/laV5Lyh6WwQY6Mc4M1we7DB2W7r7KA=
+LibraryMetaFileHash: fPtPLJYHiTg9ewLaN60HU8cA7x9bPSebqx9XHsJvIEI=
 LibraryVersion:
-  Guid: 7d39235f-52b3-4afc-b083-54674ea83691
+  Guid: 729d6eda-c0d9-4a5e-bf05-0f534f6bcfcc
   DependsOn:
     - TypeName: UDT_SS_Valve
       VersionNumber: 2.0.1

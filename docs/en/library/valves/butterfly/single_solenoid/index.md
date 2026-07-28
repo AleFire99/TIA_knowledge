@@ -85,7 +85,7 @@ classDiagram
 
 The actuator is monostable: energizing `XY` drives it toward open, while the spring returns the disc to its single rest position (closed) as soon as `XY` de-energizes.
 
-On the first PLC scan, the block reads `ZSL` and `ZSH` to determine the initial state: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, ambiguous condition → FAULT.
+On the first PLC scan, the block reads `ZSL` and `ZSH` to determine the initial state: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, neither active (valve mid-travel) → NORMAL/OPENING or NORMAL/CLOSING per `desired_open_command`, `ZSL AND ZSH` → FAULT (ambiguous condition).
 
 The desired command is resolved on every scan, the same pattern as [Solenoid Valve](../../solenoid/index.md):
 
@@ -105,8 +105,8 @@ desired_open_command := manual_mode ? manual : auto
 ```mermaid
 stateDiagram-v2
 state SS_VALVE{
-    [*] --> NORMAL : ZSL XOR ZSH on first scan
-    [*] --> FAULT : ambiguous sensors on first scan
+    [*] --> NORMAL : !(ZSL & ZSH) on first scan
+    [*] --> FAULT : ZSL & ZSH on first scan
 
     NORMAL --> FAULT : internal_error
     FAULT --> NORMAL : CMD.ack & !internal_error
@@ -114,6 +114,8 @@ state SS_VALVE{
     state NORMAL {
         [*] --> CLOSED : ZSL & !ZSH
         [*] --> OPEN : ZSH & !ZSL
+        [*] --> OPENING : !ZSL & !ZSH & desired_open_command
+        [*] --> CLOSING : !ZSL & !ZSH & !desired_open_command
 
         CLOSED --> OPENING : desired_open_command
         OPENING --> OPEN : ZSH & !ZSL
