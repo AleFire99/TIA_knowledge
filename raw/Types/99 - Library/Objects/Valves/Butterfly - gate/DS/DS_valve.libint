@@ -1,11 +1,11 @@
 ﻿DocumentHash:
   - FileName: DS_valve.s7dcl
-    Hash: bFbZDBGRJOfVXBxqeeCa1nSpJ+GoFSX1Su0U4YcVNmU=
+    Hash: tX7JX0ifjiB/Svdp5N24X9RALJsHtVVEXuqP5Z1jtgs=
   - FileName: DS_valve.s7res
     Hash: zrzr4wlXtUzlWw6i/0VywOBHbOnY2QlZ4opJ+F/Kfyw=
-LibraryMetaFileHash: KQpgkxLkdTNV9k9uDKqSoMps+n0WI2D7zAZCxrbQ/P4=
+LibraryMetaFileHash: 3gHV4tiGJBEed/iXVJHOs7wS3v7BqLGZV6qxThoRfVk=
 LibraryVersion:
-  Guid: 85471286-2763-450e-be9c-aede4f87c9da
+  Guid: 882244fd-5df9-495e-b94b-6445bc31f4c6
   DependsOn:
     - TypeName: UDT_DS_Valve
       VersionNumber: 2.0.1

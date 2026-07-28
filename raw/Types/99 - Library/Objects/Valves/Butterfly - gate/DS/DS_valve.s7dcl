@@ -55,21 +55,6 @@ FUNCTION_BLOCK "DS_valve"
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Initialization
-            IF #first_scan THEN
-                #first_scan := FALSE;
-                IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
-                    #XV.STATUS.state := #NORMAL;
-                    #XV.STATUS.normal_state := #CLOSED;
-                ELSIF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
-                    #XV.STATUS.state := #NORMAL;
-                    #XV.STATUS.normal_state := #OPEN;
-                ELSE
-                    #XV.STATUS.state := #FAULT;
-                END_IF;
-            END_IF;
-        END_REGION
-        
         REGION Map internal valves
             #fb_XYA(#XV.DEVICES.XYA);
             #fb_XYB(#XV.DEVICES.XYB);
@@ -80,6 +65,29 @@ FUNCTION_BLOCK "DS_valve"
                 #desired_command := #XV.CMD.manual;
             ELSE
                 #desired_command := #XV.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Initialization
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                IF #XV.DEVICES.ZSL AND #XV.DEVICES.ZSH THEN
+                    #XV.STATUS.state := #FAULT;
+                ELSE
+                    IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
+                        #XV.STATUS.state := #NORMAL;
+                        #XV.STATUS.normal_state := #CLOSED;
+                    ELSIF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
+                        #XV.STATUS.state := #NORMAL;
+                        #XV.STATUS.normal_state := #OPEN;
+                    ELSIF NOT #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH AND #desired_command THEN
+                        #XV.STATUS.state := #NORMAL;
+                        #XV.STATUS.normal_state := #OPENING;
+                    ELSIF NOT #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH AND NOT #desired_command THEN
+                        #XV.STATUS.state := #NORMAL;
+                        #XV.STATUS.normal_state := #CLOSING;
+                    END_IF;
+                END_IF;
             END_IF;
         END_REGION
         
@@ -135,11 +143,17 @@ FUNCTION_BLOCK "DS_valve"
                 #FAULT:
                     IF #XV.CMD.ack AND NOT #internal_error THEN
                         IF #XV.DEVICES.ZSL AND NOT #XV.DEVICES.ZSH THEN
+                            #XV.STATUS.state := #NORMAL;
                             #XV.STATUS.normal_state := #CLOSED;
-                            #XV.STATUS.state := #NORMAL;
                         ELSIF #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL THEN
-                            #XV.STATUS.normal_state := #OPEN;
                             #XV.STATUS.state := #NORMAL;
+                            #XV.STATUS.normal_state := #OPEN;
+                        ELSIF NOT #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL AND #desired_command THEN
+                            #XV.STATUS.state := #NORMAL;
+                            #XV.STATUS.normal_state := #OPENING;
+                        ELSIF NOT #XV.DEVICES.ZSH AND NOT #XV.DEVICES.ZSL AND NOT #desired_command THEN
+                            #XV.STATUS.state := #NORMAL;
+                            #XV.STATUS.normal_state := #CLOSING;
                         END_IF;
                     END_IF;
             END_CASE;
