@@ -1,6 +1,6 @@
 [project]
 name = "tia-knowledge"
-version = "0.1.0"
+version = "0.3.0"
 description = "AleFire-Library knowledge base — TIA Portal export + Zensical wiki"
 requires-python = ">=3.12,<3.13"
 dependencies = [
