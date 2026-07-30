@@ -135,6 +135,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.failed_to_close OR ALARMS.fai
 | CLOSING | TRUE | Attuatore schiaccia il tubo |
 | FAULT | FALSE | `XY` deliberatamente diseccitata (tubo aperto) — evita di lasciare il tubo schiacciato durante il guasto, prevenendo l'usura del materiale; richiede conferma operatore |
 
+| Stato | Valore Int |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

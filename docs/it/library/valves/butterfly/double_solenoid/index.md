@@ -88,7 +88,7 @@ classDiagram
 
 `XYA`/`XYB` sono eccitati solo durante il movimento (`OPENING`/`CLOSING`) — l'attuatore bistabile non richiede eccitazione di mantenimento in `CLOSED`/`OPEN`, mantiene la posizione anche a entrambi i solenoidi diseccitati (nessun ritorno a molla).
 
-Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve`.
+Al primo ciclo PLC, il blocco legge `ZSL`/`ZSH` per lo stato iniziale, con la stessa logica di `SS_valve` — incluso il caso in cui nessuno dei due sia attivo (valvola a metà corsa), risolto in `OPENING`/`CLOSING` secondo `desired_open_command` anziché in FAULT.
 
 Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
 
@@ -108,8 +108,8 @@ desired_open_command := manual_mode ? manual : auto
 ```mermaid
 stateDiagram-v2
 state DS_VALVE{
-    [*] --> NORMAL : ZSL XOR ZSH al primo scan
-    [*] --> FAULT : sensori ambigui al primo scan
+    [*] --> NORMAL : !(ZSL & ZSH) al primo scan
+    [*] --> FAULT : ZSL & ZSH al primo scan
 
     NORMAL --> FAULT : internal_error
     FAULT --> NORMAL : CMD.ack & !internal_error
@@ -117,6 +117,8 @@ state DS_VALVE{
     state NORMAL {
         [*] --> CLOSED : ZSL & !ZSH
         [*] --> OPEN : ZSH & !ZSL
+        [*] --> OPENING : !ZSL & !ZSH & desired_open_command
+        [*] --> CLOSING : !ZSL & !ZSH & !desired_open_command
 
         CLOSED --> OPENING : desired_open_command
         OPENING --> OPEN : ZSH & !ZSL
@@ -137,6 +139,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | OPEN | FALSE | FALSE | Disco aperto; nessuna eccitazione necessaria |
 | CLOSING | FALSE | TRUE | `XYB` riporta il disco in chiusura |
 | FAULT | FALSE | FALSE | Guasto; disco bistabile mantiene l'ultima posizione fisica |
+
+| Stato | Valore Int |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
 
 ### Timer
 

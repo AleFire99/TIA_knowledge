@@ -10,14 +10,18 @@ label: FILTER
 
 states:
   - id: IDLE
+    value: 1
     outputs: { XYA: false, XYB: false }
     description: standby, no cleaning, no solenoid energized
   - id: ACTIVE
+    value: 2
     children:
       - id: PULSING
+        value: 1
         outputs: { XYA: "true when active_sleeve = 0", XYB: "true when active_sleeve = 1" }
         description: air pulse into the currently active sleeve
       - id: WAITING
+        value: 2
         outputs: { XYA: false, XYB: false }
         description: both solenoids de-energized, interval between pulses
 

@@ -10,33 +10,41 @@ label: SS_VALVE
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: CLOSED
+        value: 1
         outputs: { XY: false }
         description: disc closed, spring-held
       - id: OPENING
+        value: 2
         outputs: { XY: true }
         description: actuator pushes disc toward open
       - id: OPEN
+        value: 3
         outputs: { XY: true }
         description: disc open, solenoid holds against the spring
       - id: CLOSING
+        value: 4
         outputs: { XY: false }
         description: spring returns disc to closed
   - id: FAULT
+    value: 0
     outputs: { XY: false }
     description: fault; awaiting ack with valid sensors
 
 transitions:
-  - { from: "[*]", to: NORMAL, guard: ZSL XOR ZSH on first scan }
-  - { from: "[*]", to: FAULT, guard: ambiguous sensors on first scan }
+  - { from: "[*]", to: NORMAL, guard: "!(ZSL & ZSH) on first scan" }
+  - { from: "[*]", to: FAULT, guard: ZSL & ZSH on first scan }
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
     guard: CMD.ack & !internal_error
-    note: destination (CLOSED vs OPEN) is re-derived from live ZSL/ZSH sensors, not a fixed prior state
+    note: destination (CLOSED/OPEN/OPENING/CLOSING) is re-derived from live ZSL/ZSH sensors and desired_open_command, not a fixed prior state
   - { from: "[*]", to: NORMAL.CLOSED, guard: "ZSL & !ZSH" }
   - { from: "[*]", to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
+  - { from: "[*]", to: NORMAL.OPENING, guard: "!ZSL & !ZSH & desired_open_command" }
+  - { from: "[*]", to: NORMAL.CLOSING, guard: "!ZSL & !ZSH & !desired_open_command" }
   - { from: NORMAL.CLOSED, to: NORMAL.OPENING, guard: desired_open_command }
   - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "ZSH & !ZSL" }
   - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }

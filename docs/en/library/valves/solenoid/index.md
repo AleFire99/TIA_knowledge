@@ -70,3 +70,8 @@ state SOLENOID{
 |-------|-------|-------------|
 | `DE_ENERGIZED` | FALSE | Coil de-energized |
 | `ENERGIZED` | TRUE | Coil energized |
+
+| State | Int value |
+|---|---|
+| DE_ENERGIZED | 1 |
+| ENERGIZED | 2 |

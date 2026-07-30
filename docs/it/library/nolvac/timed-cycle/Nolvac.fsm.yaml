@@ -10,19 +10,25 @@ label: NOLVAC
 
 states:
   - id: NORMAL_BEHAVIOUR
+    value: 1
     children:
       - id: IDLE
+        value: 1
         outputs: { XV01: false, XY02: false, XY03: false }
         description: standby, waiting for the start command
       - id: ACTIVE
+        value: 2
         children:
           - id: SUCTION
+            value: 1
             outputs: { XV01: false, XY02: false, XY03: true }
             description: material conveying suction path energized
           - id: CLEANING
+            value: 2
             outputs: { XV01: true, XY02: true, XY03: false }
             description: internal filter backwash, inlet valve opens to admit purge air
   - id: FAULT
+    value: 0
     outputs: { XY02: false, XY03: false }
     description: fault; awaiting operator acknowledgment
 

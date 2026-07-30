@@ -228,8 +228,12 @@ keep a one-line placeholder ("Nessun parametro configurabile."); fold any genuin
                           history and the current rule
 ### Diagramma di stato    Mermaid stateDiagram-v2 + adjoining guard-formula code block +
                           a compact state table (name + one-line description, NO numeric
-                          value column — state name alone is enough); omit entirely for
-                          stateless FC modules (Pavone interface, Pipeline)
+                          value column — state name alone is enough) + a small "Valore Int"
+                          lookup table (state path | Int value, both `state` and
+                          `normal_state` tiers) appended last, still under this one heading
+                          — a separate reference table, not a column on the state table
+                          above, so the state-table rule above stays intact; omit entirely
+                          for stateless FC modules (Pavone interface, Pipeline)
 ### Azioni di ingresso    own sub-heading, right after Diagramma di stato and before Timer;
                           one-shot writes that fire only on entering a state (not derivable
                           from the state alone — e.g. resetting a counter, snapshotting an
@@ -523,6 +527,8 @@ sections defined in Module Page Format above):
 - `guard_formulas` → the adjoining ` ```Pascal ` block, one `name := expression;` line each.
 - `states[].outputs` → state table columns (union of output keys across all states) plus a
   `description` column.
+- `states[].value` (all tiers) → the small "Valore Int" lookup table (`Stato | Valore
+  Int`), appended after the state table, still within the one Diagramma di stato heading.
 - `timers` → the Timer table (`Timer | Stato in cui è attivo | Soglia (parametro)`).
 - `entry_actions` → the Azioni di ingresso table (`Stato raggiunto | Azione all'ingresso`).
 - `delegates.fsm` set → omit Diagramma di stato *and* Timer entirely, cross-reference the

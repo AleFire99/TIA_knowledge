@@ -19,7 +19,12 @@ FUNCTION_BLOCK "Loading"
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
         }
-        loading_timer : TON_TIME;
+        last_checked_weight : Real;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        stall_timer : TON_TIME;
     END_VAR
     VAR_TEMP
         internal_error : Bool;
@@ -33,9 +38,19 @@ FUNCTION_BLOCK "Loading"
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Timeout timer
-            #loading_timer(IN := (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING),
+        REGION Stall detection
+            // "Progress" = weight has risen by at least stalled_threshold since we last checked.
+            // Every time progress is detected we re-anchor the reference weight, which drops the
+            // timer's IN for one scan and resets it to zero — so the timer only ever measures the
+            // time since the *last* significant rise, not total loading time.
+            #stall_timer(IN := (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING)
+                         AND NOT (#scale.IN.current_weight >= #last_checked_weight + #scale.SETTING.loading_stalled_treshold),
                          PT := #scale.SETTING.loading_timeout);
+            
+            IF (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING)
+                AND #scale.IN.current_weight >= #last_checked_weight + #scale.SETTING.loading_stalled_treshold THEN
+                #last_checked_weight := #scale.IN.current_weight;
+            END_IF;
         END_REGION
         
         REGION Configuration
@@ -43,7 +58,7 @@ FUNCTION_BLOCK "Loading"
         END_REGION
         
         REGION Alarms
-            #internal_error := #loading_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
+            #internal_error := #stall_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
         END_REGION
         
         REGION Top FSM
@@ -78,36 +93,39 @@ FUNCTION_BLOCK "Loading"
         END_REGION
         
         REGION Entry actions
-          // Executed once on the scan the state changes.
+            // Executed once on the scan the state changes.
             #scale.STATUS.LOADING.loading_finished := FALSE;
             
-          IF #scale.STATUS.LOADING.normal_state <> #prev_normal_state THEN
-            
-            CASE #scale.STATUS.LOADING.normal_state OF
-                #IDLE:
-                // Reset batch counter when entering IDLE.
-                #scale.BATCH.transferred := 0.0;
-                #scale.STATUS.LOADING.loading_finished := TRUE;
+            IF #scale.STATUS.LOADING.normal_state <> #prev_normal_state THEN
                 
-              #LOADING:
-                // Snapshot weight anchor on loading start.
-                  #scale.BATCH.weight_at_start := #scale.IN.current_weight;
-            END_CASE;
-            
-            #prev_normal_state := #scale.STATUS.LOADING.normal_state;
-          END_IF;
+                CASE #scale.STATUS.LOADING.normal_state OF
+                    #IDLE:
+                        // Reset batch counter when entering IDLE.
+                        #scale.BATCH.transferred := 0.0;
+                        #scale.STATUS.LOADING.loading_finished := TRUE;
+                        
+                    #LOADING:
+                        // Snapshot weight anchor on loading start.
+                        #scale.BATCH.weight_at_start := #scale.IN.current_weight;
+                        // Re-anchor the stall watchdog too, so a value left over from a previous
+                        // run can't be mistaken for "no progress" the instant we (re)start.
+                        #last_checked_weight := #scale.IN.current_weight;
+                END_CASE;
+                
+                #prev_normal_state := #scale.STATUS.LOADING.normal_state;
+            END_IF;
         END_REGION
         
         REGION Loaded quantity
-          // Computed every scan. Only meaningful during LOADING.
-          // Clamped to zero to avoid negative display on sensor drift.
-          // ERROR: no assignment — holds last frozen value.
+            // Computed every scan. Only meaningful during LOADING.
+            // Clamped to zero to avoid negative display on sensor drift.
+            // ERROR: no assignment — holds last frozen value.
             IF (#scale.STATUS.LOADING.state = #NORMAL) AND (#scale.STATUS.LOADING.normal_state = #LOADING) THEN
-            #scale.BATCH.transferred := #scale.IN.current_weight - #scale.BATCH.weight_at_start;
-            IF #scale.BATCH.transferred < 0.0 THEN
-              #scale.BATCH.transferred := 0.0;
+                #scale.BATCH.transferred := #scale.IN.current_weight - #scale.BATCH.weight_at_start;
+                IF #scale.BATCH.transferred < 0.0 THEN
+                    #scale.BATCH.transferred := 0.0;
+                END_IF;
             END_IF;
-          END_IF;
         END_REGION
         
         REGION State mapping

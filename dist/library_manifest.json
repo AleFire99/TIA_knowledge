@@ -1,7 +1,7 @@
 {
   "manifest_version": "2.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-07-21T13:10:35Z",
+  "generated_at": "2026-07-28T13:24:40Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
@@ -92,7 +92,7 @@
       "devices": {}
     },
     "UDT_Load_cells": {
-      "description": "Added layer in loading FSM",
+      "description": "Added stalled weight check",
       "label": "Load cells",
       "has_out": false,
       "cmd_ack": true,

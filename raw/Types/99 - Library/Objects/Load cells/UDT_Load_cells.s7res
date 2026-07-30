@@ -24,7 +24,7 @@
     it-IT: INPUT - Any fault from overall plant
   - id: MLC_4Qy
     it-IT: SETTING - Physical upper limit for loaded bag (kg)
-  - id: MLC_3zE
+  - id: MLC_4MJ
     it-IT: SETTING - Weight drift between desired and actual conveyed material
   - id: MLC_3Ld
     it-IT: SETTING - Maximum allowed conveying time before INCOMPLETE

@@ -10,12 +10,16 @@ label: LOADING_FB
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: IDLE
+        value: 1
         description: waiting; transferred reset to 0 on entry
       - id: LOADING
+        value: 2
         description: active fill; transferred recomputed every scan
   - id: FAULT
+    value: 0
     description: internal_error active; awaiting ack, always recovers to NORMAL.IDLE
 
 transitions:
@@ -31,12 +35,12 @@ transitions:
 
 guard_formulas:
   - name: internal_error
-    expression: loading_timer.Q OR IN.scale_error OR IN.plant_error
+    expression: stall_timer.Q OR IN.scale_error OR IN.plant_error
   - name: loading_done
     expression: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING.loading_tail)
 
 timers:
-  - name: loading_timer
+  - name: stall_timer
     active_states: [NORMAL.LOADING]
     param: SETTING.loading_timeout
     raises: feeds internal_error, which sets ALARMS.loading_timeout and drives the NORMAL -> FAULT transition
@@ -51,8 +55,10 @@ entry_actions:
     shadow_var: prev_normal_state
     actions:
       - "BATCH.weight_at_start snapshots IN.current_weight (anchor for the loaded-quantity computation)"
+      - "last_checked_weight re-anchored to IN.current_weight — so a value left over from a previous run can't be mistaken for 'no progress' the instant LOADING is (re)entered"
 
 notes:
   - "loading_tail creates an anticipation margin: the LOADING -> IDLE transition fires before current_weight actually reaches loading_setpoint, compensating for material still falling after the stop command — without this margin the settled weight would overshoot the setpoint."
   - "BATCH.transferred is recomputed every scan while in NORMAL.LOADING as current_weight - weight_at_start, clamped to zero to avoid a negative reading from sensor noise/drift near zero. Outside NORMAL.LOADING (IDLE or FAULT) this region makes no assignment at all, so transferred holds its last computed value until the IDLE entry action resets it to 0."
+  - "stall_timer no longer measures total time spent in LOADING — it measures time since the last significant weight rise. Every scan where current_weight has risen by at least SETTING.loading_stalled_treshold since last_checked_weight, last_checked_weight re-anchors to the new value and the timer's IN drops for that scan, resetting it to zero. So a slow-but-still-progressing load never nuisance-trips internal_error, while a genuinely stalled one (jammed feed, empty hopper) still faults once no progress is seen for the full loading_timeout duration."
   - "FAULT recovery (ack & !internal_error) always returns to NORMAL.IDLE, never resumes mid-load — a load interrupted by a fault restarts from scratch rather than continuing from where it stopped. This is the asymmetric counterpart to Unloading, whose FAULT recovery goes to PAUSED instead, to preserve batch progress."

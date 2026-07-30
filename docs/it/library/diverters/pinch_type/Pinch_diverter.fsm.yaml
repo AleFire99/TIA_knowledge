@@ -10,20 +10,26 @@ label: DIVERTER
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: ROUTE_A
+        value: 1
         outputs: { XVA: open, XVB: closed }
         description: route A established
       - id: A_TO_B
+        value: 2
         outputs: { XVA: closed, XVB: open }
         description: transitioning from A to B
       - id: ROUTE_B
+        value: 3
         outputs: { XVA: closed, XVB: open }
         description: route B established
       - id: B_TO_A
+        value: 4
         outputs: { XVA: open, XVB: closed }
         description: transitioning from B to A
   - id: FAULT
+    value: 0
     outputs: { XVA: closed, XVB: closed }
     description: fault; no explicit open command issued to either valve (fail-safe)
 

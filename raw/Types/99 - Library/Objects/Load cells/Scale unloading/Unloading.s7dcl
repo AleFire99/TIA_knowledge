@@ -16,10 +16,15 @@ FUNCTION_BLOCK "Unloading"
         prev_state : Int := 1;
         {
             S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        last_checked_weight : Real;
+        {
+            S7_Access := "ReadOnly := External";
             S7_MLC := "MLC_3fF";
             S7_Visibility := "Hidden := External"
         }
-        unloading_timer : TON_TIME;
+        stall_timer : TON_TIME;
     END_VAR
     VAR_TEMP
         internal_error : Bool;
@@ -36,9 +41,19 @@ FUNCTION_BLOCK "Unloading"
 
     { S7_Language := "SCL" }
     NETWORK
-        REGION Timeout timer
-            #unloading_timer(IN := (#scale.STATUS.UNLOADING.state = #UNLOADING),
-                             PT := #scale.SETTING.unloading_timeout);
+        REGION Stall detection
+            // "Progress" = weight has dropped by at least stalled_threshold since we last checked.
+            // Every time progress is detected we re-anchor the reference weight, which drops the
+            // timer's IN for one scan and resets it to zero — so the timer only ever measures the
+            // time since the *last* significant drop, not total conveying time.
+            #stall_timer(IN := (#scale.STATUS.UNLOADING.state = #UNLOADING)
+                         AND NOT (#scale.IN.current_weight <= #last_checked_weight - #scale.SETTING.unloading_stalled_treshold),
+                         PT := #scale.SETTING.unloading_timeout);
+            
+            IF (#scale.STATUS.UNLOADING.state = #UNLOADING)
+                AND #scale.IN.current_weight <= #last_checked_weight - #scale.SETTING.unloading_stalled_treshold THEN
+                #last_checked_weight := #scale.IN.current_weight;
+            END_IF;
         END_REGION
         
         REGION Configuration
@@ -46,7 +61,7 @@ FUNCTION_BLOCK "Unloading"
         END_REGION
         
         REGION Alarms
-            #internal_error := #unloading_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
+            #internal_error := #stall_timer.Q OR #scale.IN.scale_error OR #scale.IN.plant_error;
         END_REGION
         
         REGION FSM
@@ -96,6 +111,9 @@ FUNCTION_BLOCK "Unloading"
                         // On first start: conveyed = 0.0, so weight_at_start = current_weight (normal snapshot).
                         // On resume: conveyed holds the frozen value, so we back-calculate the anchor such that (weight_at_start - current_weight) = previous conveyed immediately.
                         #scale.BATCH.weight_at_start := #scale.IN.current_weight + #scale.BATCH.transferred;
+                        // Re-anchor the stall watchdog too, so a value left over from a previous
+                        // run/pause can't be mistaken for "no progress" the instant we (re)start.
+                        #last_checked_weight := #scale.IN.current_weight;
                         
                 END_CASE;
                 
@@ -115,7 +133,7 @@ FUNCTION_BLOCK "Unloading"
             END_IF;
         END_REGION
         
-        REGION Mapped outputs
+        REGION Mapped states
             // Moore outputs — derived purely from state, reset each scan.
             #scale.STATUS.UNLOADING.is_idle := (#scale.STATUS.UNLOADING.state = #IDLE);
             #scale.STATUS.UNLOADING.is_unloading := (#scale.STATUS.UNLOADING.state = #UNLOADING);

@@ -112,6 +112,10 @@
           "description": "Map of physical output device tag -> value while in this state (e.g. {\"XY\": true}). Only meaningful for states with a fixed, deterministic output; omit for states where output isn't a simple constant.",
           "additionalProperties": { "type": ["boolean", "string", "number"] }
         },
+        "value": {
+          "type": "integer",
+          "description": "The FB's own VAR CONSTANT Int literal backing this state, sourced from the .s7dcl's flat constant block (e.g. CLOSED := 1). Informational cross-reference only, rendered in a separate lookup table — id remains the authoritative symbolic name used everywhere else in this file. Per-file magnitudes aren't meaningful across FBs, and can collide across tiers within the same file (e.g. a state-enum NORMAL and a normal_state-enum CLOSED both equal to 1) — always transcribe from the .s7dcl assignment target actually using each constant, never assume by name."
+        },
         "children": {
           "type": "array",
           "minItems": 1,

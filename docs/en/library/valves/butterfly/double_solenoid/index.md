@@ -88,7 +88,7 @@ classDiagram
 
 `XYA`/`XYB` are energized only during movement (`OPENING`/`CLOSING`) — the bistable actuator requires no holding excitation in `CLOSED`/`OPEN`, it holds position even with both solenoids de-energized (no spring return).
 
-On the first PLC scan, the block reads `ZSL`/`ZSH` for the initial state, with the same logic as `SS_valve`.
+On the first PLC scan, the block reads `ZSL`/`ZSH` for the initial state, with the same logic as `SS_valve` — including the case where neither is active (valve mid-travel), resolved into `OPENING`/`CLOSING` per `desired_open_command` instead of FAULT.
 
 The desired command is resolved on every scan, the same pattern as [Solenoid Valve](../../solenoid/index.md):
 
@@ -108,8 +108,8 @@ desired_open_command := manual_mode ? manual : auto
 ```mermaid
 stateDiagram-v2
 state DS_VALVE{
-    [*] --> NORMAL : ZSL XOR ZSH on first scan
-    [*] --> FAULT : ambiguous sensors on first scan
+    [*] --> NORMAL : !(ZSL & ZSH) on first scan
+    [*] --> FAULT : ZSL & ZSH on first scan
 
     NORMAL --> FAULT : internal_error
     FAULT --> NORMAL : CMD.ack & !internal_error
@@ -117,6 +117,8 @@ state DS_VALVE{
     state NORMAL {
         [*] --> CLOSED : ZSL & !ZSH
         [*] --> OPEN : ZSH & !ZSL
+        [*] --> OPENING : !ZSL & !ZSH & desired_open_command
+        [*] --> CLOSING : !ZSL & !ZSH & !desired_open_command
 
         CLOSED --> OPENING : desired_open_command
         OPENING --> OPEN : ZSH & !ZSL
@@ -137,6 +139,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | OPEN | FALSE | FALSE | Disc open; no excitation needed |
 | CLOSING | FALSE | TRUE | `XYB` drives the disc back to closing |
 | FAULT | FALSE | FALSE | Fault; bistable disc holds its last physical position |
+
+| State | Int value |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
 
 ### Timer
 

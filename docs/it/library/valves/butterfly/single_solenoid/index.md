@@ -85,7 +85,7 @@ classDiagram
 
 L'attuatore è monostabile: l'eccitazione di `XY` lo spinge verso l'apertura, mentre la molla riporta il disco nell'unica posizione di riposo (chiuso) non appena `XY` si diseccita.
 
-Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, condizione ambigua → FAULT.
+Al primo ciclo PLC, il blocco legge `ZSL` e `ZSH` per determinare lo stato iniziale: `ZSL AND NOT ZSH` → NORMAL/CLOSED, `ZSH AND NOT ZSL` → NORMAL/OPEN, nessuno dei due attivo (valvola a metà corsa) → NORMAL/OPENING o NORMAL/CLOSING secondo `desired_open_command`, `ZSL AND ZSH` → FAULT (condizione ambigua).
 
 Il comando desiderato è risolto ad ogni scan, stesso schema di [Elettrovalvola](../../solenoid/index.md):
 
@@ -105,8 +105,8 @@ desired_open_command := manual_mode ? manual : auto
 ```mermaid
 stateDiagram-v2
 state SS_VALVE{
-    [*] --> NORMAL : ZSL XOR ZSH al primo scan
-    [*] --> FAULT : sensori ambigui al primo scan
+    [*] --> NORMAL : !(ZSL & ZSH) al primo scan
+    [*] --> FAULT : ZSL & ZSH al primo scan
 
     NORMAL --> FAULT : internal_error
     FAULT --> NORMAL : CMD.ack & !internal_error
@@ -114,6 +114,8 @@ state SS_VALVE{
     state NORMAL {
         [*] --> CLOSED : ZSL & !ZSH
         [*] --> OPEN : ZSH & !ZSL
+        [*] --> OPENING : !ZSL & !ZSH & desired_open_command
+        [*] --> CLOSING : !ZSL & !ZSH & !desired_open_command
 
         CLOSED --> OPENING : desired_open_command
         OPENING --> OPEN : ZSH & !ZSL
@@ -134,6 +136,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | OPEN | TRUE | Disco aperto; l'elettrovalvola mantiene contro la molla |
 | CLOSING | FALSE | Molla riporta il disco in chiusura |
 | FAULT | FALSE | Guasto; attende `ack` con sensori validi |
+
+| Stato | Valore Int |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
 
 ### Timer
 

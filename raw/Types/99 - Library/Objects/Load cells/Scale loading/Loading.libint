@@ -1,9 +1,9 @@
 ﻿DocumentHash:
   - FileName: Loading.s7dcl
-    Hash: mgvV3MawZNhCyNPI4hc4Ol404vHy/oW3yMtYXIBnXI4=
-LibraryMetaFileHash: UBsrEtjtpSMR5TkdcaP8Lrx59T2LO7bxvtWWQda8wsw=
+    Hash: XdIjufQWqOCrDKSj6MYt4eFBIJAKHaWHEOio08OM2W8=
+LibraryMetaFileHash: cNfFiBBbdOJERFxe/z+XvWG0O7fL1vC7v0NM3+aSL1U=
 LibraryVersion:
-  Guid: 7094696f-28af-412e-9779-c5aa4c8acb36
+  Guid: f02c71d4-7d61-4519-b6bd-04a2f0ae9102
   DependsOn:
     - TypeName: UDT_Load_cells
-      VersionNumber: 1.0.0
+      VersionNumber: 1.1.0

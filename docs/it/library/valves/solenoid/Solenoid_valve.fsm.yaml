@@ -10,9 +10,11 @@ label: SOLENOID
 
 states:
   - id: DE_ENERGIZED
+    value: 1
     outputs: { out: false }
     description: coil de-energized
   - id: ENERGIZED
+    value: 2
     outputs: { out: true }
     description: coil energized
 
