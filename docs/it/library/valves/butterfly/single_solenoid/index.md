@@ -137,6 +137,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | CLOSING | FALSE | Molla riporta il disco in chiusura |
 | FAULT | FALSE | Guasto; attende `ack` con sensori validi |
 
+| Stato | Valore Int |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

@@ -121,6 +121,15 @@ internal_error := XV01.STATUS.is_fault;
 | ACTIVE / CLEANING | aperta | eccitata | spenta | Pulizia del filtro |
 | FAULT | — | spenta | spenta | Guasto; attende conferma operatore |
 
+| Stato | Valore Int |
+|---|---|
+| NORMAL_BEHAVIOUR | 1 |
+| NORMAL_BEHAVIOUR.IDLE | 1 |
+| NORMAL_BEHAVIOUR.ACTIVE | 2 |
+| NORMAL_BEHAVIOUR.ACTIVE.SUCTION | 1 |
+| NORMAL_BEHAVIOUR.ACTIVE.CLEANING | 2 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

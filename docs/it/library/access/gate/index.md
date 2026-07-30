@@ -125,6 +125,15 @@ internal_error := ALARMS.failed_to_unlock;
 | CLOSING | FALSE | Ri-blocco comandato, in attesa che l'operatore richiuda fisicamente l'anta — nessuna scadenza, l'attesa indefinita è normale |
 | FAULT | TRUE | Guasto — `XY` deliberatamente sbloccato (vedere sopra) |
 
+| Stato | Valore Int |
+|---|---|
+| NORMAL | 1 |
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

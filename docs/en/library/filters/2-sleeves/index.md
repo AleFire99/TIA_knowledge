@@ -117,6 +117,13 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 | ACTIVE / PULSING (sleeve B) | FALSE | TRUE | Air pulse in sleeve B |
 | ACTIVE / WAITING | FALSE | FALSE | Interval between pulses |
 
+| State | Int value |
+|---|---|
+| IDLE | 1 |
+| ACTIVE | 2 |
+| ACTIVE.PULSING | 1 |
+| ACTIVE.WAITING | 2 |
+
 ### Timer
 
 | Timer | Active in state | Threshold (setting) |

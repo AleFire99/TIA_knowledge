@@ -137,6 +137,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | CLOSING | FALSE | Spring returns the disc to closed |
 | FAULT | FALSE | Fault; awaits `ack` with valid sensors |
 
+| State | Int value |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | Active in state | Threshold (parameter) |

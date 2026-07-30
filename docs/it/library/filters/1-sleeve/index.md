@@ -110,6 +110,13 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 | ACTIVE | PULSING | TRUE | Impulso di pulizia attivo; `pulse_timer` in esecuzione |
 | ACTIVE | WAITING | FALSE | In pausa tra impulsi; `interval_timer` in esecuzione |
 
+| Stato | Valore Int |
+|---|---|
+| IDLE | 1 |
+| ACTIVE | 2 |
+| ACTIVE.WAITING | 2 |
+| ACTIVE.PULSING | 1 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

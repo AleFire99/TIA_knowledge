@@ -140,6 +140,16 @@ def render_state_table(fb: dict) -> str:
     return "\n".join(lines)
 
 
+def render_value_table(fb: dict) -> str | None:
+    rows = [(path, node["value"]) for path, node in _iter_states(fb["states"]) if "value" in node]
+    if not rows:
+        return None
+    lines = ["| State | Int value |", "|---|---|"]
+    for path, value in rows:
+        lines.append(f"| {path} | {value} |")
+    return "\n".join(lines)
+
+
 def render_timer_table(fb: dict) -> str | None:
     timers = fb.get("timers")
     if not timers:
@@ -188,6 +198,10 @@ def render_fb_section(fb: dict) -> str:
         if guard_block:
             parts.append(guard_block)
         parts.append(render_state_table(fb))
+        value_table = render_value_table(fb)
+        if value_table:
+            parts.append("**Int values** (draft — append under \"Diagramma di stato\", after the state table)")
+            parts.append(value_table)
 
         if timer_delegate:
             parts.append(

@@ -125,6 +125,15 @@ internal_error := ALARMS.failed_to_unlock;
 | CLOSING | FALSE | Re-lock commanded, waiting for the operator to physically close the leaf again — no deadline, this is normal wait |
 | FAULT | TRUE | Fault — `XY` deliberately unlocked (see above) |
 
+| State | Int value |
+|---|---|
+| NORMAL | 1 |
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | State in which it's active | Threshold (setting) |

@@ -208,6 +208,18 @@ internal_error := XV01.STATUS.is_fault OR XV02.STATUS.is_fault OR XV03.STATUS.is
 | DEPRESSURIZING | FALSE | TRUE | FALSE | FALSE | FALSE | FALSE | — | FALSE |
 | FAULT | FALSE | TRUE | FALSE | TRUE | FALSE | FALSE | stop+reset | FALSE |
 
+| Stato | Valore Int |
+|---|---|
+| NORMAL | 1 |
+| NORMAL.IDLE | 1 |
+| NORMAL.FILLING | 2 |
+| NORMAL.CLEANING | 3 |
+| NORMAL.SEALING | 4 |
+| NORMAL.PRESSURIZING | 5 |
+| NORMAL.CONVEYING | 6 |
+| NORMAL.DEPRESSURIZING | 7 |
+| FAULT | 0 |
+
 ### Azioni di ingresso
 
 | Stato raggiunto | Azione all'ingresso |

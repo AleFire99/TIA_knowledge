@@ -135,6 +135,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.failed_to_close OR ALARMS.fai
 | CLOSING | TRUE | Actuator pinches the tube |
 | FAULT | FALSE | `XY` deliberately de-energized (tube open) — avoids leaving the tube pinched during the fault, preventing wear on the material; requires operator acknowledgment |
 
+| State | Int value |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | State it's active in | Threshold (parameter) |
