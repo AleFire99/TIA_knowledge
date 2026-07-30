@@ -70,3 +70,8 @@ state SOLENOID{
 |-------|-------|-------------|
 | `DE_ENERGIZED` | FALSE | Bobina diseccitata |
 | `ENERGIZED` | TRUE | Bobina eccitata |
+
+| Stato | Valore Int |
+|---|---|
+| DE_ENERGIZED | 1 |
+| ENERGIZED | 2 |

@@ -140,6 +140,14 @@ internal_error := ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.fai
 | CLOSING | FALSE | TRUE | `XYB` drives the disc back to closing |
 | FAULT | FALSE | FALSE | Fault; bistable disc holds its last physical position |
 
+| State | Int value |
+|---|---|
+| NORMAL.CLOSED | 1 |
+| NORMAL.OPENING | 2 |
+| NORMAL.OPEN | 3 |
+| NORMAL.CLOSING | 4 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | State in which it is active | Threshold (setting) |

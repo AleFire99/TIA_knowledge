@@ -10,20 +10,26 @@ label: DS_VALVE
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: CLOSED
+        value: 1
         outputs: { XYA: false, XYB: false }
         description: disc closed; no excitation needed (bistable)
       - id: OPENING
+        value: 2
         outputs: { XYA: true, XYB: false }
         description: XYA pushes disc toward open
       - id: OPEN
+        value: 3
         outputs: { XYA: false, XYB: false }
         description: disc open; no excitation needed
       - id: CLOSING
+        value: 4
         outputs: { XYA: false, XYB: true }
         description: XYB returns disc to closed
   - id: FAULT
+    value: 0
     outputs: { XYA: false, XYB: false }
     description: fault; bistable disc holds its last physical position
 

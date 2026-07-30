@@ -10,12 +10,16 @@ label: LOADING_FB
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: IDLE
+        value: 1
         description: waiting; transferred reset to 0 on entry
       - id: LOADING
+        value: 2
         description: active fill; transferred recomputed every scan
   - id: FAULT
+    value: 0
     description: internal_error active; awaiting ack, always recovers to NORMAL.IDLE
 
 transitions:

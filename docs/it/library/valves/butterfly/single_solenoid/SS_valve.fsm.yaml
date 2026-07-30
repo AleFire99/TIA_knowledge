@@ -10,20 +10,26 @@ label: SS_VALVE
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: CLOSED
+        value: 1
         outputs: { XY: false }
         description: disc closed, spring-held
       - id: OPENING
+        value: 2
         outputs: { XY: true }
         description: actuator pushes disc toward open
       - id: OPEN
+        value: 3
         outputs: { XY: true }
         description: disc open, solenoid holds against the spring
       - id: CLOSING
+        value: 4
         outputs: { XY: false }
         description: spring returns disc to closed
   - id: FAULT
+    value: 0
     outputs: { XY: false }
     description: fault; awaiting ack with valid sensors
 

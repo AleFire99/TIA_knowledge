@@ -10,12 +10,16 @@ label: UNLOADING_FB
 
 states:
   - id: IDLE
+    value: 1
     description: waiting; transferred reset to 0 on entry
   - id: UNLOADING
+    value: 2
     description: active discharge; transferred recomputed every scan
   - id: PAUSED
+    value: 3
     description: batch suspended; transferred frozen at its last computed value
   - id: FAULT
+    value: 0
     description: internal_error active; ack recovers to PAUSED, not IDLE
 
 transitions:

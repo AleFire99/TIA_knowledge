@@ -123,3 +123,12 @@ internal_error := ALARMS.valve_mismatch OR XVA.is_fault OR XVB.is_fault;
 | ROUTE_B | chiusa | aperta | Instradamento su B stabilito |
 | B_TO_A | aperta | chiusa | Transizione da B verso A |
 | FAULT | chiusa | chiusa | Guasto; nessun comando esplicito di apertura su nessuna delle due (fail-safe) |
+
+| Stato | Valore Int |
+|---|---|
+| NORMAL | 1 |
+| NORMAL.ROUTE_A | 1 |
+| NORMAL.A_TO_B | 2 |
+| NORMAL.ROUTE_B | 3 |
+| NORMAL.B_TO_A | 4 |
+| FAULT | 0 |

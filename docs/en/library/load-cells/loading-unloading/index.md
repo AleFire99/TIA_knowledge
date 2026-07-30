@@ -185,6 +185,12 @@ loading_done := CMD.stop OR (IN.current_weight >= CMD.loading_setpoint - SETTING
 | NORMAL/LOADING | Loading active; `transferred` recomputed every scan |
 | FAULT | `internal_error` active; `CMD.ack` always returns to NORMAL/IDLE |
 
+| State | Int value |
+|---|---|
+| NORMAL.IDLE | 1 |
+| NORMAL.LOADING | 2 |
+| FAULT | 0 |
+
 #### Unloading
 
 ```mermaid
@@ -214,6 +220,13 @@ unloading_paused := CMD.stop OR (IN.current_weight <= SETTING.min_weight);
 | UNLOADING | Unloading active; `transferred` recomputed every scan |
 | PAUSED | Batch suspended; `transferred` frozen at its last computed value |
 | FAULT | `internal_error` active; `CMD.ack` returns to PAUSED, not IDLE |
+
+| State | Int value |
+|---|---|
+| IDLE | 1 |
+| UNLOADING | 2 |
+| PAUSED | 3 |
+| FAULT | 0 |
 
 ### Entry Actions
 

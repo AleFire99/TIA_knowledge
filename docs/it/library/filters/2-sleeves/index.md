@@ -117,6 +117,13 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 | ACTIVE / PULSING (manica B) | FALSE | TRUE | Impulso d'aria nella manica B |
 | ACTIVE / WAITING | FALSE | FALSE | Intervallo tra impulsi |
 
+| Stato | Valore Int |
+|---|---|
+| IDLE | 1 |
+| ACTIVE | 2 |
+| ACTIVE.PULSING | 1 |
+| ACTIVE.WAITING | 2 |
+
 ### Timer
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |

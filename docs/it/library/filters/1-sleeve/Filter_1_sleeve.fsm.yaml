@@ -10,14 +10,18 @@ label: FILTER_1_SLEEVE
 
 states:
   - id: IDLE
+    value: 1
     outputs: { XY: false }
     description: filter inactive, XY de-energized
   - id: ACTIVE
+    value: 2
     children:
       - id: WAITING
+        value: 2
         outputs: { XY: false }
         description: paused between pulses, interval_timer running
       - id: PULSING
+        value: 1
         outputs: { XY: true }
         description: cleaning pulse active, pulse_timer running
 

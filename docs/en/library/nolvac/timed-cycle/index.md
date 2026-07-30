@@ -121,6 +121,15 @@ internal_error := XV01.STATUS.is_fault;
 | ACTIVE / CLEANING | open | energized | off | Filter cleaning |
 | FAULT | — | off | off | Fault; awaiting operator acknowledgment |
 
+| State | Int value |
+|---|---|
+| NORMAL_BEHAVIOUR | 1 |
+| NORMAL_BEHAVIOUR.IDLE | 1 |
+| NORMAL_BEHAVIOUR.ACTIVE | 2 |
+| NORMAL_BEHAVIOUR.ACTIVE.SUCTION | 1 |
+| NORMAL_BEHAVIOUR.ACTIVE.CLEANING | 2 |
+| FAULT | 0 |
+
 ### Timer
 
 | Timer | State it's active in | Threshold (parameter) |

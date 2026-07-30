@@ -10,29 +10,38 @@ label: SEALED_INLET_TRANSPORTER
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: IDLE
+        value: 1
         outputs: { XV01: false, XV02: true, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vessel empty, vent open, awaiting a start command
       - id: FILLING
+        value: 2
         outputs: { XV01: true, XV02: true, XV03: true, XV04: false, XV05: false, XY: false, WT01: loading, OUT.filter_cleaner_command: false }
         description: inlet/vent/orifice open, Loading FB fills the vessel to its setpoint
       - id: CLEANING
+        value: 3
         outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: true }
         description: all valves closed, external filter-cleaning system enabled for a fixed duration
       - id: SEALING
+        value: 4
         outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vessel sealed, waiting for all loading-side valves to confirm closed before pressurizing
       - id: PRESSURIZING
+        value: 5
         outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: false, XY: true, WT01: "-", OUT.filter_cleaner_command: false }
         description: pressurization solenoid and discharge valve open, building vessel pressure above line pressure
       - id: CONVEYING
+        value: 6
         outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: true, XY: true, WT01: unloading, OUT.filter_cleaner_command: false }
         description: line valve open, material flows to the line under the pressure differential while Unloading FB tracks the batch
       - id: DEPRESSURIZING
+        value: 7
         outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", OUT.filter_cleaner_command: false }
         description: vent open, releasing residual vessel pressure before returning to IDLE
   - id: FAULT
+    value: 0
     outputs: { XV01: false, XV02: true, XV03: false, XV04: true, XV05: false, XY: false, WT01: "stop+reset", OUT.filter_cleaner_command: false }
     description: fault; vent and discharge held open as a passively-safe state, scale stopped and reset, awaiting ack
 

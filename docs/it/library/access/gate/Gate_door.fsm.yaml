@@ -10,20 +10,26 @@ label: GATE_DOOR
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: CLOSED
+        value: 1
         outputs: { XY: false }
         description: door closed and locked, confirmed by ZSL
       - id: OPENING
+        value: 2
         outputs: { XY: true }
         description: unlock commanded, not yet confirmed
       - id: OPEN
+        value: 3
         outputs: { XY: true }
         description: unlock confirmed — physical position beyond this point is known only to the operator
       - id: CLOSING
+        value: 4
         outputs: { XY: false }
         description: re-lock commanded, waiting for the operator to physically close the door — no timeout, indefinite wait is normal
   - id: FAULT
+    value: 0
     outputs: { XY: true }
     description: fault; XY deliberately unlocked (see notes)
 

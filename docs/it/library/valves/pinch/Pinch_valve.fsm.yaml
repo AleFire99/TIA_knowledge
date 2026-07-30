@@ -10,20 +10,26 @@ label: PINCH_VALVE
 
 states:
   - id: NORMAL
+    value: 1
     children:
       - id: CLOSED
+        value: 1
         outputs: { XY: true }
         description: tube pinched, flow blocked
       - id: OPENING
+        value: 2
         outputs: { XY: false }
         description: actuator releases the tube
       - id: OPEN
+        value: 3
         outputs: { XY: false }
         description: tube free, flow allowed
       - id: CLOSING
+        value: 4
         outputs: { XY: true }
         description: actuator pinches the tube
   - id: FAULT
+    value: 0
     outputs: { XY: false }
     description: XY deliberately de-energized (tube released) — avoids leaving the tube pinched during the fault, preventing material wear; awaiting operator ack
 

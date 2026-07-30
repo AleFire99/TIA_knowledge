@@ -110,6 +110,13 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 | ACTIVE | PULSING | TRUE | Cleaning pulse active; `pulse_timer` running |
 | ACTIVE | WAITING | FALSE | Paused between pulses; `interval_timer` running |
 
+| State | Int value |
+|---|---|
+| IDLE | 1 |
+| ACTIVE | 2 |
+| ACTIVE.WAITING | 2 |
+| ACTIVE.PULSING | 1 |
+
 ### Timer
 
 | Timer | State in which it is active | Threshold (parameter) |
