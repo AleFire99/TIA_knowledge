@@ -509,7 +509,12 @@ bare `failed_to_close` while that same file's `timers[].raises` called the ident
   first scan` for a two-valve diverter — "positions" because it's valve state, not a sensor).
 - **Quoting**: only quote a guard/expression string when YAML syntax actually requires it
   (leading `!`, embedded `|`/`:`). Don't quote defensively — a bare dotted path or a phrase
-  with no special character never needs quotes.
+  with no special character never needs quotes. **Exception**: always quote a bare state
+  `id` (or any scalar) that reads as `on`/`off`/`yes`/`no`/`y`/`n` in any case — PyYAML's
+  default YAML 1.1 boolean resolver silently turns an unquoted `OFF` into `false`, which
+  then renders wrong everywhere that value is used (`Motor.fsm.yaml`'s `OFF` state hit this
+  exactly; `ON` was already quoted, `OFF` wasn't, and `render_fsm.py` silently printed
+  `NORMAL.False` in the state table until caught).
 - **Header comment**: two lines, every file — `# <FB name> — <one-line device description>.`
   / `# Source: raw/<path>. Doc: docs/it/library/<category>/<device>/index.md.` Anything more
   discursive (e.g. a delegation rationale) belongs in `notes`, not the header.
