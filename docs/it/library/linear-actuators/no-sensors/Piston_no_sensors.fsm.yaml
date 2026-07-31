@@ -1,0 +1,27 @@
+# Piston_no_sensors — command-driven linear actuator, no position feedback.
+# Source: raw/Types/99 - Library/Objects/Linear actuators/Piston no sensors/Piston_no_sensors.s7dcl. Doc: docs/it/library/linear-actuators/no-sensors/index.md.
+
+schema_version: "1.0"
+fb: Piston_no_sensors
+udt: UDT_Piston_no_sensors
+source: Types/99 - Library/Objects/Linear actuators/Piston no sensors/Piston_no_sensors.s7dcl
+
+label: PISTON
+
+states:
+  - id: RETRACTED
+    value: 1
+    outputs: { XY: false }
+    description: piston retracted, embedded solenoid de-energized
+  - id: EXTENDED
+    value: 2
+    outputs: { XY: true }
+    description: piston extended, embedded solenoid energized
+
+transitions:
+  - { from: "[*]", to: RETRACTED }
+  - { from: RETRACTED, to: EXTENDED, guard: desired_command }
+  - { from: EXTENDED, to: RETRACTED, guard: "!desired_command" }
+
+notes:
+  - "no position feedback exists on this variant, so the state reflects only the last command issued to the embedded solenoid valve (XY), never a confirmed physical position — the transition is immediate, same as Solenoid_valve's own FSM."

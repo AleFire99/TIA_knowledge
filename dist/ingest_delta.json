@@ -1,14 +1,30 @@
 {
   "delta_version": "1.0.0",
-  "generated_at": "2026-07-28T13:24:48Z",
-  "total_types": 40,
+  "generated_at": "2026-07-31T16:03:17Z",
+  "total_types": 47,
   "counts": {
-    "new": 0,
+    "new": 7,
     "changed": 0,
     "removed": 0
   },
-  "needs_doc_update": [],
-  "new": [],
+  "needs_doc_update": [
+    "Motor",
+    "Piston_no_sensors",
+    "Piston_sensors",
+    "Piston_sensors_simulator",
+    "UDT_Motor_no_sensors",
+    "UDT_Piston_no_sensors",
+    "UDT_Piston_sensors"
+  ],
+  "new": [
+    "Motor",
+    "Piston_no_sensors",
+    "Piston_sensors",
+    "Piston_sensors_simulator",
+    "UDT_Motor_no_sensors",
+    "UDT_Piston_no_sensors",
+    "UDT_Piston_sensors"
+  ],
   "changed": [],
   "removed": []
 }

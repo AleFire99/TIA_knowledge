@@ -1,0 +1,9 @@
+﻿DocumentHash:
+  - FileName: Piston_sensors_simulator.s7dcl
+    Hash: x33oUEsB54UhYQhy59krh1LV031hdz7HWr5XWUvCcyM=
+LibraryMetaFileHash: RZ/YYkqgA+hkGqE+QiZVySyYp1u7+DWhRgJalpfgDjc=
+LibraryVersion:
+  Guid: db9c9c1b-0491-4ed6-97fb-bbc8d6058858
+  DependsOn:
+    - TypeName: UDT_Piston_sensors
+      VersionNumber: 0.0.1

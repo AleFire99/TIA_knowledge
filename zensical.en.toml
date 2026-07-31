@@ -16,6 +16,10 @@ nav = [
           { "Butterfly — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
           { "Sealed — Single Solenoid" = "library/valves/sealed/ss/index.md" },
       ] },
+      { "Motors" = [
+          { "Overview" = "library/motors/index.md" },
+          { "No Sensors" = "library/motors/no-sensors/index.md" },
+      ] },
       { "Access Devices" = [
           { "Overview" = "library/access/index.md" },
           { "Gate Leaf — Electric Lock" = "library/access/gate/index.md" },
@@ -24,6 +28,11 @@ nav = [
           { "Overview" = "library/filters/index.md" },
           { "1 Sleeve" = "library/filters/1-sleeve/index.md" },
           { "2 Sleeves" = "library/filters/2-sleeves/index.md" },
+      ] },
+      { "Linear Actuators" = [
+          { "Overview" = "library/linear-actuators/index.md" },
+          { "No Sensors" = "library/linear-actuators/no-sensors/index.md" },
+          { "With Sensors" = "library/linear-actuators/sensors/index.md" },
       ] },
       { "Diverters" = [
           { "Overview" = "library/diverters/index.md" },

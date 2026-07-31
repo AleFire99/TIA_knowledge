@@ -24,6 +24,16 @@ Pneumatically controlled valves for isolation, actuation, and process control.
 
 ---
 
+## [Motors](motors/index.md)
+
+Electric motor with on/off control, no pneumatic component embedded at all.
+
+| Module | Description |
+|--------|-------------|
+| [Motor — No Sensors](motors/no-sensors/index.md) | Run/stop commanded; fault detected only from external `error_in` |
+
+---
+
 ## [Access Devices](access/index.md)
 
 The PLC only grants unlock permission based on the current state — physical access stays with the operator, the PLC never moves anything.
@@ -42,6 +52,17 @@ Compressed-air pulse cleaning systems for filter sleeves.
 |--------|-------------|
 | [Filter Cleaner — 1 Sleeve](filters/1-sleeve/index.md) | Periodic pulse cycle with a single solenoid valve |
 | [Filter Cleaner — 2 Sleeves](filters/2-sleeves/index.md) | Alternating pulse sequence across two sleeves |
+
+---
+
+## [Linear Actuators](linear-actuators/index.md)
+
+Pneumatic linear piston, embedding a single Solenoid Valve as its own actuator.
+
+| Module | Description |
+|--------|-------------|
+| [Piston — No Sensors](linear-actuators/no-sensors/index.md) | Immediate transition on command alone; no feedback |
+| [Piston — With Sensors](linear-actuators/sensors/index.md) | Position feedback via ZSL/ZSH; movement timeout; FAULT |
 
 ---
 

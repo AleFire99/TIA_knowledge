@@ -1,0 +1,39 @@
+﻿MultiLingualTexts:
+  - id: MLC_3FT
+    en-US: INPUT - Limit switch closed
+  - id: MLC_4kn
+    en-US: INPUT - Limit switch opened
+  - id: MLC_4UY
+    en-US: OUTPUT - Solenoid command
+  - id: MLC_Z7
+    en-US: COMMAND - Active mode
+  - id: MLC_3iU
+    en-US: COMMAND - Manual command
+  - id: MLC_444
+    en-US: COMMAND - Automatic command
+  - id: MLC_53T
+    en-US: COMMAND - Acknowledge all errors
+  - id: MLC_3tf
+    en-US: SETTING - Max time to complete movement
+  - id: MLC_4Mb
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_m3
+    en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
+  - id: MLC_4u2
+    en-US: STATUS - Piston in fault
+  - id: MLC_54i
+    en-US: STATUS - Piston retracted
+  - id: MLC_4Kh
+    en-US: STATUS - Piston extending
+  - id: MLC_4nj
+    en-US: STATUS - Piston extended
+  - id: MLC_ip
+    en-US: STATUS - Piston retracting
+  - id: MLC_3Bn
+    en-US: ALARM - Sensor mismatch
+  - id: MLC_53t
+    en-US: ALARM - Sensor conflict
+  - id: MLC_4Kc
+    en-US: ALARM - Failed to retract
+  - id: MLC_4GK
+    en-US: ALARM - Failed  to extend

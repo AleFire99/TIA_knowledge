@@ -1,0 +1,201 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Piston_sensors"
+    VAR_IN_OUT
+        Piston : _.UDT_Piston_sensors;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_3tJ";
+            S7_Visibility := "Hidden := External"
+        }
+        first_scan : Bool := TRUE;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_46K";
+            S7_Visibility := "Hidden := External"
+        }
+        movement_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XY : _.Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        { S7_MLC := "MLC_Un" }
+        desired_command : Bool;
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        { S7_MLC := "MLC_NV" }
+        FAULT : Int := 0;
+        { S7_MLC := "MLC_58v" }
+        NORMAL : Int := 1;
+        { S7_MLC := "MLC_4aK" }
+        RETRACTED : Int := 1;
+        { S7_MLC := "MLC_4gr" }
+        EXTENDING : Int := 2;
+        { S7_MLC := "MLC_Ug" }
+        EXTENDED : Int := 3;
+        { S7_MLC := "MLC_NH" }
+        RETRACTING : Int := 4;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Map internal valves
+            #fb_XY(#Piston.DEVICES.XY);
+        END_REGION
+        
+        REGION Determine desired target
+            IF #Piston.CMD.manual_mode THEN
+                #desired_command := #Piston.CMD.manual;
+            ELSE
+                #desired_command := #Piston.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Initialization
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                IF #Piston.DEVICES.ZSL AND #Piston.DEVICES.ZSH THEN
+                    #Piston.STATUS.state := #FAULT;
+                ELSE
+                    IF #Piston.DEVICES.ZSL AND NOT #Piston.DEVICES.ZSH THEN
+                        #Piston.STATUS.state := #NORMAL;
+                        #Piston.STATUS.normal_state := #RETRACTED;
+                    ELSIF #Piston.DEVICES.ZSH AND NOT #Piston.DEVICES.ZSL THEN
+                        #Piston.STATUS.state := #NORMAL;
+                        #Piston.STATUS.normal_state := #EXTENDED;
+                    ELSIF NOT #Piston.DEVICES.ZSL AND NOT #Piston.DEVICES.ZSH AND #desired_command THEN
+                        #Piston.STATUS.state := #NORMAL;
+                        #Piston.STATUS.normal_state := #EXTENDING;
+                    ELSIF NOT #Piston.DEVICES.ZSL AND NOT #Piston.DEVICES.ZSH AND NOT #desired_command THEN
+                        #Piston.STATUS.state := #NORMAL;
+                        #Piston.STATUS.normal_state := #RETRACTING;
+                    END_IF;
+                END_IF;
+            END_IF;
+        END_REGION
+        
+        REGION Movement timer
+            #movement_timer(
+                            IN := (#Piston.STATUS.state = #NORMAL AND
+                            (#Piston.STATUS.normal_state = #EXTENDING OR #Piston.STATUS.normal_state = #RETRACTING)),
+                            PT := #Piston.SETTING.actuator_timeout);
+        END_REGION
+        
+        REGION Alarms
+            IF (#Piston.STATUS.state = #NORMAL AND #Piston.STATUS.normal_state = #RETRACTED AND NOT #Piston.DEVICES.ZSL) OR
+                (#Piston.STATUS.state = #NORMAL AND #Piston.STATUS.normal_state = #EXTENDED AND NOT #Piston.DEVICES.ZSH) THEN
+                #Piston.ALARMS.sensor_mismatch := TRUE;
+            END_IF;
+            
+            IF #Piston.DEVICES.ZSL AND #Piston.DEVICES.ZSH THEN
+                #Piston.ALARMS.sensor_conflict := TRUE;
+            END_IF;
+            
+            IF #movement_timer.Q THEN
+                IF #Piston.STATUS.normal_state = #RETRACTING THEN
+                    #Piston.ALARMS.failed_to_retract := TRUE;
+                ELSIF #Piston.STATUS.normal_state = #EXTENDING THEN
+                    #Piston.ALARMS.failed_to_extend := TRUE;
+                END_IF;
+            END_IF;
+        END_REGION
+        
+        REGION Acknowledgment
+            IF #Piston.CMD.ack THEN
+                #Piston.ALARMS.sensor_mismatch := FALSE;
+                #Piston.ALARMS.sensor_conflict := FALSE;
+                #Piston.ALARMS.failed_to_retract := FALSE;
+                #Piston.ALARMS.failed_to_extend := FALSE;
+            END_IF;
+        END_REGION
+        
+        REGION Internal error
+            #internal_error := #Piston.ALARMS.sensor_mismatch
+            OR #Piston.ALARMS.sensor_conflict
+            OR #Piston.ALARMS.failed_to_retract
+            OR #Piston.ALARMS.failed_to_extend;
+        END_REGION
+        
+        REGION Top FSM
+            CASE #Piston.STATUS.state OF
+                #NORMAL:
+                    IF #internal_error THEN
+                        #Piston.STATUS.state := #FAULT;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #Piston.CMD.ack AND NOT #internal_error THEN
+                        IF #Piston.DEVICES.ZSL AND NOT #Piston.DEVICES.ZSH THEN
+                            #Piston.STATUS.state := #NORMAL;
+                            #Piston.STATUS.normal_state := #RETRACTED;
+                        ELSIF #Piston.DEVICES.ZSH AND NOT #Piston.DEVICES.ZSL THEN
+                            #Piston.STATUS.state := #NORMAL;
+                            #Piston.STATUS.normal_state := #EXTENDED;
+                        ELSIF NOT #Piston.DEVICES.ZSH AND NOT #Piston.DEVICES.ZSL AND #desired_command THEN
+                            #Piston.STATUS.state := #NORMAL;
+                            #Piston.STATUS.normal_state := #EXTENDING;
+                        ELSIF NOT #Piston.DEVICES.ZSH AND NOT #Piston.DEVICES.ZSL AND NOT #desired_command THEN
+                            #Piston.STATUS.state := #NORMAL;
+                            #Piston.STATUS.normal_state := #RETRACTING;
+                        END_IF;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #Piston.STATUS.state = #NORMAL THEN
+                CASE #Piston.STATUS.normal_state OF
+                    #RETRACTED:
+                        IF #desired_command THEN
+                            #Piston.STATUS.normal_state := #EXTENDING;
+                        END_IF;
+                        
+                    #EXTENDING:
+                        IF #Piston.DEVICES.ZSH AND NOT #Piston.DEVICES.ZSL THEN
+                            #Piston.STATUS.normal_state := #EXTENDED;
+                        END_IF;
+                        
+                    #EXTENDED:
+                        IF NOT #desired_command THEN
+                            #Piston.STATUS.normal_state := #RETRACTING;
+                        END_IF;
+                        
+                    #RETRACTING:
+                        IF #Piston.DEVICES.ZSL AND NOT #Piston.DEVICES.ZSH THEN
+                            #Piston.STATUS.normal_state := #RETRACTED;
+                        END_IF;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #Piston.DEVICES.XY.CMD.auto := FALSE;
+            
+            IF #Piston.STATUS.state = #NORMAL THEN
+                CASE #Piston.STATUS.normal_state OF
+                    #EXTENDING:
+                        #Piston.DEVICES.XY.CMD.auto := TRUE;
+                    #EXTENDED:
+                        #Piston.DEVICES.XY.CMD.auto := TRUE;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #Piston.STATUS.is_retracted := (#Piston.STATUS.state = #NORMAL) AND (#Piston.STATUS.normal_state = #RETRACTED);
+            #Piston.STATUS.is_extending := (#Piston.STATUS.state = #NORMAL) AND (#Piston.STATUS.normal_state = #EXTENDING);
+            #Piston.STATUS.is_extended := (#Piston.STATUS.state = #NORMAL) AND (#Piston.STATUS.normal_state = #EXTENDED);
+            #Piston.STATUS.is_retracting := (#Piston.STATUS.state = #NORMAL) AND (#Piston.STATUS.normal_state = #RETRACTING);
+            #Piston.STATUS.is_fault := (#Piston.STATUS.state = #FAULT);
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK
