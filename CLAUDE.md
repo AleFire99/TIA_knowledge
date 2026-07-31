@@ -590,6 +590,9 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
 | UDT_SS_Sealed_Valve | SS_Sealed_valve | XV | SS_Sealed_valve_simulator (XV) |
 | UDT_Pinch_Valve | Pinch_valve | XV | Pinch_valve_simulator (XV) |
 | UDT_Solenoid_valve | Solenoid_valve | XY | — |
+| UDT_Piston_no_sensors | Piston_no_sensors | Piston | — |
+| UDT_Piston_sensors | Piston_sensors | Piston | Piston_sensors_simulator (Piston) |
+| UDT_Motor_no_sensors | Motor | motor | — |
 | UDT_Gate_Door | Gate_door | gate_door | — |
 | UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator (DIV) |
 | UDT_Filter_1_sleeve | Filter_1_sleeve | filter | — |
@@ -614,6 +617,12 @@ All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are aut
    when called on a GlobalLibrary proxy. Use `--skip-instantiate` and instantiate manually
    in TIA Portal UI, then re-run.
 3. Staging project must be committed in **empty state** between export runs.
+4. `Piston_no_sensors.s7dcl`'s `VAR_IN_OUT` declared its param as `_.UDT_Piston` (nonexistent
+   type) instead of `_.UDT_Piston_no_sensors` — an export typo, not a naming choice. Patched
+   directly in `raw/` (same treatment as the Nolvac/Gate_door `ReadOnly` gaps) since
+   `LibraryTypeVersion.export()` for global library types can't be re-run outside TIA Portal
+   in this environment. Still needs backporting into the actual FB declaration in TIA Portal
+   on the next real export cycle, or the next `export.py` run will overwrite the fix.
 
 ---
 
@@ -656,9 +665,10 @@ Current values, for reference when adding a new module:
 | Module | Livello | Why |
 |---|---|---|
 | Elettrovalvola | 1 | Embeds nothing — genuinely atomic |
-| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
+| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche, Pistone — Senza Sensori, Pistone — Con Sensori | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
 | Deviatore a Manicotto, Valvola Sigillata SS, Nolvac — Ciclo a Tempo | 3 | Embed at least one Livello-2 component |
 | Celle di Carico core (Ciclo di Carico e Scarico) | 1 | Embeds nothing, but two independent FSMs share one UDT — Livello 1 without being "atomico" |
+| Motore — Senza Sensori | 1 | Embeds nothing (no `DEVICES` struct at all) — standalone primitive like Elettrovalvola, but not "atomico" outright since it carries its own FAULT/alarm handling, same reasoning as Celle di Carico's non-atomic Livello 1 |
 | Propulsore Ingresso Sigillato | 4 | Embeds Valvola Sigillata SS (Livello 3) |
 | Interfaccia Pavone DAT 1400, Pipeline Analogica/Digitale | not classified | FC, stateless — Livello only applies to stateful FBs with their own state machine |
 
@@ -668,24 +678,29 @@ Categories are ordered by **valve-nesting depth**, not alphabetically or by devi
 
 1. **Valvole** first — the only category with no external dependency (it *is* the Livello
    1–3 valve family other categories build on).
-2. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Dispositivi di
-   Accesso** (1×) → **Filtri** (1–2×).
-3. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
+2. **Motori** right after Valvole — also zero external dependency (no embedded
+   sub-components at all, see Livello classification below), the same "no dependency"
+   status as Valvole itself, so it sits at the front of the chain alongside it rather than
+   in a later embedding bucket.
+3. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Dispositivi di
+   Accesso** (1×) → **Filtri** (1–2×) → **Attuatori Lineari** (1× per variant — Pistone
+   Senza/Con Sensori both embed a single Elettrovalvola).
+4. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
    **Nolvac** (Farfalla SS Livello 2 + 2× Elettrovalvola).
-4. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
+5. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
    classification below), but independent of Valvole regardless (own device family: a core
    UDT plus swappable transmitter interfaces). Introduced here because a later item
    depends on it, not because of its own livello number.
-5. **Segnali Analogici** — not classified (stateless FC utility, not a device), no valve
+6. **Segnali Analogici** — not classified (stateless FC utility, not a device), no valve
    dependency, sits outside the nesting chain like Pipeline further below. Placed here,
    before **Propulsori**, because Propulsore Ingresso Sigillato is a real consumer too
    (`PT01`/`PT02` are `UDT_Analogic_signal`) — not just Pipeline Analogica. Both dependents
    need it introduced first, so it sits right after Celle di Carico and before either.
-6. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
+7. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
    multiple valve livelli (Sigillata SS at Livello 3, Farfalla SS at Livello 2, Elettrovalvola
    at Livello 1) *and* a full Celle di Carico instance, *and* consuming Segnali Analogici
    (`PT01`/`PT02`). Needs all three prior chains already introduced.
-7. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, depends
+8. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, depends
    only on Segnali Analogici (already introduced above it). A different logical domain
    (sensor-state derivation, not valve actuation), so it sits outside the nesting chain
    otherwise.

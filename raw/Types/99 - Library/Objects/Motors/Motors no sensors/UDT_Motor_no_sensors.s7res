@@ -1,0 +1,25 @@
+﻿MultiLingualTexts:
+  - id: MLC_3cy
+    en-US: COMMAND - Active mode
+  - id: MLC_uz
+    en-US: COMMAND - Manual command
+  - id: MLC_LT
+    en-US: COMMAND - Automatic command
+  - id: MLC_34i
+    en-US: COMMAND - Acknowledge errors
+  - id: MLC_344
+    en-US: STATUS - 0=fault,1=normal
+  - id: MLC_Rb
+    en-US: STATUS - 1=off, 2=on
+  - id: MLC_32q
+    en-US: STATUS - Motor is on
+  - id: MLC_4KY
+    en-US: STATUS - Motor is off
+  - id: MLC_4D8
+    en-US: STATUS - Motor is in fault
+  - id: MLC_Tv
+    en-US: ALARM - Thermal overload
+  - id: MLC_UJ
+    en-US: IN - Thermal overload
+  - id: MLC_464
+    en-US: OUT - Motor command

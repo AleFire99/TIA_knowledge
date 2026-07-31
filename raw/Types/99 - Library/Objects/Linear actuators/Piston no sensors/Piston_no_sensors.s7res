@@ -1,0 +1,7 @@
+﻿MultiLingualTexts:
+  - id: MLC_ba
+    en-US: Actual desired command based on active mode
+  - id: MLC_3LB
+    en-US: Retracted piston state
+  - id: MLC_4K3
+    en-US: Extended piston state

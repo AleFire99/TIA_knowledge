@@ -1,0 +1,11 @@
+﻿DocumentHash:
+  - FileName: Motor.s7dcl
+    Hash: Gnyqhzp79KSrZ2ENeKFlqAucVROz/bU5og0GgrezO+s=
+  - FileName: Motor.s7res
+    Hash: bHsPQmJ6FuqLPwVl5zCgK0voT0qtPd7AwEl5K8Odh+w=
+LibraryMetaFileHash: p1+/huFeq7zz03XI2AqRIFa7N/PeUJOGIDsz9XcxwQQ=
+LibraryVersion:
+  Guid: fb2435f2-0ff5-4e8e-8c0e-1397d3119d4a
+  DependsOn:
+    - TypeName: UDT_Motor_no_sensors
+      VersionNumber: 0.0.1

@@ -1,7 +1,7 @@
 {
   "manifest_version": "2.0.0",
   "library_version": "unknown",
-  "generated_at": "2026-07-28T13:24:40Z",
+  "generated_at": "2026-07-31T16:03:15Z",
   "udts": {
     "UDT_Analogic_signal": {
       "description": "Types / 99 - Library / IO",
@@ -75,6 +75,40 @@
         }
       }
     },
+    "UDT_Piston_no_sensors": {
+      "description": "First version",
+      "label": "Piston (no sensors)",
+      "has_out": false,
+      "cmd_ack": false,
+      "cmd_manual_mode": true,
+      "devices": {
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
+        }
+      }
+    },
+    "UDT_Piston_sensors": {
+      "description": "First version",
+      "label": "Piston (sensors)",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "devices": {
+        "ZSL": {
+          "type": "Bool",
+          "description": ""
+        },
+        "ZSH": {
+          "type": "Bool",
+          "description": ""
+        },
+        "XY": {
+          "type": "UDT_Solenoid_valve",
+          "description": ""
+        }
+      }
+    },
     "UDT_Pavone_IN": {
       "description": "Types / 99 - Library / Objects / Load cells / Pavone Sistemi",
       "label": "Pavone DAT 1400 (input)",
@@ -97,6 +131,14 @@
       "has_out": false,
       "cmd_ack": true,
       "cmd_manual_mode": false,
+      "devices": {}
+    },
+    "UDT_Motor_no_sensors": {
+      "description": "First version",
+      "label": "Motor (no sensors)",
+      "has_out": true,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
       "devices": {}
     },
     "UDT_Nolvac": {
@@ -341,6 +383,27 @@
       ],
       "sim": null
     },
+    "UDT_Piston_no_sensors": {
+      "ctrl": [
+        {
+          "name": "Piston_no_sensors",
+          "param": "Piston"
+        }
+      ],
+      "sim": null
+    },
+    "UDT_Piston_sensors": {
+      "ctrl": [
+        {
+          "name": "Piston_sensors",
+          "param": "Piston"
+        }
+      ],
+      "sim": {
+        "name": "Piston_sensors_simulator",
+        "param": "Piston"
+      }
+    },
     "UDT_Load_cells": {
       "ctrl": [
         {
@@ -354,6 +417,15 @@
         {
           "name": "Unloading",
           "param": "scale"
+        }
+      ],
+      "sim": null
+    },
+    "UDT_Motor_no_sensors": {
+      "ctrl": [
+        {
+          "name": "Motor",
+          "param": "motor"
         }
       ],
       "sim": null

@@ -24,6 +24,16 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 
 ---
 
+## [Motori](motors/index.md)
+
+Motore elettrico controllato on/off, senza alcun componente pneumatico incorporato.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Motore — Senza Sensori](motors/no-sensors/index.md) | Marcia/arresto comandati; guasto rilevato solo da `error_in` esterno |
+
+---
+
 ## [Dispositivi di Accesso](access/index.md)
 
 Il PLC concede solo il permesso di sblocco in base allo stato corrente — l'accesso fisico resta all'operatore, il PLC non movimenta nulla.
@@ -42,6 +52,17 @@ Sistemi di pulizia a impulsi d'aria compressa per maniche filtranti.
 |--------|-------------|
 | [Pulitore Filtro — 1 Manica](filters/1-sleeve/index.md) | Ciclo a impulso periodico con una singola elettrovalvola |
 | [Pulitore Filtro — 2 Maniche](filters/2-sleeves/index.md) | Sequenza di impulsi alternati su due maniche |
+
+---
+
+## [Attuatori Lineari](linear-actuators/index.md)
+
+Pistone pneumatico lineare, incorpora una singola Elettrovalvola come proprio attuatore.
+
+| Modulo | Descrizione |
+|--------|-------------|
+| [Pistone — Senza Sensori](linear-actuators/no-sensors/index.md) | Transizione immediata sul solo comando; nessuna retroazione |
+| [Pistone — Con Sensori](linear-actuators/sensors/index.md) | Retroazione di posizione via ZSL/ZSH; timeout di movimento; FAULT |
 
 ---
 

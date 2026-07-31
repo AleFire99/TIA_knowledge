@@ -1,0 +1,41 @@
+﻿TYPE
+    UDT_Piston_no_sensors : STRUCT
+        { S7_Access := "ReadOnly := External" }
+        DEVICES : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_uk"
+            }
+            XY : _.UDT_Solenoid_valve;
+        END_STRUCT;
+        CMD : STRUCT
+            { S7_MLC := "MLC_3Lm" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_53D" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3t9"
+            }
+            auto : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4ur"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3H4"
+            }
+            is_retracted : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Xx"
+            }
+            is_extended : Bool;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

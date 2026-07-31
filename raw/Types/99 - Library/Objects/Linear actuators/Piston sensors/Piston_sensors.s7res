@@ -1,0 +1,19 @@
+﻿MultiLingualTexts:
+  - id: MLC_3tJ
+    en-US: TRUE if first scan, then set to FALSE
+  - id: MLC_46K
+    en-US: Movement timer
+  - id: MLC_Un
+    en-US: Actual desired command based on active mode
+  - id: MLC_NV
+    en-US: Error piston state
+  - id: MLC_58v
+    en-US: Normal piston state
+  - id: MLC_4aK
+    en-US: Retracted piston state
+  - id: MLC_4gr
+    en-US: Extending piston state
+  - id: MLC_Ug
+    en-US: Extended piston state
+  - id: MLC_NH
+    en-US: Retracting piston state

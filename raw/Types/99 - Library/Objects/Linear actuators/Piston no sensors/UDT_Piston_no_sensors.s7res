@@ -1,0 +1,15 @@
+﻿MultiLingualTexts:
+  - id: MLC_uk
+    en-US: OUTPUT - Command
+  - id: MLC_3Lm
+    en-US: COMMAND - Active mode
+  - id: MLC_53D
+    en-US: COMMAND - Manual command
+  - id: MLC_3t9
+    en-US: COMMAND - Automatic command
+  - id: MLC_4ur
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_3H4
+    en-US: STATUS - Piston is retracted
+  - id: MLC_3Xx
+    en-US: STATUS - Piston is extended

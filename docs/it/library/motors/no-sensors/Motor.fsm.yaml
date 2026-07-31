@@ -1,0 +1,40 @@
+# Motor — command-driven motor, no embedded sub-components, thermal-overload fault tier.
+# Source: raw/Types/99 - Library/Objects/Motors/Motors no sensors/Motor.s7dcl. Doc: docs/it/library/motors/no-sensors/index.md.
+
+schema_version: "1.0"
+fb: Motor
+udt: UDT_Motor_no_sensors
+source: Types/99 - Library/Objects/Motors/Motors no sensors/Motor.s7dcl
+
+label: MOTOR
+
+states:
+  - id: NORMAL
+    value: 1
+    children:
+      - id: "OFF"
+        value: 1
+        outputs: { out: false }
+        description: motor stopped
+      - id: "ON"
+        value: 2
+        outputs: { out: true }
+        description: motor running
+  - id: FAULT
+    value: 0
+    outputs: { out: false }
+    description: fault; awaiting ack with error_in cleared
+
+transitions:
+  - { from: "[*]", to: NORMAL.OFF }
+  - { from: NORMAL, to: FAULT, guard: error_in }
+  - from: FAULT
+    to: NORMAL.OFF
+    guard: "CMD.ack & !error_in"
+    note: recovery always re-enters OFF regardless of the state before the fault — unlike the piston/valve FBs, there is no live sensor to re-derive a resumed ON state from
+  - { from: NORMAL.OFF, to: NORMAL.ON, guard: desired_command }
+  - { from: NORMAL.ON, to: NORMAL.OFF, guard: "!desired_command" }
+
+notes:
+  - "error_in is an externally-driven signal (e.g. an overload relay auxiliary contact), not a DEVICES sensor of this FB's own — Motor has no DEVICES struct at all, out/error_in sit flat at the UDT root."
+  - "ALARMS.thermal_overload is asserted every scan the FSM is in FAULT (not latched independently of the state) and clears only via CMD.ack."
