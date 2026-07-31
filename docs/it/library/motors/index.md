@@ -6,7 +6,7 @@ Motore elettrico controllato on/off, senza alcun componente pneumatico incorpora
 
 | ID | Titolo | Condizione | Applicabile a |
 |----|--------|------------|----------------|
-| `MO-E01` | Sovraccarico termico | `error_in` TRUE mentre in marcia — tipicamente contatto ausiliario del relè termico | Motore — Senza Sensori |
+| `MT-E01` | Sovraccarico termico | `error_in` TRUE mentre in marcia — tipicamente contatto ausiliario del relè termico | Motore — Senza Sensori |
 
 ## Moduli
 

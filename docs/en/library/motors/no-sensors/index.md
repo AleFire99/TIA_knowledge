@@ -61,15 +61,17 @@ The desired command is resolved every scan (`manual_mode ? manual : auto`). `err
 
 ### Alarms
 
-[`MO-E01`](../index.md#motor-alarms) — `error_in` TRUE, asserted every scan the state is FAULT; clears only via `CMD.ack`.
+[`MT-E01`](../index.md#motor-alarms) — `error_in` TRUE, asserted every scan the state is FAULT; clears only via `CMD.ack`.
 
 ### State diagram
 
 ```mermaid
 stateDiagram-v2
 state MOTOR{
+    [*] --> NORMAL
+
     NORMAL --> FAULT : error_in
-    FAULT --> NORMAL.OFF : CMD.ack & !error_in
+    FAULT --> NORMAL : CMD.ack & !error_in
 
     state NORMAL {
         [*] --> OFF

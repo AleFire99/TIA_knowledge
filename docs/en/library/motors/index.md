@@ -6,7 +6,7 @@ Electric motor with on/off control, no pneumatic component embedded at all — n
 
 | ID | Title | Condition | Applies to |
 |----|-------|-----------|------------|
-| `MO-E01` | Thermal overload | `error_in` TRUE while running — typically a thermal relay auxiliary contact | Motor — No Sensors |
+| `MT-E01` | Thermal overload | `error_in` TRUE while running — typically a thermal relay auxiliary contact | Motor — No Sensors |
 
 ## Modules
 

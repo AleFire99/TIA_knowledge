@@ -502,6 +502,19 @@ bare `failed_to_close` while that same file's `timers[].raises` called the ident
   `loading_done`, with `loading_done: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint
   - SETTING.loading_tail)` as its own `guard_formulas` entry). This keeps every mermaid edge
   label short and gives the actual formula one authoritative place to live.
+- **A transition into a composite state always targets the bare composite name
+  (`NORMAL`), never a dotted child (`NORMAL.CLOSED`)** — this applies to both the
+  unconditional top-level initial edge (`{ from: "[*]", to: NORMAL }`) and any
+  FAULT-recovery edge (`{ from: FAULT, to: NORMAL, guard: ... }`). Which specific child is
+  entered is a *separate* concern, expressed as its own `{ from: "[*]", to: NORMAL.<child>,
+  guard: ... }` entry (or entries, one per possible child) — rendered nested inside
+  `state NORMAL { ... }` — guarded when disambiguation is needed (SS_valve/Gate_door landing
+  in different children depending on live sensors) or bare/unconditional when there's only
+  one possible child (Motor always lands in `OFF` — still needs its own
+  `{ from: "[*]", to: NORMAL.OFF }` entry, just without a guard). Every existing FSM file
+  already followed this split; only `Motor.fsm.yaml` initially collapsed the two into a
+  single dotted-child edge on both transitions, which silently dropped the inner state's own
+  `[*] --> OFF` line from the rendered diagram until caught and fixed.
 - **First-scan ambiguous-pair guards share one template**, domain word substituted:
   `"<predicate A> XOR <predicate B> on first scan"` / `"ambiguous <domain noun> on first
   scan"` (e.g. `ZSL XOR ZSH on first scan` / `ambiguous sensors on first scan` for a

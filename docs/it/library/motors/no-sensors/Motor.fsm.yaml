@@ -26,12 +26,13 @@ states:
     description: fault; awaiting ack with error_in cleared
 
 transitions:
-  - { from: "[*]", to: NORMAL.OFF }
+  - { from: "[*]", to: NORMAL }
   - { from: NORMAL, to: FAULT, guard: error_in }
   - from: FAULT
-    to: NORMAL.OFF
+    to: NORMAL
     guard: "CMD.ack & !error_in"
     note: recovery always re-enters OFF regardless of the state before the fault — unlike the piston/valve FBs, there is no live sensor to re-derive a resumed ON state from
+  - { from: "[*]", to: NORMAL.OFF }
   - { from: NORMAL.OFF, to: NORMAL.ON, guard: desired_command }
   - { from: NORMAL.ON, to: NORMAL.OFF, guard: "!desired_command" }
 
