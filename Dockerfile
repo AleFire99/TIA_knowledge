@@ -21,4 +21,5 @@ COPY --from=builder /app/site/it /usr/share/nginx/html/it
 COPY --from=builder /app/site/en /usr/share/nginx/html/en
 RUN printf '<!DOCTYPE html><meta http-equiv="refresh" content="0; url=/it/">' \
     > /usr/share/nginx/html/index.html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
