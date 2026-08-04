@@ -144,10 +144,17 @@ server. Full dual-locale + language-switcher check happens via the Docker build
 
 ```bash
 docker build -t alefires-wiki .
-docker run -d -p 8080:80 alefires-wiki
+docker run -d -p 8080:80 -v "${PWD}/dist:/data:ro" alefires-wiki
 # Italian (default): http://<host-ip>:8080/
 # English:           http://<host-ip>:8080/en/
+# Manifest API:      http://<host-ip>:8080/api/manifest
 ```
+
+The `-v` bind-mount is required — `/api/manifest` (nginx, `nginx.conf`) serves
+`dist/library_manifest.json` straight off disk, not baked into the image. A fresh
+`scripts/ingest.py` run is visible on the next request with no rebuild/restart.
+Downstream consumers (e.g. plc-doc-gen's `config.toml [knowledge].manifest_url`) read
+this live — no more manual copy/commit of the manifest file into other repos.
 
 ### Step 6 — Commit
 
