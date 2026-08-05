@@ -4,12 +4,12 @@
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Kd"
+                S7_MLC := "MLC_4S7"
             }
             XVA : _.UDT_Pinch_Valve;
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Hn"
+                S7_MLC := "MLC_3AU"
             }
             XVB : _.UDT_Pinch_Valve;
         END_STRUCT;

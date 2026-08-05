@@ -24,6 +24,9 @@ classDiagram
     class DEVICES {
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Filter_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -42,28 +45,30 @@ classDiagram
         -Bool is_waiting
     }
     UDT_Filter_1_sleeve *-- DEVICES
-    UDT_Filter_1_sleeve *-- CMD
-    UDT_Filter_1_sleeve *-- SETTING
-    UDT_Filter_1_sleeve *-- STATUS
+    UDT_Filter_1_sleeve *-- CORE
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = writable by DCS/HMI, `-` = read-only.
+`+` = writable by DCS/HMI, `-` = read-only. `CORE` is the contract shared by both filter
+variants — see [Filters — Overview](../index.md#core).
 
 ### Control Signals
 
 | Signal | Type | Direction | Description |
 |---------|------|-----------|-------------|
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Cleaning-pulse electrovalve — commanded, its own state is not read back by this block |
-| `CMD.manual_mode` | Bool | IN | TRUE = manual mode |
-| `CMD.manual` | Bool | IN | Enable in manual mode |
-| `CMD.auto` | Bool | IN | Enable in automatic mode |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = manual mode |
+| `CORE.CMD.manual` | Bool | IN | Enable in manual mode |
+| `CORE.CMD.auto` | Bool | IN | Enable in automatic mode |
 
 ### Settings
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Duration of each cleaning pulse |
-| `interval_duration` | T#3s | Wait time between successive pulses |
+| `CORE.SETTING.pulse_duration` | T#500ms | Duration of each cleaning pulse |
+| `CORE.SETTING.interval_duration` | T#3s | Wait time between successive pulses |
 
 ---
 
@@ -101,7 +106,7 @@ state FILTER_1_SLEEVE{
 ```
 
 ```Pascal
-desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
+desired_command := (CORE.CMD.manual_mode AND CORE.CMD.manual) OR (NOT CORE.CMD.manual_mode AND CORE.CMD.auto);
 ```
 
 | State | Sub-state | `XY` | Description |
@@ -121,5 +126,5 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 
 | Timer | State in which it is active | Threshold (parameter) |
 |-------|------------------------|---------------------|
-| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |
-| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |
+| `interval_timer` | ACTIVE/WAITING | `CORE.SETTING.interval_duration` |
+| `pulse_timer` | ACTIVE/PULSING | `CORE.SETTING.pulse_duration` |

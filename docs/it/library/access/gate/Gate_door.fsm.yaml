@@ -1,10 +1,10 @@
 # Gate_door — electric-lock gate access device.
-# Source: raw/Types/99 - Library/Objects/Gate/Gate_door.s7dcl. Doc: docs/it/library/access/gate/index.md.
+# Source: raw/Types/99 - Library/Objects/Access devices/Gate/Gate_door.s7dcl. Doc: docs/it/library/access/gate/index.md.
 
 schema_version: "1.0"
 fb: Gate_door
 udt: UDT_Gate_Door
-source: Types/99 - Library/Objects/Gate/Gate_door.s7dcl
+source: Types/99 - Library/Objects/Access devices/Gate/Gate_door.s7dcl
 
 label: GATE_DOOR
 

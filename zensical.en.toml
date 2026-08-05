@@ -14,7 +14,7 @@ nav = [
           { "Pinch" = "library/valves/pinch/index.md" },
           { "Butterfly — Single Solenoid" = "library/valves/butterfly/single_solenoid/index.md" },
           { "Butterfly — Double Solenoid" = "library/valves/butterfly/double_solenoid/index.md" },
-          { "Sealed — Single Solenoid" = "library/valves/sealed/ss/index.md" },
+          { "Sealed" = "library/valves/sealed/index.md" },
       ] },
       { "Motors" = [
           { "Overview" = "library/motors/index.md" },
@@ -50,7 +50,7 @@ nav = [
       { "Analog Signals" = "library/io/index.md" },
       { "Transporters" = [
           { "Overview" = "library/transporters/index.md" },
-          { "Sealed Inlet Transporter" = "library/transporters/sealed-inlet/index.md" },
+          { "Transporter" = "library/transporters/transporter/index.md" },
       ] },
       { "Pipeline" = [
           { "Overview" = "library/pipeline/index.md" },

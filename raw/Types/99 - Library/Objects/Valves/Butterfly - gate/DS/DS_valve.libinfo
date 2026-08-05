@@ -1,8 +1,8 @@
 ﻿LibraryType:
   Guid: dae84302-94bb-4987-ae01-d21caeed7872
 LibraryVersion:
-  VersionNumber: 2.2.1
+  VersionNumber: 3.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Moved normal state reset in IF after ack clearance
+    en-US: Updated with Core structure

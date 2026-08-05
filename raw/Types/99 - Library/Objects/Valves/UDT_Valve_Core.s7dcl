@@ -1,0 +1,59 @@
+﻿TYPE
+    UDT_Valve_Core : STRUCT
+        CMD : STRUCT
+            { S7_MLC := "MLC_3Mr" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_3av" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4yN"
+            }
+            auto : Bool;
+            { S7_MLC := "MLC_qx" }
+            ack : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_RE"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Tc"
+            }
+            normal_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_sr"
+            }
+            is_fault : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_dq"
+            }
+            is_closed : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_574"
+            }
+            is_opening : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3z9"
+            }
+            is_open : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3zq"
+            }
+            is_closing : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_3Vn" }
+            actuator_timeout : Time := T#2s;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

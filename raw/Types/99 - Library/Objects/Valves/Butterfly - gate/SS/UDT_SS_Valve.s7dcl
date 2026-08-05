@@ -18,61 +18,7 @@
             }
             XY : _.UDT_Solenoid_valve;
         END_STRUCT;
-        CMD : STRUCT
-            { S7_MLC := "MLC_3PJ" }
-            manual_mode : Bool;
-            { S7_MLC := "MLC_4Xg" }
-            manual : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_Ri"
-            }
-            auto : Bool;
-            { S7_MLC := "MLC_3j6" }
-            ack : Bool;
-        END_STRUCT;
-        SETTING : STRUCT
-            { S7_MLC := "MLC_3g7" }
-            actuator_timeout : Time := T#2s;
-        END_STRUCT;
-        { S7_Access := "ReadOnly := External" }
-        STATUS : STRUCT
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Dp"
-            }
-            state : Int := 1;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_35n"
-            }
-            normal_state : Int := 1;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_3Uy"
-            }
-            is_fault : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4BV"
-            }
-            is_closed : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4KL"
-            }
-            is_opening : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4WN"
-            }
-            is_open : Bool;
-            {
-                S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4vr"
-            }
-            is_closing : Bool;
-        END_STRUCT;
+        CORE : _.UDT_Valve_Core;
         { S7_Access := "ReadOnly := External" }
         ALARMS : STRUCT
             {

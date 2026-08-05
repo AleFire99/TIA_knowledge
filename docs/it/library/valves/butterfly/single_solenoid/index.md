@@ -26,6 +26,9 @@ classDiagram
         -Bool ZSH
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Valve_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -51,13 +54,15 @@ classDiagram
         -Bool failed_to_open
     }
     UDT_SS_Valve *-- DEVICES
-    UDT_SS_Valve *-- CMD
-    UDT_SS_Valve *-- SETTING
-    UDT_SS_Valve *-- STATUS
+    UDT_SS_Valve *-- CORE
     UDT_SS_Valve *-- ALARMS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. `CORE` è il contratto condiviso da tutta la
+famiglia valvole — vedi [Valvole — Panoramica](../../index.md#core).
 
 ### Segnali di controllo
 
@@ -66,16 +71,16 @@ classDiagram
 | `DEVICES.ZSL` | Bool | IN | Finecorsa posizione chiusa |
 | `DEVICES.ZSH` | Bool | IN | Finecorsa posizione aperta |
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola attuatore — comandata, il proprio stato non viene riletto da questo blocco |
-| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di apertura in modalità automatica |
-| `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
+| `CORE.CMD.manual` | Bool | IN | Comando di apertura in modalità manuale |
+| `CORE.CMD.auto` | Bool | IN | Comando di apertura in modalità automatica |
+| `CORE.CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
 ### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Vedi la convenzione in [Valvole — Panoramica](../../index.md) |
+| `CORE.SETTING.actuator_timeout` | T#2s | Vedi la convenzione in [Valvole — Panoramica](../../index.md) |
 
 ---
 

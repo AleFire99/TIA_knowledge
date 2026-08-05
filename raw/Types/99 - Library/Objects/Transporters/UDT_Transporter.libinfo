@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 87242aeb-a136-449c-b661-6f3c26cda5e5
+  Comment:
+    en-US: First version
+LibraryVersion:
+  VersionNumber: 3.1.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Removed filter cleaner command for dependency injection

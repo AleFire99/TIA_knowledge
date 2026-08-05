@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: f163cbdc-36d4-4c59-8aa1-1073c9c73bfb
+  Comment:
+    en-US: First commit
+LibraryVersion:
+  VersionNumber: 0.1.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: First commit

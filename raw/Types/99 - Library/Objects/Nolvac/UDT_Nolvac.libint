@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: UDT_Nolvac.s7dcl
-    Hash: FdTn9n2zDQDriS3PqrZrAVr0XYSTh4KoXWKvZvt63i0=
+    Hash: HibvhPsn4gGOynCLn4+X9McC8OAHXA8RxXinMeKsicI=
   - FileName: UDT_Nolvac.s7res
-    Hash: 6u8IWGrU8eWyevQzcstw4iHU6h1w18AUIqV7OpGNDN4=
-LibraryMetaFileHash: eGAi4cKRIyBFpWuom3uk1n8vB3Sa2Lwj8Kl15dyUbp0=
+    Hash: FcP5O+bI5HeMii5hSb/+nCYFIE6MtxrwuQtt3tWvIKA=
+LibraryMetaFileHash: bEiMrDXd4rA8AKD4HcUpz7P49UZQbJzsmxYsHo3T6gE=
 LibraryVersion:
-  Guid: af32cc44-c17a-40f2-93da-16a3e6678698
+  Guid: fc94f830-c6ac-486e-9d56-b3590ba6d408
   DependsOn:
     - TypeName: UDT_SS_Valve
-      VersionNumber: 2.0.1
+      VersionNumber: 3.0.0
     - TypeName: UDT_Solenoid_valve
       VersionNumber: 2.0.1

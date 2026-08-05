@@ -42,7 +42,7 @@ FUNCTION_BLOCK "Nolvac"
         END_REGION
         
         REGION Map internal valves
-            #VC.DEVICES.XV01.CMD.ack := #VC.CMD.ack;
+            #VC.DEVICES.XV01.CORE.CMD.ack := #VC.CMD.ack;
             #fb_XV01(#VC.DEVICES.XV01);
             #fb_XY02(#VC.DEVICES.XY02);
             #fb_XY03(#VC.DEVICES.XY03);
@@ -56,7 +56,7 @@ FUNCTION_BLOCK "Nolvac"
         END_REGION
         
         REGION Alarms
-            #internal_error := #VC.DEVICES.XV01.STATUS.is_fault;
+            #internal_error := #VC.DEVICES.XV01.CORE.STATUS.is_fault;
         END_REGION
         
         REGION Top FSM
@@ -106,7 +106,7 @@ FUNCTION_BLOCK "Nolvac"
         END_REGION
         
         REGION Output mapping
-            #VC.DEVICES.XV01.CMD.auto := FALSE;
+            #VC.DEVICES.XV01.CORE.CMD.auto := FALSE;
             #VC.DEVICES.XY02.CMD.auto := FALSE;
             #VC.DEVICES.XY03.CMD.auto := FALSE;
             
@@ -115,7 +115,7 @@ FUNCTION_BLOCK "Nolvac"
                     #SUCTION:
                         #VC.DEVICES.XY03.CMD.auto := TRUE;
                     #CLEANING:
-                        #VC.DEVICES.XV01.CMD.auto := TRUE;
+                        #VC.DEVICES.XV01.CORE.CMD.auto := TRUE;
                         #VC.DEVICES.XY02.CMD.auto := TRUE;
                 END_CASE;
             END_IF;

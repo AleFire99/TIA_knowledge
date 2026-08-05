@@ -45,14 +45,14 @@ FUNCTION_BLOCK "Pinch_diverter"
     NETWORK
         REGION Command internal valves
             REGION Valve A
-                #DIV.DEVICES.XVA.CMD.ack := #DIV.CMD.ack;
-                #DIV.DEVICES.XVA.SETTING.actuator_timeout := #DIV.SETTING.actuator_timeout;
+                #DIV.DEVICES.XVA.CORE.CMD.ack := #DIV.CMD.ack;
+                #DIV.DEVICES.XVA.CORE.SETTING.actuator_timeout := #DIV.SETTING.actuator_timeout;
                 #fb_XVA(#DIV.DEVICES.XVA);
             END_REGION
             
             REGION Valve B
-                #DIV.DEVICES.XVB.CMD.ack := #DIV.CMD.ack;
-                #DIV.DEVICES.XVB.SETTING.actuator_timeout := #DIV.SETTING.actuator_timeout;
+                #DIV.DEVICES.XVB.CORE.CMD.ack := #DIV.CMD.ack;
+                #DIV.DEVICES.XVB.CORE.SETTING.actuator_timeout := #DIV.SETTING.actuator_timeout;
                 #fb_XVB(#DIV.DEVICES.XVB);
             END_REGION
         END_REGION
@@ -60,10 +60,10 @@ FUNCTION_BLOCK "Pinch_diverter"
         REGION Initialization
             IF #first_scan THEN
                 #first_scan := FALSE;
-                IF #DIV.DEVICES.XVA.STATUS.is_open AND #DIV.DEVICES.XVB.STATUS.is_closed THEN
+                IF #DIV.DEVICES.XVA.CORE.STATUS.is_open AND #DIV.DEVICES.XVB.CORE.STATUS.is_closed THEN
                     #DIV.STATUS.state := #NORMAL;
                     #DIV.STATUS.normal_state := #ROUTE_A;
-                ELSIF #DIV.DEVICES.XVA.STATUS.is_closed AND #DIV.DEVICES.XVB.STATUS.is_open THEN
+                ELSIF #DIV.DEVICES.XVA.CORE.STATUS.is_closed AND #DIV.DEVICES.XVB.CORE.STATUS.is_open THEN
                     #DIV.STATUS.state := #NORMAL;
                     #DIV.STATUS.normal_state := #ROUTE_B;
                 ELSE
@@ -82,10 +82,10 @@ FUNCTION_BLOCK "Pinch_diverter"
         
         REGION Alarms
             IF #DIV.STATUS.state = #NORMAL THEN
-                IF #DIV.STATUS.normal_state = #ROUTE_A AND NOT #DIV.DEVICES.XVA.STATUS.is_open THEN
+                IF #DIV.STATUS.normal_state = #ROUTE_A AND NOT #DIV.DEVICES.XVA.CORE.STATUS.is_open THEN
                     #DIV.ALARMS.valve_mismatch := TRUE;
                 END_IF;
-                IF #DIV.STATUS.normal_state = #ROUTE_B AND NOT #DIV.DEVICES.XVB.STATUS.is_open THEN
+                IF #DIV.STATUS.normal_state = #ROUTE_B AND NOT #DIV.DEVICES.XVB.CORE.STATUS.is_open THEN
                     #DIV.ALARMS.valve_mismatch := TRUE;
                 END_IF;
             END_IF;
@@ -99,8 +99,8 @@ FUNCTION_BLOCK "Pinch_diverter"
         
         REGION internal_error
             #internal_error := #DIV.ALARMS.valve_mismatch
-            OR #DIV.DEVICES.XVA.STATUS.is_fault
-            OR #DIV.DEVICES.XVB.STATUS.is_fault;
+            OR #DIV.DEVICES.XVA.CORE.STATUS.is_fault
+            OR #DIV.DEVICES.XVB.CORE.STATUS.is_fault;
         END_REGION
         
         REGION Top FSM
@@ -112,10 +112,10 @@ FUNCTION_BLOCK "Pinch_diverter"
                     
                 #FAULT:
                     IF #DIV.CMD.ack AND NOT #internal_error THEN
-                        IF #DIV.DEVICES.XVA.STATUS.is_open AND #DIV.DEVICES.XVB.STATUS.is_closed THEN
+                        IF #DIV.DEVICES.XVA.CORE.STATUS.is_open AND #DIV.DEVICES.XVB.CORE.STATUS.is_closed THEN
                             #DIV.STATUS.normal_state := #ROUTE_A;
                             #DIV.STATUS.state := #NORMAL;
-                        ELSIF #DIV.DEVICES.XVA.STATUS.is_closed AND #DIV.DEVICES.XVB.STATUS.is_open THEN
+                        ELSIF #DIV.DEVICES.XVA.CORE.STATUS.is_closed AND #DIV.DEVICES.XVB.CORE.STATUS.is_open THEN
                             #DIV.STATUS.normal_state := #ROUTE_B;
                             #DIV.STATUS.state := #NORMAL;
                         END_IF;
@@ -132,7 +132,7 @@ FUNCTION_BLOCK "Pinch_diverter"
                         END_IF;
                         
                     #A_TO_B:
-                        IF #DIV.DEVICES.XVA.STATUS.is_closed AND #DIV.DEVICES.XVB.STATUS.is_open THEN
+                        IF #DIV.DEVICES.XVA.CORE.STATUS.is_closed AND #DIV.DEVICES.XVB.CORE.STATUS.is_open THEN
                             #DIV.STATUS.normal_state := #ROUTE_B;
                         END_IF;
                         
@@ -142,7 +142,7 @@ FUNCTION_BLOCK "Pinch_diverter"
                         END_IF;
                         
                     #B_TO_A:
-                        IF #DIV.DEVICES.XVA.STATUS.is_open AND #DIV.DEVICES.XVB.STATUS.is_closed THEN
+                        IF #DIV.DEVICES.XVA.CORE.STATUS.is_open AND #DIV.DEVICES.XVB.CORE.STATUS.is_closed THEN
                             #DIV.STATUS.normal_state := #ROUTE_A;
                         END_IF;
                 END_CASE;
@@ -150,23 +150,23 @@ FUNCTION_BLOCK "Pinch_diverter"
         END_REGION ;
         
         REGION Output mapping
-            #DIV.DEVICES.XVA.CMD.auto := FALSE;
-            #DIV.DEVICES.XVB.CMD.auto := FALSE;
+            #DIV.DEVICES.XVA.CORE.CMD.auto := FALSE;
+            #DIV.DEVICES.XVB.CORE.CMD.auto := FALSE;
             
             CASE #DIV.STATUS.state OF
                 #NORMAL:
                     CASE #DIV.STATUS.normal_state OF
                         #ROUTE_A:
-                            #DIV.DEVICES.XVA.CMD.auto := TRUE;
+                            #DIV.DEVICES.XVA.CORE.CMD.auto := TRUE;
                             
                         #A_TO_B:
-                            #DIV.DEVICES.XVB.CMD.auto := TRUE;
+                            #DIV.DEVICES.XVB.CORE.CMD.auto := TRUE;
                             
                         #ROUTE_B:
-                            #DIV.DEVICES.XVB.CMD.auto := TRUE;
+                            #DIV.DEVICES.XVB.CORE.CMD.auto := TRUE;
                             
                         #B_TO_A:
-                            #DIV.DEVICES.XVA.CMD.auto := TRUE;
+                            #DIV.DEVICES.XVA.CORE.CMD.auto := TRUE;
                     END_CASE;
             END_CASE;
         END_REGION
