@@ -1,0 +1,19 @@
+﻿DocumentHash:
+  - FileName: UDT_Transporter.s7dcl
+    Hash: 4D1j81BEB5H0j3VXE2GXVZJ/41UyvEqayPi7zO2ry5k=
+  - FileName: UDT_Transporter.s7res
+    Hash: 4abpPFE7/tqvlC44A2EaefQkc2lDm5h7kJ1KVKPayV8=
+LibraryMetaFileHash: J7DUCdFnYPJkcq0tfhlCgItXVX2aIMp5ubpXDeJjqoQ=
+LibraryVersion:
+  Guid: a4202267-f4ee-406b-aeb1-e347bc5ca4b6
+  DependsOn:
+    - TypeName: UDT_DS_Valve
+      VersionNumber: 3.0.0
+    - TypeName: UDT_SS_Valve
+      VersionNumber: 3.0.0
+    - TypeName: UDT_Solenoid_valve
+      VersionNumber: 2.0.1
+    - TypeName: UDT_Load_cells
+      VersionNumber: 1.1.0
+    - TypeName: UDT_Analogic_signal
+      VersionNumber: 0.0.2

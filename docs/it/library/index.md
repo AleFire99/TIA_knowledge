@@ -20,7 +20,7 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 | [Valvola a Manicotto](valves/pinch/index.md) | Comprime un tubo flessibile per chiudersi; pressostato conferma la posizione |
 | [Valvola a Farfalla — Singolo Solenoide](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; retroazione di posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; retroazione di posizione via ZSL/ZSH |
-| [Valvola Sigillata — Singolo Solenoide](valves/sealed/ss/index.md) | Valvola SS + elettrovalvola di tenuta dedicata |
+| [Valvola Sigillata](valves/sealed/index.md) | Avvolge una valvola qualsiasi della famiglia (`CORE`) con un'elettrovalvola di tenuta dedicata |
 
 ---
 
@@ -103,7 +103,7 @@ Utility di libreria condivisa: converte un conteggio grezzo di ingresso analogic
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Segnali Analogici](io/index.md) | Conversione conteggio grezzo → valore scalato, usata da Pipeline Analogica e Propulsore Ingresso Sigillato |
+| [Segnali Analogici](io/index.md) | Conversione conteggio grezzo → valore scalato, usata da Pipeline Analogica e Propulsore |
 
 ---
 
@@ -113,7 +113,7 @@ Trasportano materiale tra due punti tramite un ciclo di carico, trasferimento e 
 
 | Modulo | Descrizione |
 |--------|-------------|
-| [Propulsore Ingresso Sigillato](transporters/sealed-inlet/index.md) | Ciclo carico → sigillatura → pressurizzazione → convogliamento → depressurizzazione |
+| [Propulsore](transporters/transporter/index.md) | Ciclo carico → sigillatura → pressurizzazione → convogliamento → depressurizzazione; valvola d'ingresso e filtro iniettati |
 
 ---
 

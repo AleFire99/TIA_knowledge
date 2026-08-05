@@ -574,9 +574,18 @@ controlling FB, but a UDT can have more than one (e.g. `UDT_Load_cells`, driven 
 `Loading` + `Unloading` + the `Pavone_DAT_1400` transmitter-interface adapter, all sharing
 the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a single entry.
 
+`udts.<UDT>.core` (added in `2.1.0`) is the name of the shared Core UDT (`UDT_Valve_Core`/
+`UDT_Filter_Core`) this UDT embeds as a `CORE` field, or `null` if it doesn't embed one.
+When set, `cmd_ack`/`cmd_manual_mode` are resolved from the *Core* UDT's own CMD, since the
+device UDT no longer inlines CMD itself — `ingest.py` does this resolution automatically, so
+consumers can keep reading `cmd_ack`/`cmd_manual_mode` exactly as before without following
+`core` themselves. A Core UDT's own manifest entry (`UDT_Valve_Core`, `UDT_Filter_Core`) has
+`core: null`, empty `devices`, and no `fbs` entry at all — no FB controls a Core UDT directly,
+it's only ever embedded or injected.
+
 ```json
 {
-  "manifest_version": "2.0.0",
+  "manifest_version": "2.1.0",
   "udts": {
     "UDT_SS_Valve": {
       "description": "Uniformed states and variables visibility in HMI",
@@ -584,7 +593,17 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
       "has_out": false,
       "cmd_ack": true,
       "cmd_manual_mode": true,
+      "core": "UDT_Valve_Core",
       "devices": { "ZSL": {"type": "Bool", "description": ""}, "ZSH": {"type": "Bool", "description": ""}, "XY": {"type": "UDT_Solenoid_valve", "description": ""} }
+    },
+    "UDT_Valve_Core": {
+      "description": "Shared CMD+STATUS+SETTING contract for the valve family",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "core": null,
+      "devices": {}
     }
   },
   "fbs": {
@@ -612,7 +631,7 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
 |-----|----------------|------------------|--------|
 | UDT_SS_Valve | SS_valve | XV | SS_valve_simulator (XV) |
 | UDT_DS_Valve | DS_valve | XV | DS_valve_simulator (XV) |
-| UDT_SS_Sealed_Valve | SS_Sealed_valve | XV | SS_Sealed_valve_simulator (XV) |
+| UDT_Sealed_Valve | Sealed_valve | sealed_XV (+ injected `XV : UDT_Valve_Core`) | — |
 | UDT_Pinch_Valve | Pinch_valve | XV | Pinch_valve_simulator (XV) |
 | UDT_Solenoid_valve | Solenoid_valve | XY | — |
 | UDT_Piston_no_sensors | Piston_no_sensors | Piston | — |
@@ -626,11 +645,26 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
 | UDT_Nolvac | Nolvac | VC | — |
 | UDT_An_Pipeline | An_pipeline | pipeline | — |
 | UDT_Dig_Pipeline | Dig_pipeline | pipeline | — |
-| UDT_Sealed_inlet_Transporter | Sealed_inlet_Transporter | TR | Sealed_inlet_Transporter_simulator (TR) |
+| UDT_Transporter | Transporter | TR (+ injected `XV01 : UDT_Valve_Core`, `FI : UDT_Filter_Core`) | Transporter_simulator (TR) |
 | UDT_Analogic_signal | — (`Scale_input` FC, utility not a device) | `analogic_signal` | — |
 | UDT_Pavone_IN / UDT_Pavone_OUT | Pavone_DAT_1400 (FC) | dat_IN / dat_OUT | — |
 
 All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are auto-detected by `ingest.py` via name regex. No manual overrides needed.
+
+**Core UDTs — no controlling FB, not "devices" in their own right.** `UDT_Valve_Core`
+(`CMD{manual_mode,manual,auto,ack}` + `STATUS{state,normal_state,is_fault,is_closed,
+is_opening,is_open,is_closing}` + `SETTING{actuator_timeout}`) and `UDT_Filter_Core`
+(`CMD{manual_mode,manual,auto}` + `STATUS{state,active_state,is_idle,is_active,is_pulsing,
+is_waiting}` + `SETTING{pulse_duration,interval_duration}`) are shared structs embedded as a
+named `CORE` field inside every valve-family (`SS_Valve`/`DS_Valve`/`Pinch_Valve`/
+`Sealed_Valve`) and filter-family (`Filter_1_sleeve`/`Filter_2_sleeves`) UDT, factoring out
+their identical CMD/STATUS/SETTING contract so an orchestrator can take a Core-typed
+parameter instead of hardcoding one concrete valve/filter type — dependency injection at the
+UDT level, since TIA Portal SCL has no interfaces. `Sealed_valve` (decorator over any injected
+`ValveCore`-typed `XV`) and `Transporter` (injected `XV01`/`FI`, see below) are the two
+consumers today. `ALARMS` and `DEVICES` always stay outside Core — they're where the family
+genuinely diverges (see `dist/library_manifest.json`'s `"core"` field below for how this
+shows up in the manifest).
 
 ---
 
@@ -643,11 +677,14 @@ All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are aut
    in TIA Portal UI, then re-run.
 3. Staging project must be committed in **empty state** between export runs.
 4. `Piston_no_sensors.s7dcl`'s `VAR_IN_OUT` declared its param as `_.UDT_Piston` (nonexistent
-   type) instead of `_.UDT_Piston_no_sensors` — an export typo, not a naming choice. Patched
-   directly in `raw/` (same treatment as the Nolvac/Gate_door `ReadOnly` gaps) since
-   `LibraryTypeVersion.export()` for global library types can't be re-run outside TIA Portal
-   in this environment. Still needs backporting into the actual FB declaration in TIA Portal
-   on the next real export cycle, or the next `export.py` run will overwrite the fix.
+   type) instead of `_.UDT_Piston_no_sensors` — an export typo, not a naming choice; the FB's
+   actual `VAR_IN_OUT` declaration in TIA Portal is correct, so there's nothing to backport —
+   this is purely an `export.py`/`siemens_tia_scripting` v1.2.1 export-time artifact, root
+   cause unidentified. **Recurred on the full-library re-export that introduced the Core-UDT
+   DI pattern** (2026-08), confirming it isn't a one-off. Patched directly in `raw/` each time
+   (same treatment as the Nolvac/Gate_door `ReadOnly` gaps) since there's no TIA-side fix to
+   make — workaround is "patch `raw/` after every re-export" until the export tool's own bug
+   is found.
 
 ---
 

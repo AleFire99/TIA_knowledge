@@ -1,8 +1,8 @@
 ﻿MultiLingualTexts:
-  - id: MLC_4Kd
-    en-US: DEVICE - Pinch valve for line A
-  - id: MLC_4Hn
-    en-US: DEVICE- Pinch valve for line B
+  - id: MLC_4S7
+    en-US: DEVICE - Valve for line A
+  - id: MLC_3AU
+    en-US: DEVICE - Valve for line B
   - id: MLC_4nb
     en-US: COMMAND - Active mode
   - id: MLC_35T

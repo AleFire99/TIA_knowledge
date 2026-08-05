@@ -3,8 +3,8 @@
   Comment:
     en-US: First release
 LibraryVersion:
-  VersionNumber: 2.1.2
+  VersionNumber: 3.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT
+    en-US: Added core

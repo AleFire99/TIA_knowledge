@@ -24,6 +24,9 @@ classDiagram
     class DEVICES {
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Filter_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -42,28 +45,30 @@ classDiagram
         -Bool is_waiting
     }
     UDT_Filter_1_sleeve *-- DEVICES
-    UDT_Filter_1_sleeve *-- CMD
-    UDT_Filter_1_sleeve *-- SETTING
-    UDT_Filter_1_sleeve *-- STATUS
+    UDT_Filter_1_sleeve *-- CORE
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. `CORE` è il contratto condiviso da entrambe
+le varianti filtro — vedi [Filtri — Panoramica](../index.md#core).
 
 ### Segnali di controllo
 
 | Segnale | Tipo | Direzione | Descrizione |
 |---------|------|-----------|-------------|
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola impulso pulizia — comandata, il proprio stato non viene riletto da questo blocco |
-| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale |
-| `CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
-| `CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = modalità manuale |
+| `CORE.CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
+| `CORE.CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
 
 ### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Durata di ogni impulso di pulizia |
-| `interval_duration` | T#3s | Tempo di attesa tra impulsi successivi |
+| `CORE.SETTING.pulse_duration` | T#500ms | Durata di ogni impulso di pulizia |
+| `CORE.SETTING.interval_duration` | T#3s | Tempo di attesa tra impulsi successivi |
 
 ---
 
@@ -101,7 +106,7 @@ state FILTER_1_SLEEVE{
 ```
 
 ```Pascal
-desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
+desired_command := (CORE.CMD.manual_mode AND CORE.CMD.manual) OR (NOT CORE.CMD.manual_mode AND CORE.CMD.auto);
 ```
 
 | Stato | Sotto-stato | `XY` | Descrizione |
@@ -121,5 +126,5 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |
 |-------|------------------------|---------------------|
-| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |
-| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |
+| `interval_timer` | ACTIVE/WAITING | `CORE.SETTING.interval_duration` |
+| `pulse_timer` | ACTIVE/PULSING | `CORE.SETTING.pulse_duration` |

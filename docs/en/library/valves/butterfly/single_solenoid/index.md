@@ -26,6 +26,9 @@ classDiagram
         -Bool ZSH
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Valve_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -51,13 +54,15 @@ classDiagram
         -Bool failed_to_open
     }
     UDT_SS_Valve *-- DEVICES
-    UDT_SS_Valve *-- CMD
-    UDT_SS_Valve *-- SETTING
-    UDT_SS_Valve *-- STATUS
+    UDT_SS_Valve *-- CORE
     UDT_SS_Valve *-- ALARMS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = writable by DCS/HMI, `-` = read-only.
+`+` = writable by DCS/HMI, `-` = read-only. `CORE` is the contract shared by the whole valve
+family — see [Valves — Overview](../../index.md#core).
 
 ### Control Signals
 
@@ -66,16 +71,16 @@ classDiagram
 | `DEVICES.ZSL` | Bool | IN | Closed-position limit switch |
 | `DEVICES.ZSH` | Bool | IN | Open-position limit switch |
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Actuator solenoid valve — commanded, its own status is not read back by this block |
-| `CMD.manual_mode` | Bool | IN | TRUE = HMI manual mode |
-| `CMD.manual` | Bool | IN | Open command in manual mode |
-| `CMD.auto` | Bool | IN | Open command in automatic mode |
-| `CMD.ack` | Bool | IN | Acknowledges alarms and clears FAULT |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = HMI manual mode |
+| `CORE.CMD.manual` | Bool | IN | Open command in manual mode |
+| `CORE.CMD.auto` | Bool | IN | Open command in automatic mode |
+| `CORE.CMD.ack` | Bool | IN | Acknowledges alarms and clears FAULT |
 
 ### Settings
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | See the convention in [Valves — Overview](../../index.md) |
+| `CORE.SETTING.actuator_timeout` | T#2s | See the convention in [Valves — Overview](../../index.md) |
 
 ---
 

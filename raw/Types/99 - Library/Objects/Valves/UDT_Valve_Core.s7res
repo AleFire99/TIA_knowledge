@@ -1,0 +1,25 @@
+﻿MultiLingualTexts:
+  - id: MLC_3Mr
+    en-US: COMMAND - Active mode
+  - id: MLC_3av
+    en-US: COMMAND - Manual command
+  - id: MLC_4yN
+    en-US: COMMAND - Automatic command
+  - id: MLC_qx
+    en-US: COMMAND - Acknowledge all errors
+  - id: MLC_RE
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_Tc
+    en-US: STATE - 1=closed, 2=opening, 3=open, 4=closing
+  - id: MLC_sr
+    en-US: STATUS - Valve in fault state
+  - id: MLC_dq
+    en-US: STATUS - Valve closed
+  - id: MLC_574
+    en-US: STATUS - Valve opening
+  - id: MLC_3z9
+    en-US: STATUS - Valve open
+  - id: MLC_3zq
+    en-US: STATUS - Valve closing
+  - id: MLC_3Vn
+    en-US: SETTING - Max time to complete movement

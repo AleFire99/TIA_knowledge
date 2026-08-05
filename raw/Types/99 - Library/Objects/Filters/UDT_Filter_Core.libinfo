@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: e1f41685-3a65-472e-b5e5-1a18007111ab
+  Comment:
+    en-US: Added filter core for device swap
+LibraryVersion:
+  VersionNumber: 3.0.0
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Added filter core for device swap

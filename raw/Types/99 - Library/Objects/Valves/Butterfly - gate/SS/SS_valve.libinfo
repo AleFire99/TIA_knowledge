@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and variables visibility in HMI
 LibraryVersion:
-  VersionNumber: 2.2.1
+  VersionNumber: 3.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Writing normal state inside each transition, not just on ack clearance
+    en-US: Updated UDT with Core struct

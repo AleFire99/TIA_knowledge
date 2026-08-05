@@ -26,6 +26,9 @@ classDiagram
         -UDT_Solenoid_valve XYA
         -UDT_Solenoid_valve XYB
     }
+    class CORE {
+        <<UDT_Filter_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -38,21 +41,27 @@ classDiagram
     class STATUS {
         -Int state
         -Int active_state
-        -Int active_sleeve
         -Bool is_idle
         -Bool is_active
         -Bool is_pulsing
         -Bool is_waiting
+    }
+    class SLEEVE_STATUS {
+        -Int active_sleeve
         -Bool is_sleeve_A
         -Bool is_sleeve_B
     }
     UDT_Filter_2_sleeves *-- DEVICES
-    UDT_Filter_2_sleeves *-- CMD
-    UDT_Filter_2_sleeves *-- SETTING
-    UDT_Filter_2_sleeves *-- STATUS
+    UDT_Filter_2_sleeves *-- CORE
+    UDT_Filter_2_sleeves *-- SLEEVE_STATUS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = writable by DCS/HMI, `-` = read-only.
+`+` = writable by DCS/HMI, `-` = read-only. `CORE` is the contract shared by both filter
+variants — see [Filters — Overview](../index.md#core); `SLEEVE_STATUS` stays outside `CORE`
+since it's specific to the 2-sleeve variant.
 
 ### Control Signals
 
@@ -60,16 +69,16 @@ classDiagram
 |--------|------|-----------|-------------|
 | `DEVICES.XYA` | UDT_Solenoid_valve | OUT | Sleeve A pulse solenoid valve — commanded, its own status is not read back by this block |
 | `DEVICES.XYB` | UDT_Solenoid_valve | OUT | Sleeve B pulse solenoid valve — commanded, its own status is not read back by this block |
-| `CMD.manual_mode` | Bool | IN | TRUE = manual mode |
-| `CMD.manual` | Bool | IN | Enable in manual mode |
-| `CMD.auto` | Bool | IN | Enable in automatic mode |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = manual mode |
+| `CORE.CMD.manual` | Bool | IN | Enable in manual mode |
+| `CORE.CMD.auto` | Bool | IN | Enable in automatic mode |
 
 ### Settings
 
 | Setting | Default | Description |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Duration of each air pulse per sleeve |
-| `interval_duration` | T#3s | Wait time between pulses |
+| `CORE.SETTING.pulse_duration` | T#500ms | Duration of each air pulse per sleeve |
+| `CORE.SETTING.interval_duration` | T#3s | Wait time between pulses |
 
 ---
 
@@ -85,7 +94,7 @@ When enabled, the system alternates between sleeves A and B in a continuous cycl
 4. **WAITING** — both solenoid valves off for `interval_duration`
 5. Repeat from step 1
 
-The active sleeve is tracked by `STATUS.is_sleeve_A`/`is_sleeve_B`. Removing the enable command at any time returns the system to **IDLE**.
+The active sleeve is tracked by `SLEEVE_STATUS.is_sleeve_A`/`is_sleeve_B`. Removing the enable command at any time returns the system to **IDLE**.
 
 In **manual mode** (`manual_mode = TRUE`), the operator enables cleaning via `manual`. In **automatic mode**, the command comes from the process via `auto`.
 
@@ -107,7 +116,7 @@ state FILTER{
 ```
 
 ```Pascal
-desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
+desired_command := (CORE.CMD.manual_mode AND CORE.CMD.manual) OR (NOT CORE.CMD.manual_mode AND CORE.CMD.auto);
 ```
 
 | State | `XYA` | `XYB` | Description |
@@ -128,5 +137,5 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 
 | Timer | Active in state | Threshold (setting) |
 |-------|------------------------|---------------------|
-| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |
-| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |
+| `pulse_timer` | ACTIVE/PULSING | `CORE.SETTING.pulse_duration` |
+| `interval_timer` | ACTIVE/WAITING | `CORE.SETTING.interval_duration` |

@@ -1,0 +1,23 @@
+﻿MultiLingualTexts:
+  - id: MLC_gb
+    en-US: COMMAND - Active mode
+  - id: MLC_3ng
+    en-US: COMMAND - Manual command
+  - id: MLC_3ad
+    en-US: COMMAND - Automatic command
+  - id: MLC_j6
+    en-US: STATE - 1=idle, 2=active
+  - id: MLC_4mX
+    en-US: STATE - 1=pulsing, 2 =waiting
+  - id: MLC_YG
+    en-US: STATUS - Filter is waiting for enable command
+  - id: MLC_3Ka
+    en-US: STATUS - Filter cleaning routine is active
+  - id: MLC_4rG
+    en-US: STATUS - Air is being pulsed in the filter
+  - id: MLC_48k
+    en-US: STATUS - Filter is waiting for next pulse
+  - id: MLC_5C3
+    en-US: SETTING - Duration of active pulse
+  - id: MLC_43U
+    en-US: SETTING - Duration of time between pulses

@@ -4,6 +4,8 @@
 
 **Level 3 — composite.** The pinch-type diverter routes material flow between two lines (A and B) by embedding two instances of Pinch Valve (Level 2), `XVA` and `XVB`. Only one line is open at a time. The diverter has no physical sensors of its own — the routing state is derived entirely from the position feedback of the two sub-valves.
 
+`XVA`/`XVB` are concrete `Pinch_valve` instances, wired internally — not an injected parameter like in [Sealed Valve](../../valves/sealed/index.md).
+
 ---
 
 ## Interface

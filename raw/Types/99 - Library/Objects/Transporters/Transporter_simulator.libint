@@ -1,0 +1,13 @@
+﻿DocumentHash:
+  - FileName: Transporter_simulator.s7dcl
+    Hash: aIE3huWy586THj8VMvbefZgyr77tDaxC2iHnZzjoJL8=
+LibraryMetaFileHash: hs8qCYaIBojyQdqcPmPQMv3i0xsLAjHAZdQ5zj/Opvs=
+LibraryVersion:
+  Guid: 3705cd3b-427f-432e-a625-1566e4ebf0a0
+  DependsOn:
+    - TypeName: UDT_Transporter
+      VersionNumber: 3.1.1
+    - TypeName: DS_valve_simulator
+      VersionNumber: 3.0.0
+    - TypeName: SS_valve_simulator
+      VersionNumber: 3.0.0

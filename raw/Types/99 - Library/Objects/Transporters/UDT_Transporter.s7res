@@ -1,0 +1,69 @@
+﻿MultiLingualTexts:
+  - id: MLC_ef
+    en-US: 'DEVICE - Vent valve '
+  - id: MLC_ce
+    en-US: DEVICE - Orifice valve
+  - id: MLC_Si
+    en-US: DEVICE - Discharge valve
+  - id: MLC_4Qk
+    en-US: DEVICE - Line valve
+  - id: MLC_4zj
+    en-US: DEVICE - Pressurization solenoid
+  - id: MLC_4rb
+    en-US: DEVICE - Load cells
+  - id: MLC_4Ey
+    en-US: DEVICE - Vessel high level switch
+  - id: MLC_3Gs
+    en-US: DEVICE - Supply air pressure switch
+  - id: MLC_54R
+    en-US: DEVICE - Vessel pressure
+  - id: MLC_Xb
+    en-US: DEVICE - Line pressure
+  - id: MLC_WK
+    en-US: COMMAND - Start loading routine
+  - id: MLC_bm
+    en-US: COMMAND - Start conveying routine (seals first)
+  - id: MLC_jD
+    en-US: COMMAND - Stop current cycle
+  - id: MLC_3ML
+    en-US: COMMAND - Acknowledge fault
+  - id: MLC_3Je
+    en-US: SETTING - Vessel pressure threshold to consider empty (barg)
+  - id: MLC_4yw
+    en-US: SETTING - Line pressure threshold to consider empty (barg)
+  - id: MLC_38S
+    en-US: SETTING - Vessel overpressure required before opening line valve (barg)
+  - id: MLC_49g
+    en-US: SETTING - Internal valves timeout setting
+  - id: MLC_57E
+    en-US: SETTING - Timeout timer for pressurization phase
+  - id: MLC_4hF
+    en-US: SETTING - Timeout timer for depressurization phase
+  - id: MLC_3Ff
+    en-US: STATE - 0=fault, 1=normal
+  - id: MLC_4m6
+    en-US: STATE - 10=idle, 20=filling, 30=sealing, 40=pressurizing, 50=conveying, 60=depressurizing
+  - id: MLC_4Wd
+    en-US: STATUS - Transporter idle
+  - id: MLC_38h
+    en-US: STATUS - Vessel being filled
+  - id: MLC_3FQ
+    en-US: STATUS - Loading valves closing
+  - id: MLC_cq
+    en-US: STATUS - Vessel being pressurized
+  - id: MLC_Rr
+    en-US: STATUS - Material being conveyed
+  - id: MLC_3Mv
+    en-US: STATUS - Vessel venting to atmosphere
+  - id: MLC_5BV
+    en-US: STATUS - Transporter is in fault
+  - id: MLC_54k
+    en-US: OUT - Loading setpoint reached
+  - id: MLC_3f2
+    en-US: OUT - Full cycle completed, back to idle
+  - id: MLC_kF
+    en-US: OUT - kg transferred in last cycle
+  - id: MLC_wE
+    en-US: ALARM - Pressurization phase took too long
+  - id: MLC_hq
+    en-US: ALARM - Depressurization phase took too long

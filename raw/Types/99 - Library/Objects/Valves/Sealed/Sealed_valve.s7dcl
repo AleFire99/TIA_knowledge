@@ -1,0 +1,50 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_GenerateENOforSCL := "TRUE";
+    S7_IECCheck := "TRUE";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Sealed_valve"
+    VAR_IN_OUT
+        XV : _.UDT_Valve_Core;
+        sealed_XV : _.UDT_Sealed_Valve;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XY : _.Solenoid_valve;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Command internal devices
+            REGION Valve
+                #XV.CMD.ack := #sealed_XV.CORE.CMD.ack;
+                #XV.SETTING.actuator_timeout := #sealed_XV.CORE.SETTING.actuator_timeout;
+            END_REGION
+            
+            REGION Seal
+                #fb_XY(#sealed_XV.DEVICES.XY_seal);
+            END_REGION
+        END_REGION
+        
+        REGION Determine target
+            IF #sealed_XV.CORE.CMD.manual_mode THEN
+                #XV.CMD.auto := #sealed_XV.CORE.CMD.manual;
+            ELSE
+                #XV.CMD.auto := #sealed_XV.CORE.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #sealed_XV.DEVICES.XY_seal.CMD.auto := #XV.STATUS.is_closed;
+        END_REGION
+        
+        REGION State mapping
+            #sealed_XV.CORE.STATUS := #XV.STATUS;
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

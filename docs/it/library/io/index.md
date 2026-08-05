@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-**FC, senza stato.** `Scale_input` è l'utility di libreria che converte una lettura analogica grezza (conteggio intero del modulo di ingresso) in un valore scalato in unità ingegneristiche, scrivendolo in `UDT_Analogic_signal.Scaled_value`. Non è un dispositivo — non ha `CMD`, non ha `STATUS`, non appartiene a nessuna categoria di campo specifica: è condivisa da qualunque modulo che legga un trasmettitore analogico, oggi [Pipeline Analogica](../pipeline/analogic/index.md) e [Propulsore Ingresso Sigillato](../transporters/sealed-inlet/index.md) (`PT01`/`PT02`).
+**FC, senza stato.** `Scale_input` è l'utility di libreria che converte una lettura analogica grezza (conteggio intero del modulo di ingresso) in un valore scalato in unità ingegneristiche, scrivendolo in `UDT_Analogic_signal.Scaled_value`. Non è un dispositivo — non ha `CMD`, non ha `STATUS`, non appartiene a nessuna categoria di campo specifica: è condivisa da qualunque modulo che legga un trasmettitore analogico, oggi [Pipeline Analogica](../pipeline/analogic/index.md) e [Propulsore](../transporters/transporter/index.md) (`PT01`/`PT02`).
 
 Nessuna istanza FB di questa libreria chiama `Scale_input` al proprio interno: viene invocata a monte, una volta per canale analogico, dal programma chiamante — il modulo consumatore riceve già l'istanza `UDT_Analogic_signal` con `Scaled_value` popolato e si limita a leggerlo.
 

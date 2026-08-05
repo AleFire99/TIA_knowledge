@@ -20,7 +20,7 @@ Pneumatically controlled valves for isolation, actuation, and process control.
 | [Pinch Valve](valves/pinch/index.md) | Pinches a flexible tube shut; a pressure switch confirms position |
 | [Butterfly Valve — Single Solenoid](valves/butterfly/single_solenoid/index.md) | Spring return; position feedback via ZSL/ZSH |
 | [Butterfly Valve — Double Solenoid](valves/butterfly/double_solenoid/index.md) | Bistable, double-acting; position feedback via ZSL/ZSH |
-| [Sealed Valve — Single Solenoid](valves/sealed/ss/index.md) | SS valve + dedicated sealing solenoid valve |
+| [Sealed Valve](valves/sealed/index.md) | Wraps any valve-family member (`CORE`) with a dedicated sealing solenoid valve |
 
 ---
 
@@ -103,7 +103,7 @@ Shared library utility: converts a raw analog input count into a value scaled to
 
 | Module | Description |
 |--------|-------------|
-| [Analog Signals](io/index.md) | Raw count → scaled value conversion, used by the Analog Pipeline and Sealed Inlet Transporter |
+| [Analog Signals](io/index.md) | Raw count → scaled value conversion, used by the Analog Pipeline and Transporter |
 
 ---
 
@@ -113,7 +113,7 @@ Convey material between two points through a load, transfer, and pressurized dis
 
 | Module | Description |
 |--------|-------------|
-| [Sealed Inlet Transporter](transporters/sealed-inlet/index.md) | Load → sealing → pressurizing → conveying → depressurizing cycle |
+| [Transporter](transporters/transporter/index.md) | Load → sealing → pressurizing → conveying → depressurizing cycle; inlet valve and filter injected |
 
 ---
 

@@ -38,7 +38,7 @@ REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 import config as cfg
 
-MANIFEST_VERSION = "2.0.0"
+MANIFEST_VERSION = "2.1.0"
 
 # Matches _.TypeName or just TypeName (VCI uses _.prefix for cross-references)
 _TYPE_RE = re.compile(r'"([^"]+)"|(?:_\.)?(\w+)')
@@ -184,6 +184,7 @@ def parse_udt(path: Path) -> dict:
     has_out = False
     cmd_ack = False
     cmd_manual_mode = False
+    core_ref: str | None = None
     depth = 0
     in_devices = False
     in_cmd = False
@@ -224,6 +225,11 @@ def parse_udt(path: Path) -> dict:
             member = _parse_member_line(line)
             if member and member[0].lower() == "out" and member[1].lower() == "bool":
                 has_out = True
+            # CORE : "UDT_Valve_Core"-style reference — a named-type field, not an
+            # inline Struct, so it never opens a nested depth block above; CMD/STATUS/
+            # SETTING live inside the referenced type instead of this one.
+            if member and member[0].upper() == "CORE":
+                core_ref = member[1]
 
         elif depth == 2 and in_devices:
             member = _parse_member_line(line)
@@ -249,6 +255,7 @@ def parse_udt(path: Path) -> dict:
         "cmd_ack": cmd_ack,
         "cmd_manual_mode": cmd_manual_mode,
         "devices": devices,
+        "core_ref": core_ref,
     }
 
 
@@ -275,28 +282,24 @@ def parse_fb(path: Path) -> dict | None:
 
     # VCI format: "ParamName" : _.UDT_Type;  (param quoted, type prefixed)
     # Old format: ParamName : "UDT_Type";    (param unquoted, type quoted)
-    param_m = re.search(
+    param_patterns = [
         r'"(\w+)"\s*(?:\{[^}]*\})?\s*:\s*(?:_\.)?(\w+)\s*;',  # VCI: quoted param
-        var_block
-    )
-    if not param_m:
-        param_m = re.search(
-            r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*"([^"]+)"\s*;',     # old: unquoted param
-            var_block
-        )
-    if not param_m:
-        # Fallback: unquoted param, unquoted type with optional _.prefix
-        param_m = re.search(
-            r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*(?:_\.)?(\w+)\s*;',
-            var_block
-        )
-    if not param_m:
+        r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*"([^"]+)"\s*;',        # old: unquoted param
+        r'(\w+)(?:\s*\{[^}]*\})?\s*:\s*(?:_\.)?(\w+)\s*;',    # fallback: both unquoted
+    ]
+    params: list[dict] = []
+    for line in var_block.splitlines():
+        for pattern in param_patterns:
+            m = re.search(pattern, line)
+            if m:
+                params.append({"param_name": m.group(1), "udt_type": m.group(2)})
+                break
+    if not params:
         return None
 
     return {
         "name": fb_name,
-        "param_name": param_m.group(1),
-        "udt_type": param_m.group(2),
+        "params": params,
         "is_sim": bool(_SIM_RE.search(fb_name)),
     }
 
@@ -307,14 +310,24 @@ def parse_fb(path: Path) -> dict | None:
 
 def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict], ctrl_overrides: list[dict] | None = None, udt_labels: dict[str, str] | None = None) -> dict:
     labels = udt_labels or {}
+    udts_by_name = {u["name"]: u for u in udts}
+
     udt_section: dict[str, dict] = {}
     for u in udts:
+        core_ref = u.get("core_ref")
+        core_udt = udts_by_name.get(core_ref) if core_ref else None
+        # A Core UDT (e.g. UDT_Valve_Core) carries CMD/STATUS/SETTING inline; a device
+        # UDT that embeds one via `CORE : "UDT_X_Core"` no longer inlines CMD itself, so
+        # inherit these flags from the referenced Core rather than reporting them false.
+        cmd_ack = u.get("cmd_ack", False) or (core_udt.get("cmd_ack", False) if core_udt else False)
+        cmd_manual_mode = u.get("cmd_manual_mode", False) or (core_udt.get("cmd_manual_mode", False) if core_udt else False)
         udt_section[u["name"]] = {
             "description": u["description"],
             "label": labels.get(u["name"], ""),
             "has_out": u["has_out"],
-            "cmd_ack": u.get("cmd_ack", False),
-            "cmd_manual_mode": u.get("cmd_manual_mode", False),
+            "cmd_ack": cmd_ack,
+            "cmd_manual_mode": cmd_manual_mode,
+            "core": core_ref if core_ref in udts_by_name else None,
             "devices": {
                 fname: {"type": fd["type"], "description": fd["description"]}
                 for fname, fd in u["devices"].items()
@@ -323,10 +336,22 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict],
 
     fb_section: dict[str, dict] = {}
     for fb in fbs:
-        udt_key = fb["udt_type"]
+        params = fb["params"]
+        # Prefer the VAR_IN_OUT param whose UDT has a real DEVICES surface — that's the
+        # device this FB actually models. An injected Core dependency (UDT_Valve_Core,
+        # UDT_Filter_Core) never has one, so it loses to any param that does. Falls back
+        # to the first declared param when there's only one, or none qualify.
+        chosen = params[0]
+        for p in params:
+            candidate = udts_by_name.get(p["udt_type"])
+            if candidate and candidate["devices"]:
+                chosen = p
+                break
+
+        udt_key = chosen["udt_type"]
         if udt_key not in fb_section:
             fb_section[udt_key] = {"ctrl": [], "sim": None}
-        entry = {"name": fb["name"], "param": fb["param_name"]}
+        entry = {"name": fb["name"], "param": chosen["param_name"]}
         if fb["is_sim"]:
             fb_section[udt_key]["sim"] = entry
         else:
@@ -437,7 +462,8 @@ def main() -> None:
     print("FBs -> UDT mapping:")
     for fb in fbs:
         kind = "sim" if fb["is_sim"] else "ctrl"
-        print(f"  [{kind}] {fb['name']}({fb['param_name']} : {fb['udt_type']})")
+        params_str = ", ".join(f"{p['param_name']}:{p['udt_type']}" for p in fb["params"])
+        print(f"  [{kind}] {fb['name']}({params_str})")
     if sim_overrides:
         print()
         print("Sim overrides applied:")

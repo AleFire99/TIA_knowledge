@@ -1,0 +1,54 @@
+﻿TYPE
+    UDT_Filter_Core : STRUCT
+        CMD : STRUCT
+            { S7_MLC := "MLC_gb" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_3ng" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3ad"
+            }
+            auto : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_j6"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4mX"
+            }
+            active_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_YG"
+            }
+            is_idle : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_3Ka"
+            }
+            is_active : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4rG"
+            }
+            is_pulsing : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_48k"
+            }
+            is_waiting : Bool;
+        END_STRUCT;
+        SETTING : STRUCT
+            { S7_MLC := "MLC_5C3" }
+            pulse_duration : Time := T#500ms;
+            { S7_MLC := "MLC_43U" }
+            interval_duration : Time := T#3s;
+        END_STRUCT;
+    END_STRUCT;
+END_TYPE

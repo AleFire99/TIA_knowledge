@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 2.0.2
+  VersionNumber: 3.1.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT
+    en-US: Using pinch valves not enforcing dependency injection

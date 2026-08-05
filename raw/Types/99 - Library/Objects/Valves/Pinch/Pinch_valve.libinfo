@@ -3,8 +3,8 @@
   Comment:
     en-US: Uniformed states and fixed HMI visibility
 LibraryVersion:
-  VersionNumber: 2.1.3
+  VersionNumber: 3.0.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: Updated UDT
+    en-US: Updated UDT with Core struct
