@@ -1,25 +1,3 @@
 ﻿MultiLingualTexts:
   - id: MLC_3Mm
     en-US: OUTPUT - Solenoid command
-  - id: MLC_32r
-    en-US: COMMAND - Active mode
-  - id: MLC_33a
-    en-US: COMMAND - Manual command
-  - id: MLC_3Td
-    en-US: COMMAND - Automatic command
-  - id: MLC_3HH
-    en-US: SETTING - Duration of active pulse
-  - id: MLC_3Yd
-    en-US: SETTING - Duration of time between pulses
-  - id: MLC_Vy
-    en-US: STATE - 1=idle, 2=active
-  - id: MLC_X4
-    en-US: STATE - 1=pulsing, 2 =waiting
-  - id: MLC_3A6
-    en-US: STATUS - Filter is waiting for enable command
-  - id: MLC_ZQ
-    en-US: STATUS - Filter cleaning routine is active
-  - id: MLC_5Bx
-    en-US: STATUS - Air is being pulsed in the filter
-  - id: MLC_3VK
-    en-US: STATUS - Filter is waiting for next pulse

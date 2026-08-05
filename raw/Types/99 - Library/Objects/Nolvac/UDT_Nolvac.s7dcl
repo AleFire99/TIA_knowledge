@@ -4,7 +4,7 @@
         DEVICES : STRUCT
             {
                 S7_Access := "ReadOnly := External";
-                S7_MLC := "MLC_4Yh"
+                S7_MLC := "MLC_45B"
             }
             XV01 : _.UDT_SS_Valve;
             {

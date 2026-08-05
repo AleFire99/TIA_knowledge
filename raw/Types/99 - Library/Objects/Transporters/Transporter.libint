@@ -1,0 +1,25 @@
+﻿DocumentHash:
+  - FileName: Transporter.s7dcl
+    Hash: lKwRsj8kEH7tiPW5uccNkqPtcXJIboGZ4w73cWCvlNw=
+  - FileName: Transporter.s7res
+    Hash: 5YX26BDrX83r8O5NAFdbJ5QoFiWQUH/ACKVsfsLKB3Q=
+LibraryMetaFileHash: KcQ+KRRyKtSSZFYfMWTM9TEIVfSa25WRk2C7hY4P5oc=
+LibraryVersion:
+  Guid: bff5e4ad-8ac0-419d-bf1b-5aa6fdd65e47
+  DependsOn:
+    - TypeName: UDT_Transporter
+      VersionNumber: 3.1.1
+    - TypeName: Loading
+      VersionNumber: 1.1.0
+    - TypeName: Unloading
+      VersionNumber: 1.1.0
+    - TypeName: UDT_Valve_Core
+      VersionNumber: 0.1.0
+    - TypeName: DS_valve
+      VersionNumber: 3.0.0
+    - TypeName: SS_valve
+      VersionNumber: 3.0.0
+    - TypeName: Solenoid_valve
+      VersionNumber: 2.0.3
+    - TypeName: UDT_Filter_Core
+      VersionNumber: 3.0.0

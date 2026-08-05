@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: 3cd57eeb-2aa8-4ed2-b826-f3edc9ed5dfb
+  Comment:
+    en-US: Removed XV01 for swappable valve
+LibraryVersion:
+  VersionNumber: 3.0.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Updated UDT

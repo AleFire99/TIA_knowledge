@@ -25,6 +25,9 @@ classDiagram
         -Bool PSL
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Valve_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -49,13 +52,15 @@ classDiagram
         -Bool failed_to_open
     }
     UDT_Pinch_Valve *-- DEVICES
-    UDT_Pinch_Valve *-- CMD
-    UDT_Pinch_Valve *-- SETTING
-    UDT_Pinch_Valve *-- STATUS
+    UDT_Pinch_Valve *-- CORE
     UDT_Pinch_Valve *-- ALARMS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = writable by DCS/HMI, `-` = read-only.
+`+` = writable by DCS/HMI, `-` = read-only. `CORE` is the contract shared by the whole valve
+family — see [Valves — Overview](../index.md#core).
 
 ### Control Signals
 
@@ -63,16 +68,16 @@ classDiagram
 |--------|------|-----------|--------------|
 | `DEVICES.PSL` | Bool | IN | Pressure switch: TRUE = valve closed (tube pinched) |
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Actuator solenoid valve — commanded; this block does not read its state back |
-| `CMD.manual_mode` | Bool | IN | TRUE = HMI manual mode |
-| `CMD.manual` | Bool | IN | Close command in manual mode |
-| `CMD.auto` | Bool | IN | Close command in automatic mode |
-| `CMD.ack` | Bool | IN | Acknowledges alarms and clears FAULT |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = HMI manual mode |
+| `CORE.CMD.manual` | Bool | IN | Close command in manual mode |
+| `CORE.CMD.auto` | Bool | IN | Close command in automatic mode |
+| `CORE.CMD.ack` | Bool | IN | Acknowledges alarms and clears FAULT |
 
 ### Settings
 
 | Parameter | Default | Description |
 |-----------|---------|--------------|
-| `SETTING.actuator_timeout` | T#2s | See the convention in [Valves — Overview](../index.md) |
+| `CORE.SETTING.actuator_timeout` | T#2s | See the convention in [Valves — Overview](../index.md) |
 
 ---
 

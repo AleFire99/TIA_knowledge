@@ -1,0 +1,62 @@
+﻿TYPE
+    UDT_Motor_no_sensors : STRUCT
+        CMD : STRUCT
+            { S7_MLC := "MLC_3cy" }
+            manual_mode : Bool;
+            { S7_MLC := "MLC_uz" }
+            manual : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_LT"
+            }
+            auto : Bool;
+            { S7_MLC := "MLC_34i" }
+            ack : Bool;
+        END_STRUCT;
+        STATUS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_344"
+            }
+            state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Rb"
+            }
+            normal_state : Int := 1;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_32q"
+            }
+            is_on : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4KY"
+            }
+            is_off : Bool;
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_4D8"
+            }
+            is_fault : Bool;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        ALARMS : STRUCT
+            {
+                S7_Access := "ReadOnly := External";
+                S7_MLC := "MLC_Tv"
+            }
+            thermal_overload : Bool;
+        END_STRUCT;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_UJ"
+        }
+        error_in : Bool;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_MLC := "MLC_464"
+        }
+        out : Bool;
+    END_STRUCT;
+END_TYPE

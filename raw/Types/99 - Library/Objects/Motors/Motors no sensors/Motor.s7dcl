@@ -1,0 +1,96 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Motor"
+    VAR_IN_OUT
+        motor : _.UDT_Motor_no_sensors;
+    END_VAR
+    VAR_TEMP
+        { S7_MLC := "MLC_42G" }
+        desired_command : Bool;
+    END_VAR
+    VAR CONSTANT
+        { S7_MLC := "MLC_RG" }
+        FAULT : Int := 0;
+        { S7_MLC := "MLC_tn" }
+        NORMAL : Int := 1;
+        { S7_MLC := "MLC_3av" }
+        OFF : Int := 1;
+        { S7_MLC := "MLC_zQ" }
+        "ON" : Int := 2;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Determine desired target
+            IF #motor.CMD.manual_mode THEN
+                #desired_command := #motor.CMD.manual;
+            ELSE
+                #desired_command := #motor.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Alarms
+            IF #motor.STATUS.state = #FAULT THEN
+                #motor.ALARMS.thermal_overload := TRUE;
+            END_IF;
+        END_REGION
+        
+        REGION Acknowledgment
+            IF #motor.CMD.ack THEN
+                #motor.ALARMS.thermal_overload := FALSE;
+            END_IF;
+        END_REGION
+        
+        REGION Top FSM
+            CASE #motor.STATUS.state OF
+                #NORMAL:
+                    IF #motor.error_in THEN
+                        #motor.STATUS.state := #FAULT;
+                    END_IF;
+                    
+                #FAULT:
+                    IF #motor.CMD.ack AND NOT #motor.error_in THEN
+                        #motor.STATUS.state := #NORMAL;
+                        #motor.STATUS.normal_state := #OFF;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #motor.STATUS.state = #NORMAL THEN
+                CASE #motor.STATUS.normal_state OF
+                    #OFF:
+                        IF #desired_command THEN
+                            #motor.STATUS.normal_state := #ON;
+                        END_IF;
+                        
+                    #ON:
+                        IF NOT #desired_command THEN
+                            #motor.STATUS.normal_state := #OFF;
+                        END_IF;
+                        
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION Output mapping
+            #motor.out := FALSE;
+            
+            IF #motor.STATUS.state = #NORMAL THEN
+                CASE #motor.STATUS.normal_state OF
+                    #ON:
+                        #motor.out := TRUE;
+                END_CASE;
+            END_IF;
+        END_REGION
+        
+        REGION State mapping
+            #motor.STATUS.is_off := (#motor.STATUS.state = #NORMAL) AND (#motor.STATUS.normal_state = #OFF);
+            #motor.STATUS.is_on := (#motor.STATUS.state = #NORMAL) AND (#motor.STATUS.normal_state = #ON);
+            #motor.STATUS.is_fault := (#motor.STATUS.state = #FAULT);
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

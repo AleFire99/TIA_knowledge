@@ -1,13 +1,13 @@
 ﻿DocumentHash:
   - FileName: Filter_1_sleeve.s7dcl
-    Hash: ar0RMKu9F+aZeNyToRSTKCfGjxQ3XJWUWg7uDPTTfjo=
+    Hash: CyHHrxSPddupns9J6DxWsRZ98v/C/UU1eMr9wv043XA=
   - FileName: Filter_1_sleeve.s7res
     Hash: wu5y3/436zbXNgxNcJ6MuvTw8V8Oot7TwASecsUCRZg=
-LibraryMetaFileHash: Wc/aZ1djXz1vn6aER8nvc/RLPG3qTh99V6LmfKbm6iA=
+LibraryMetaFileHash: HiV1nli0o9BomDzhdTu9tmOSdHpLRKqvC9IwcWt+y1A=
 LibraryVersion:
-  Guid: 4b692b29-e394-4485-9711-d57427d18591
+  Guid: ebb3676a-2f0a-4b56-b639-373daca93f29
   DependsOn:
     - TypeName: UDT_Filter_1_sleeve
-      VersionNumber: 2.0.2
+      VersionNumber: 3.0.0
     - TypeName: Solenoid_valve
       VersionNumber: 2.0.3

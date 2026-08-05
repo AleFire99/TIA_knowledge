@@ -1,0 +1,10 @@
+﻿LibraryType:
+  Guid: fd0efaa4-0b82-40e8-830f-3c1feeb3f644
+  Comment:
+    en-US: First version
+LibraryVersion:
+  VersionNumber: 3.1.1
+  Author: Alessandro Firetto
+  IsDefault: true
+  Comment:
+    en-US: Removed internal core valve

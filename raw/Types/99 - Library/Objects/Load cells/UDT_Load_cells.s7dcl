@@ -1,5 +1,4 @@
 ﻿TYPE
-    { S7_BlockComment := "MLC_3sW" }
     UDT_Load_cells : STRUCT
         CMD : STRUCT
             { S7_MLC := "MLC_4en" }

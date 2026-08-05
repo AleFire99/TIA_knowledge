@@ -1,0 +1,70 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Piston_no_sensors"
+    VAR_IN_OUT
+        Piston : _.UDT_Piston_no_sensors;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        fb_XY : _.Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        { S7_MLC := "MLC_ba" }
+        desired_command : Bool;
+    END_VAR
+    VAR CONSTANT
+        { S7_MLC := "MLC_3LB" }
+        RETRACTED : Int := 1;
+        { S7_MLC := "MLC_4K3" }
+        EXTENDED : Int := 2;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Map internal valves
+            #fb_XY(#Piston.DEVICES.XY);
+        END_REGION
+        
+        REGION Determine desired target
+            IF #Piston.CMD.manual_mode THEN
+                #desired_command := #Piston.CMD.manual;
+            ELSE
+                #desired_command := #Piston.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION FSM
+            CASE #Piston.STATUS.state OF
+                #RETRACTED:
+                    IF #desired_command THEN
+                        #Piston.STATUS.state := #EXTENDED;
+                    END_IF;
+                    
+                #EXTENDED:
+                    IF NOT #desired_command THEN
+                        #Piston.STATUS.state := #RETRACTED;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Output mapping
+            #Piston.DEVICES.XY.CMD.auto := FALSE;
+            
+            CASE #Piston.STATUS.state OF
+                #EXTENDED:
+                    #Piston.DEVICES.XY.CMD.auto := TRUE;
+            END_CASE;
+        END_REGION
+        
+        REGION State mapping
+            #Piston.STATUS.is_retracted := (#Piston.STATUS.state = #RETRACTED);
+            #Piston.STATUS.is_extended := (#Piston.STATUS.state = #EXTENDED);
+        END_REGION
+    END_NETWORK
+END_FUNCTION_BLOCK

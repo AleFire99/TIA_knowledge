@@ -1,0 +1,65 @@
+# Piston_sensors — linear actuator with limit-switch position feedback.
+# Source: raw/Types/99 - Library/Objects/Linear actuators/Piston sensors/Piston_sensors.s7dcl. Doc: docs/it/library/linear-actuators/sensors/index.md.
+
+schema_version: "1.0"
+fb: Piston_sensors
+udt: UDT_Piston_sensors
+source: Types/99 - Library/Objects/Linear actuators/Piston sensors/Piston_sensors.s7dcl
+
+label: PISTON_SENSORS
+
+states:
+  - id: NORMAL
+    value: 1
+    children:
+      - id: RETRACTED
+        value: 1
+        outputs: { XY: false }
+        description: piston fully retracted, confirmed by ZSL
+      - id: EXTENDING
+        value: 2
+        outputs: { XY: true }
+        description: actuator pushes piston toward extended
+      - id: EXTENDED
+        value: 3
+        outputs: { XY: true }
+        description: piston fully extended, confirmed by ZSH
+      - id: RETRACTING
+        value: 4
+        outputs: { XY: false }
+        description: solenoid released, piston returns to retracted
+  - id: FAULT
+    value: 0
+    outputs: { XY: false }
+    description: fault; awaiting ack with valid sensors
+
+transitions:
+  - { from: "[*]", to: NORMAL, guard: "!(ZSL & ZSH) on first scan" }
+  - { from: "[*]", to: FAULT, guard: "ZSL & ZSH on first scan" }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: "CMD.ack & !internal_error"
+    note: destination (RETRACTED/EXTENDED/EXTENDING/RETRACTING) is re-derived from live ZSL/ZSH sensors and desired_command, not a fixed prior state
+  - { from: "[*]", to: NORMAL.RETRACTED, guard: "ZSL & !ZSH" }
+  - { from: "[*]", to: NORMAL.EXTENDED, guard: "ZSH & !ZSL" }
+  - { from: "[*]", to: NORMAL.EXTENDING, guard: "!ZSL & !ZSH & desired_command" }
+  - { from: "[*]", to: NORMAL.RETRACTING, guard: "!ZSL & !ZSH & !desired_command" }
+  - { from: NORMAL.RETRACTED, to: NORMAL.EXTENDING, guard: desired_command }
+  - { from: NORMAL.EXTENDING, to: NORMAL.EXTENDED, guard: "ZSH & !ZSL" }
+  - { from: NORMAL.EXTENDED, to: NORMAL.RETRACTING, guard: "!desired_command" }
+  - { from: NORMAL.RETRACTING, to: NORMAL.RETRACTED, guard: "ZSL & !ZSH" }
+
+guard_formulas:
+  - name: internal_error
+    expression: ALARMS.sensor_mismatch OR ALARMS.sensor_conflict OR ALARMS.failed_to_retract OR ALARMS.failed_to_extend
+
+timers:
+  - name: movement_timer
+    active_states: [NORMAL.EXTENDING, NORMAL.RETRACTING]
+    param: SETTING.actuator_timeout
+    raises: ALARMS.failed_to_extend when stuck in EXTENDING, ALARMS.failed_to_retract when stuck in RETRACTING
+
+notes:
+  - movement_timer ORs two sibling states (EXTENDING, RETRACTING) — don't assume single-state activity from the timer's name alone.
+  - sensor_mismatch fires when the FSM believes it's fully retracted/extended but the corresponding limit switch (ZSL/ZSH) disagrees; sensor_conflict fires if ZSL and ZSH both read true simultaneously, which is physically impossible.

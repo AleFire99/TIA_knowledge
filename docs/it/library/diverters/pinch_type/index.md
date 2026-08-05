@@ -4,6 +4,8 @@
 
 **Livello 3 — composito.** Il deviatore a manicotto indirizza il flusso di materiale tra due linee (A e B) incorporando due istanze di Valvola a Manicotto (Livello 2), `XVA` e `XVB`. Solo una linea è aperta alla volta. Non ci sono sensori fisici propri del deviatore — lo stato di instradamento è interamente derivato dalla retroazione di posizione delle due sotto-valvole.
 
+`XVA`/`XVB` sono istanze concrete di `Pinch_valve`, cablate internamente — non un parametro iniettato come in [Valvola Sigillata](../../valves/sealed/index.md).
+
 ---
 
 ## Interfaccia

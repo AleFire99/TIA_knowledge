@@ -1,0 +1,58 @@
+﻿{
+    S7_EditorMode := "SCL";
+    S7_Optimized := "TRUE";
+    S7_Version := "0.1"
+}
+FUNCTION_BLOCK "Piston_sensors_simulator"
+    VAR_INPUT
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        ON_Delay : Time := T#1s;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        OFF_Delay : Time := T#1s;
+    END_VAR
+    VAR_IN_OUT
+        Piston : _.UDT_Piston_sensors;
+    END_VAR
+    VAR
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Timer_ON : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        Timer_OFF : TON_TIME;
+    END_VAR
+
+    { S7_Language := "SCL" }
+    NETWORK
+        REGION Timers
+            #Timer_ON(IN := #Piston.DEVICES.XY.out,
+                      PT := #ON_Delay);
+            
+            #Timer_OFF(IN := NOT #Piston.DEVICES.XY.out,
+                       PT := #OFF_Delay);
+        END_REGION
+        
+        REGION Signals
+            IF #Timer_ON.Q THEN
+                #Piston.DEVICES.ZSH := TRUE;
+                #Piston.DEVICES.ZSL := FALSE;
+            END_IF;
+            
+            IF #Timer_OFF.Q THEN
+                #Piston.DEVICES.ZSH := FALSE;
+                #Piston.DEVICES.ZSL := TRUE;
+            END_IF;
+        END_REGION
+        
+    END_NETWORK
+END_FUNCTION_BLOCK

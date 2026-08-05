@@ -1,0 +1,18 @@
+# Sealed_valve — decorator that wraps any Valve_Core-typed injected valve with a dedicated sealing solenoid; fully delegates its FSM to the injected XV core.
+# Source: raw/Types/99 - Library/Objects/Valves/Sealed/Sealed_valve.s7dcl. Doc: docs/it/library/valves/sealed/index.md.
+
+schema_version: "1.0"
+fb: Sealed_valve
+udt: UDT_Sealed_Valve
+source: Types/99 - Library/Objects/Valves/Sealed/Sealed_valve.s7dcl
+
+delegates:
+  fsm: XV
+
+notes:
+  - "XV is an injected UDT_Valve_Core parameter, not an owned child FB instance — the composition root instantiates whichever concrete valve-family member fills it and calls that FB before calling Sealed_valve, so XV.STATUS is already fresh when this FB reads it."
+  - sealed_XV.CORE.STATUS is a direct, full mirror of XV.STATUS every scan (state, normal_state, is_fault, is_closed, is_opening, is_open, is_closing) — this FB defines no state machine of its own.
+  - The seal solenoid (sealed_XV.DEVICES.XY_seal) is driven by one stateless combinational rule, not a state machine — it is excited automatically as soon as XV.STATUS.is_closed is confirmed TRUE, and de-excited immediately once XV leaves CLOSED (OPENING/OPEN/CLOSING/FAULT all read as FALSE).
+  - sealed_XV.CORE.SETTING.actuator_timeout is forwarded to XV.SETTING.actuator_timeout every scan; this FB has no TON_TIME of its own, so its own actuator timing is delegated to whichever valve fills XV, as a direct consequence of delegating the whole FSM to it — not a separate, timer-only delegation case.
+  - sealed_XV.CORE.CMD.ack is forwarded to XV.CMD.ack. This FB has no own ALARMS struct — alarms remain visible only through whichever valve fills XV.
+  - "delegates.fsm (not delegates.timer) is correct here: the FB has no own STATUS.state/normal_state computation and no state logic beyond the one stateless seal-solenoid rule above — there is no own diagram to render at all, matching schema/fsm.schema.json's own canonical example of full FSM delegation."

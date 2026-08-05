@@ -1,0 +1,13 @@
+﻿DocumentHash:
+  - FileName: Piston_no_sensors.s7dcl
+    Hash: ky+4qWH/ItfkQ9xR2fOlSxPCCC2LlhIaSMxpET3NfMg=
+  - FileName: Piston_no_sensors.s7res
+    Hash: b0hLd7EMfwnvTmgRLA93wVD6nhma0UIAEl+GgQZdwuw=
+LibraryMetaFileHash: OKzdJVh96Tumk/2dp1JqZAT8AWp/MGZCuer0alMm7Ho=
+LibraryVersion:
+  Guid: f1eab5d4-b2d7-444b-9679-38ab7f1e8596
+  DependsOn:
+    - TypeName: Solenoid_valve
+      VersionNumber: 2.0.3
+    - TypeName: UDT_Piston_no_sensors
+      VersionNumber: 0.0.1

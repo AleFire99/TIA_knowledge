@@ -1,0 +1,11 @@
+﻿MultiLingualTexts:
+  - id: MLC_42G
+    en-US: Actual desired command based on active mode
+  - id: MLC_RG
+    en-US: Motor in error
+  - id: MLC_tn
+    en-US: Motor working normally
+  - id: MLC_3av
+    en-US: Motor is off
+  - id: MLC_zQ
+    en-US: Motor is on

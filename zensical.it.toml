@@ -14,7 +14,11 @@ nav = [
           { "A Manicotto" = "library/valves/pinch/index.md" },
           { "A Farfalla — Singolo Solenoide" = "library/valves/butterfly/single_solenoid/index.md" },
           { "A Farfalla — Doppio Solenoide" = "library/valves/butterfly/double_solenoid/index.md" },
-          { "Sigillata — Singolo Solenoide" = "library/valves/sealed/ss/index.md" },
+          { "Sigillata" = "library/valves/sealed/index.md" },
+      ] },
+      { "Motori" = [
+          { "Panoramica" = "library/motors/index.md" },
+          { "Senza Sensori" = "library/motors/no-sensors/index.md" },
       ] },
       { "Dispositivi di Accesso" = [
           { "Panoramica" = "library/access/index.md" },
@@ -24,6 +28,11 @@ nav = [
           { "Panoramica" = "library/filters/index.md" },
           { "1 Manica" = "library/filters/1-sleeve/index.md" },
           { "2 Maniche" = "library/filters/2-sleeves/index.md" },
+      ] },
+      { "Attuatori Lineari" = [
+          { "Panoramica" = "library/linear-actuators/index.md" },
+          { "Senza Sensori" = "library/linear-actuators/no-sensors/index.md" },
+          { "Con Sensori" = "library/linear-actuators/sensors/index.md" },
       ] },
       { "Deviatori" = [
           { "Panoramica" = "library/diverters/index.md" },
@@ -41,7 +50,7 @@ nav = [
       { "Segnali Analogici" = "library/io/index.md" },
       { "Propulsori" = [
           { "Panoramica" = "library/transporters/index.md" },
-          { "Propulsore Ingresso Sigillato" = "library/transporters/sealed-inlet/index.md" },
+          { "Propulsore" = "library/transporters/transporter/index.md" },
       ] },
       { "Tubazione" = [
           { "Panoramica" = "library/pipeline/index.md" },

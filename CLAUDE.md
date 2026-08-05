@@ -144,10 +144,17 @@ server. Full dual-locale + language-switcher check happens via the Docker build
 
 ```bash
 docker build -t alefires-wiki .
-docker run -d -p 8080:80 alefires-wiki
+docker run -d -p 8080:80 -v "${PWD}/dist:/data:ro" alefires-wiki
 # Italian (default): http://<host-ip>:8080/
 # English:           http://<host-ip>:8080/en/
+# Manifest API:      http://<host-ip>:8080/api/manifest
 ```
+
+The `-v` bind-mount is required — `/api/manifest` (nginx, `nginx.conf`) serves
+`dist/library_manifest.json` straight off disk, not baked into the image. A fresh
+`scripts/ingest.py` run is visible on the next request with no rebuild/restart.
+Downstream consumers (e.g. plc-doc-gen's `config.toml [knowledge].manifest_url`) read
+this live — no more manual copy/commit of the manifest file into other repos.
 
 ### Step 6 — Commit
 
@@ -502,6 +509,19 @@ bare `failed_to_close` while that same file's `timers[].raises` called the ident
   `loading_done`, with `loading_done: CMD.stop OR (IN.current_weight >= CMD.loading_setpoint
   - SETTING.loading_tail)` as its own `guard_formulas` entry). This keeps every mermaid edge
   label short and gives the actual formula one authoritative place to live.
+- **A transition into a composite state always targets the bare composite name
+  (`NORMAL`), never a dotted child (`NORMAL.CLOSED`)** — this applies to both the
+  unconditional top-level initial edge (`{ from: "[*]", to: NORMAL }`) and any
+  FAULT-recovery edge (`{ from: FAULT, to: NORMAL, guard: ... }`). Which specific child is
+  entered is a *separate* concern, expressed as its own `{ from: "[*]", to: NORMAL.<child>,
+  guard: ... }` entry (or entries, one per possible child) — rendered nested inside
+  `state NORMAL { ... }` — guarded when disambiguation is needed (SS_valve/Gate_door landing
+  in different children depending on live sensors) or bare/unconditional when there's only
+  one possible child (Motor always lands in `OFF` — still needs its own
+  `{ from: "[*]", to: NORMAL.OFF }` entry, just without a guard). Every existing FSM file
+  already followed this split; only `Motor.fsm.yaml` initially collapsed the two into a
+  single dotted-child edge on both transitions, which silently dropped the inner state's own
+  `[*] --> OFF` line from the rendered diagram until caught and fixed.
 - **First-scan ambiguous-pair guards share one template**, domain word substituted:
   `"<predicate A> XOR <predicate B> on first scan"` / `"ambiguous <domain noun> on first
   scan"` (e.g. `ZSL XOR ZSH on first scan` / `ambiguous sensors on first scan` for a
@@ -509,7 +529,12 @@ bare `failed_to_close` while that same file's `timers[].raises` called the ident
   first scan` for a two-valve diverter — "positions" because it's valve state, not a sensor).
 - **Quoting**: only quote a guard/expression string when YAML syntax actually requires it
   (leading `!`, embedded `|`/`:`). Don't quote defensively — a bare dotted path or a phrase
-  with no special character never needs quotes.
+  with no special character never needs quotes. **Exception**: always quote a bare state
+  `id` (or any scalar) that reads as `on`/`off`/`yes`/`no`/`y`/`n` in any case — PyYAML's
+  default YAML 1.1 boolean resolver silently turns an unquoted `OFF` into `false`, which
+  then renders wrong everywhere that value is used (`Motor.fsm.yaml`'s `OFF` state hit this
+  exactly; `ON` was already quoted, `OFF` wasn't, and `render_fsm.py` silently printed
+  `NORMAL.False` in the state table until caught).
 - **Header comment**: two lines, every file — `# <FB name> — <one-line device description>.`
   / `# Source: raw/<path>. Doc: docs/it/library/<category>/<device>/index.md.` Anything more
   discursive (e.g. a delegation rationale) belongs in `notes`, not the header.
@@ -549,9 +574,18 @@ controlling FB, but a UDT can have more than one (e.g. `UDT_Load_cells`, driven 
 `Loading` + `Unloading` + the `Pavone_DAT_1400` transmitter-interface adapter, all sharing
 the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a single entry.
 
+`udts.<UDT>.core` (added in `2.1.0`) is the name of the shared Core UDT (`UDT_Valve_Core`/
+`UDT_Filter_Core`) this UDT embeds as a `CORE` field, or `null` if it doesn't embed one.
+When set, `cmd_ack`/`cmd_manual_mode` are resolved from the *Core* UDT's own CMD, since the
+device UDT no longer inlines CMD itself — `ingest.py` does this resolution automatically, so
+consumers can keep reading `cmd_ack`/`cmd_manual_mode` exactly as before without following
+`core` themselves. A Core UDT's own manifest entry (`UDT_Valve_Core`, `UDT_Filter_Core`) has
+`core: null`, empty `devices`, and no `fbs` entry at all — no FB controls a Core UDT directly,
+it's only ever embedded or injected.
+
 ```json
 {
-  "manifest_version": "2.0.0",
+  "manifest_version": "2.1.0",
   "udts": {
     "UDT_SS_Valve": {
       "description": "Uniformed states and variables visibility in HMI",
@@ -559,7 +593,17 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
       "has_out": false,
       "cmd_ack": true,
       "cmd_manual_mode": true,
+      "core": "UDT_Valve_Core",
       "devices": { "ZSL": {"type": "Bool", "description": ""}, "ZSH": {"type": "Bool", "description": ""}, "XY": {"type": "UDT_Solenoid_valve", "description": ""} }
+    },
+    "UDT_Valve_Core": {
+      "description": "Shared CMD+STATUS+SETTING contract for the valve family",
+      "label": "",
+      "has_out": false,
+      "cmd_ack": true,
+      "cmd_manual_mode": true,
+      "core": null,
+      "devices": {}
     }
   },
   "fbs": {
@@ -587,9 +631,12 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
 |-----|----------------|------------------|--------|
 | UDT_SS_Valve | SS_valve | XV | SS_valve_simulator (XV) |
 | UDT_DS_Valve | DS_valve | XV | DS_valve_simulator (XV) |
-| UDT_SS_Sealed_Valve | SS_Sealed_valve | XV | SS_Sealed_valve_simulator (XV) |
+| UDT_Sealed_Valve | Sealed_valve | sealed_XV (+ injected `XV : UDT_Valve_Core`) | — |
 | UDT_Pinch_Valve | Pinch_valve | XV | Pinch_valve_simulator (XV) |
 | UDT_Solenoid_valve | Solenoid_valve | XY | — |
+| UDT_Piston_no_sensors | Piston_no_sensors | Piston | — |
+| UDT_Piston_sensors | Piston_sensors | Piston | Piston_sensors_simulator (Piston) |
+| UDT_Motor_no_sensors | Motor | motor | — |
 | UDT_Gate_Door | Gate_door | gate_door | — |
 | UDT_Pinch_diverter | Pinch_diverter | DIV | Pinch_diverter_simulator (DIV) |
 | UDT_Filter_1_sleeve | Filter_1_sleeve | filter | — |
@@ -598,11 +645,26 @@ the same `scale` VAR_IN_OUT param). Always iterate the array; never assume a sin
 | UDT_Nolvac | Nolvac | VC | — |
 | UDT_An_Pipeline | An_pipeline | pipeline | — |
 | UDT_Dig_Pipeline | Dig_pipeline | pipeline | — |
-| UDT_Sealed_inlet_Transporter | Sealed_inlet_Transporter | TR | Sealed_inlet_Transporter_simulator (TR) |
+| UDT_Transporter | Transporter | TR (+ injected `XV01 : UDT_Valve_Core`, `FI : UDT_Filter_Core`) | Transporter_simulator (TR) |
 | UDT_Analogic_signal | — (`Scale_input` FC, utility not a device) | `analogic_signal` | — |
 | UDT_Pavone_IN / UDT_Pavone_OUT | Pavone_DAT_1400 (FC) | dat_IN / dat_OUT | — |
 
 All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are auto-detected by `ingest.py` via name regex. No manual overrides needed.
+
+**Core UDTs — no controlling FB, not "devices" in their own right.** `UDT_Valve_Core`
+(`CMD{manual_mode,manual,auto,ack}` + `STATUS{state,normal_state,is_fault,is_closed,
+is_opening,is_open,is_closing}` + `SETTING{actuator_timeout}`) and `UDT_Filter_Core`
+(`CMD{manual_mode,manual,auto}` + `STATUS{state,active_state,is_idle,is_active,is_pulsing,
+is_waiting}` + `SETTING{pulse_duration,interval_duration}`) are shared structs embedded as a
+named `CORE` field inside every valve-family (`SS_Valve`/`DS_Valve`/`Pinch_Valve`/
+`Sealed_Valve`) and filter-family (`Filter_1_sleeve`/`Filter_2_sleeves`) UDT, factoring out
+their identical CMD/STATUS/SETTING contract so an orchestrator can take a Core-typed
+parameter instead of hardcoding one concrete valve/filter type — dependency injection at the
+UDT level, since TIA Portal SCL has no interfaces. `Sealed_valve` (decorator over any injected
+`ValveCore`-typed `XV`) and `Transporter` (injected `XV01`/`FI`, see below) are the two
+consumers today. `ALARMS` and `DEVICES` always stay outside Core — they're where the family
+genuinely diverges (see `dist/library_manifest.json`'s `"core"` field below for how this
+shows up in the manifest).
 
 ---
 
@@ -614,6 +676,15 @@ All simulator FBs export as `.s7dcl` (SimaticSD exports LAD as text) and are aut
    when called on a GlobalLibrary proxy. Use `--skip-instantiate` and instantiate manually
    in TIA Portal UI, then re-run.
 3. Staging project must be committed in **empty state** between export runs.
+4. `Piston_no_sensors.s7dcl`'s `VAR_IN_OUT` declared its param as `_.UDT_Piston` (nonexistent
+   type) instead of `_.UDT_Piston_no_sensors` — an export typo, not a naming choice; the FB's
+   actual `VAR_IN_OUT` declaration in TIA Portal is correct, so there's nothing to backport —
+   this is purely an `export.py`/`siemens_tia_scripting` v1.2.1 export-time artifact, root
+   cause unidentified. **Recurred on the full-library re-export that introduced the Core-UDT
+   DI pattern** (2026-08), confirming it isn't a one-off. Patched directly in `raw/` each time
+   (same treatment as the Nolvac/Gate_door `ReadOnly` gaps) since there's no TIA-side fix to
+   make — workaround is "patch `raw/` after every re-export" until the export tool's own bug
+   is found.
 
 ---
 
@@ -656,9 +727,10 @@ Current values, for reference when adding a new module:
 | Module | Livello | Why |
 |---|---|---|
 | Elettrovalvola | 1 | Embeds nothing — genuinely atomic |
-| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
+| Valvola a Manicotto, Farfalla SS, Doppio Solenoide (DS), Anta Cancello, Filtro 1-Manica, Filtro 2-Maniche, Pistone — Senza Sensori, Pistone — Con Sensori | 2 | Embed only Livello-1 Elettrovalvola (count varies 1–2×, doesn't change the livello) |
 | Deviatore a Manicotto, Valvola Sigillata SS, Nolvac — Ciclo a Tempo | 3 | Embed at least one Livello-2 component |
 | Celle di Carico core (Ciclo di Carico e Scarico) | 1 | Embeds nothing, but two independent FSMs share one UDT — Livello 1 without being "atomico" |
+| Motore — Senza Sensori | 1 | Embeds nothing (no `DEVICES` struct at all) — standalone primitive like Elettrovalvola, but not "atomico" outright since it carries its own FAULT/alarm handling, same reasoning as Celle di Carico's non-atomic Livello 1 |
 | Propulsore Ingresso Sigillato | 4 | Embeds Valvola Sigillata SS (Livello 3) |
 | Interfaccia Pavone DAT 1400, Pipeline Analogica/Digitale | not classified | FC, stateless — Livello only applies to stateful FBs with their own state machine |
 
@@ -668,24 +740,29 @@ Categories are ordered by **valve-nesting depth**, not alphabetically or by devi
 
 1. **Valvole** first — the only category with no external dependency (it *is* the Livello
    1–3 valve family other categories build on).
-2. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Dispositivi di
-   Accesso** (1×) → **Filtri** (1–2×).
-3. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
+2. **Motori** right after Valvole — also zero external dependency (no embedded
+   sub-components at all, see Livello classification below), the same "no dependency"
+   status as Valvole itself, so it sits at the front of the chain alongside it rather than
+   in a later embedding bucket.
+3. Categories embedding only atomic **Livello-1 Elettrovalvola** instances: **Dispositivi di
+   Accesso** (1×) → **Filtri** (1–2×) → **Attuatori Lineari** (1× per variant — Pistone
+   Senza/Con Sensori both embed a single Elettrovalvola).
+4. Categories embedding **Livello-2+ valve types**: **Deviatori** (2× Manicotto, Livello 2) →
    **Nolvac** (Farfalla SS Livello 2 + 2× Elettrovalvola).
-4. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
+5. **Celle di Carico** — Livello 1 at its core (no embedded sub-components — see Livello
    classification below), but independent of Valvole regardless (own device family: a core
    UDT plus swappable transmitter interfaces). Introduced here because a later item
    depends on it, not because of its own livello number.
-5. **Segnali Analogici** — not classified (stateless FC utility, not a device), no valve
+6. **Segnali Analogici** — not classified (stateless FC utility, not a device), no valve
    dependency, sits outside the nesting chain like Pipeline further below. Placed here,
    before **Propulsori**, because Propulsore Ingresso Sigillato is a real consumer too
    (`PT01`/`PT02` are `UDT_Analogic_signal`) — not just Pipeline Analogica. Both dependents
    need it introduced first, so it sits right after Celle di Carico and before either.
-6. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
+7. **Propulsori** last among nested categories — the deepest composite (Livello 4), nesting
    multiple valve livelli (Sigillata SS at Livello 3, Farfalla SS at Livello 2, Elettrovalvola
    at Livello 1) *and* a full Celle di Carico instance, *and* consuming Segnali Analogici
    (`PT01`/`PT02`). Needs all three prior chains already introduced.
-7. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, depends
+8. **Pipeline** absolute last — not classified at all (stateless FC), no nesting, depends
    only on Segnali Analogici (already introduced above it). A different logical domain
    (sensor-state derivation, not valve actuation), so it sits outside the nesting chain
    otherwise.

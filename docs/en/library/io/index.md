@@ -2,7 +2,7 @@
 
 ## Overview
 
-**FC, stateless.** `Scale_input` is the library utility that converts a raw analog reading (integer count from the input module) into a value scaled to engineering units, writing it into `UDT_Analogic_signal.Scaled_value`. It is not a device — it has no `CMD`, no `STATUS`, it doesn't belong to any specific field category: it's shared by any module that reads an analog transmitter, today [Analog Pipeline](../pipeline/analogic/index.md) and [Sealed Inlet Transporter](../transporters/sealed-inlet/index.md) (`PT01`/`PT02`).
+**FC, stateless.** `Scale_input` is the library utility that converts a raw analog reading (integer count from the input module) into a value scaled to engineering units, writing it into `UDT_Analogic_signal.Scaled_value`. It is not a device — it has no `CMD`, no `STATUS`, it doesn't belong to any specific field category: it's shared by any module that reads an analog transmitter, today [Analog Pipeline](../pipeline/analogic/index.md) and [Transporter](../transporters/transporter/index.md) (`PT01`/`PT02`).
 
 No FB instance in this library calls `Scale_input` internally: it's invoked upstream, once per analog channel, by the calling program — the consuming module already receives the `UDT_Analogic_signal` instance with `Scaled_value` populated and just reads it.
 

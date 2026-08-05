@@ -26,6 +26,9 @@ classDiagram
         -UDT_Solenoid_valve XYA
         -UDT_Solenoid_valve XYB
     }
+    class CORE {
+        <<UDT_Filter_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -38,21 +41,27 @@ classDiagram
     class STATUS {
         -Int state
         -Int active_state
-        -Int active_sleeve
         -Bool is_idle
         -Bool is_active
         -Bool is_pulsing
         -Bool is_waiting
+    }
+    class SLEEVE_STATUS {
+        -Int active_sleeve
         -Bool is_sleeve_A
         -Bool is_sleeve_B
     }
     UDT_Filter_2_sleeves *-- DEVICES
-    UDT_Filter_2_sleeves *-- CMD
-    UDT_Filter_2_sleeves *-- SETTING
-    UDT_Filter_2_sleeves *-- STATUS
+    UDT_Filter_2_sleeves *-- CORE
+    UDT_Filter_2_sleeves *-- SLEEVE_STATUS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. `CORE` è il contratto condiviso da entrambe
+le varianti filtro — vedi [Filtri — Panoramica](../index.md#core); `SLEEVE_STATUS` resta
+fuori da `CORE` perché è specifico della variante a 2 maniche.
 
 ### Segnali di controllo
 
@@ -60,16 +69,16 @@ classDiagram
 |---------|------|-----------|-------------|
 | `DEVICES.XYA` | UDT_Solenoid_valve | OUT | Elettrovalvola impulso manica A — comandata, il proprio stato non viene riletto da questo blocco |
 | `DEVICES.XYB` | UDT_Solenoid_valve | OUT | Elettrovalvola impulso manica B — comandata, il proprio stato non viene riletto da questo blocco |
-| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale |
-| `CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
-| `CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = modalità manuale |
+| `CORE.CMD.manual` | Bool | IN | Abilitazione in modalità manuale |
+| `CORE.CMD.auto` | Bool | IN | Abilitazione in modalità automatica |
 
 ### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `pulse_duration` | T#500ms | Durata di ogni impulso d'aria per manica |
-| `interval_duration` | T#3s | Tempo di attesa tra gli impulsi |
+| `CORE.SETTING.pulse_duration` | T#500ms | Durata di ogni impulso d'aria per manica |
+| `CORE.SETTING.interval_duration` | T#3s | Tempo di attesa tra gli impulsi |
 
 ---
 
@@ -85,7 +94,7 @@ Quando abilitato, il sistema alterna tra le maniche A e B in un ciclo continuo:
 4. **WAITING** — entrambe le elettrovalvole spente per `interval_duration`
 5. Ripetere dal passo 1
 
-La manica attiva è tracciata da `STATUS.is_sleeve_A`/`is_sleeve_B`. La rimozione del comando di abilitazione in qualsiasi momento riporta il sistema in **IDLE**.
+La manica attiva è tracciata da `SLEEVE_STATUS.is_sleeve_A`/`is_sleeve_B`. La rimozione del comando di abilitazione in qualsiasi momento riporta il sistema in **IDLE**.
 
 In **modalità manuale** (`manual_mode = TRUE`), l'operatore abilita la pulizia tramite `manual`. In **modalità automatica**, il comando arriva dal processo tramite `auto`.
 
@@ -107,7 +116,7 @@ state FILTER{
 ```
 
 ```Pascal
-desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND CMD.auto);
+desired_command := (CORE.CMD.manual_mode AND CORE.CMD.manual) OR (NOT CORE.CMD.manual_mode AND CORE.CMD.auto);
 ```
 
 | Stato | `XYA` | `XYB` | Descrizione |
@@ -128,5 +137,5 @@ desired_command := (CMD.manual_mode AND CMD.manual) OR (NOT CMD.manual_mode AND 
 
 | Timer | Stato in cui è attivo | Soglia (parametro) |
 |-------|------------------------|---------------------|
-| `pulse_timer` | ACTIVE/PULSING | `SETTING.pulse_duration` |
-| `interval_timer` | ACTIVE/WAITING | `SETTING.interval_duration` |
+| `pulse_timer` | ACTIVE/PULSING | `CORE.SETTING.pulse_duration` |
+| `interval_timer` | ACTIVE/WAITING | `CORE.SETTING.interval_duration` |

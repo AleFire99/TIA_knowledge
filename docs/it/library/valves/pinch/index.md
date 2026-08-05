@@ -25,6 +25,9 @@ classDiagram
         -Bool PSL
         -UDT_Solenoid_valve XY
     }
+    class CORE {
+        <<UDT_Valve_Core>>
+    }
     class CMD {
         +Bool manual_mode
         +Bool manual
@@ -49,13 +52,15 @@ classDiagram
         -Bool failed_to_open
     }
     UDT_Pinch_Valve *-- DEVICES
-    UDT_Pinch_Valve *-- CMD
-    UDT_Pinch_Valve *-- SETTING
-    UDT_Pinch_Valve *-- STATUS
+    UDT_Pinch_Valve *-- CORE
     UDT_Pinch_Valve *-- ALARMS
+    CORE *-- CMD
+    CORE *-- SETTING
+    CORE *-- STATUS
 ```
 
-`+` = scrivibile da DCS/HMI, `-` = sola lettura.
+`+` = scrivibile da DCS/HMI, `-` = sola lettura. `CORE` è il contratto condiviso da tutta la
+famiglia valvole — vedi [Valvole — Panoramica](../index.md#core).
 
 ### Segnali di controllo
 
@@ -63,16 +68,16 @@ classDiagram
 |---------|------|-----------|-------------|
 | `DEVICES.PSL` | Bool | IN | Pressostato: TRUE = valvola chiusa (tubo schiacciato) |
 | `DEVICES.XY` | UDT_Solenoid_valve | OUT | Elettrovalvola attuatore — comandata, il proprio stato non viene riletto da questo blocco |
-| `CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
-| `CMD.manual` | Bool | IN | Comando di chiusura in modalità manuale |
-| `CMD.auto` | Bool | IN | Comando di chiusura in modalità automatica |
-| `CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
+| `CORE.CMD.manual_mode` | Bool | IN | TRUE = modalità manuale HMI |
+| `CORE.CMD.manual` | Bool | IN | Comando di chiusura in modalità manuale |
+| `CORE.CMD.auto` | Bool | IN | Comando di chiusura in modalità automatica |
+| `CORE.CMD.ack` | Bool | IN | Conferma allarmi e ripristino da FAULT |
 
 ### Parametri
 
 | Parametro | Default | Descrizione |
 |-----------|---------|-------------|
-| `SETTING.actuator_timeout` | T#2s | Vedi la convenzione in [Valvole — Panoramica](../index.md) |
+| `CORE.SETTING.actuator_timeout` | T#2s | Vedi la convenzione in [Valvole — Panoramica](../index.md) |
 
 ---
 

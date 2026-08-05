@@ -59,9 +59,9 @@ FUNCTION_BLOCK "Filter_2_sleeves"
         REGION Initialization
             IF #first_scan THEN
                 #first_scan := FALSE;
-                #filter.STATUS.state := #IDLE;
-                #filter.STATUS.active_state := #PULSING;
-                #filter.STATUS.active_sleeve := 0;
+                #filter.CORE.STATUS.state := #IDLE;
+                #filter.CORE.STATUS.active_state := #PULSING;
+                #filter.SLEEVE_STATUS.active_sleeve := 0;
             END_IF;
         END_REGION
         
@@ -71,48 +71,48 @@ FUNCTION_BLOCK "Filter_2_sleeves"
         END_REGION
         
         REGION Determine desired target
-            IF #filter.CMD.manual_mode THEN
-                #desired_command := #filter.CMD.manual;
+            IF #filter.CORE.CMD.manual_mode THEN
+                #desired_command := #filter.CORE.CMD.manual;
             ELSE
-                #desired_command := #filter.CMD.auto;
+                #desired_command := #filter.CORE.CMD.auto;
             END_IF;
         END_REGION
         
         REGION Timers
-            #interval_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #WAITING),
-                            PT := #filter.SETTING.interval_duration);
-            #pulse_timer(IN := (#filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #PULSING),
-                         PT := #filter.SETTING.pulse_duration);
+            #interval_timer(IN := (#filter.CORE.STATUS.state = #ACTIVE AND #filter.CORE.STATUS.active_state = #WAITING),
+                            PT := #filter.CORE.SETTING.interval_duration);
+            #pulse_timer(IN := (#filter.CORE.STATUS.state = #ACTIVE AND #filter.CORE.STATUS.active_state = #PULSING),
+                         PT := #filter.CORE.SETTING.pulse_duration);
         END_REGION
         
         REGION Top FSM
-            CASE #filter.STATUS.state OF
+            CASE #filter.CORE.STATUS.state OF
                 #IDLE:
                     IF #desired_command THEN
-                        #filter.STATUS.state := #ACTIVE;
-                        #filter.STATUS.active_state := #PULSING;
-                        #filter.STATUS.active_sleeve := 0;
+                        #filter.CORE.STATUS.state := #ACTIVE;
+                        #filter.CORE.STATUS.active_state := #PULSING;
+                        #filter.SLEEVE_STATUS.active_sleeve := 0;
                     END_IF;
                     
                 #ACTIVE:
                     IF NOT #desired_command THEN
-                        #filter.STATUS.state := #IDLE;
+                        #filter.CORE.STATUS.state := #IDLE;
                     END_IF;
             END_CASE;
         END_REGION
         
         REGION Active FSM
-            IF #filter.STATUS.state = #ACTIVE THEN
-                CASE #filter.STATUS.active_state OF
+            IF #filter.CORE.STATUS.state = #ACTIVE THEN
+                CASE #filter.CORE.STATUS.active_state OF
                     #PULSING:
                         IF #pulse_timer.Q THEN
-                            #filter.STATUS.active_state := #WAITING;
+                            #filter.CORE.STATUS.active_state := #WAITING;
                         END_IF;
                         
                     #WAITING:
                         IF #interval_timer.Q THEN
-                            #filter.STATUS.active_sleeve := (#filter.STATUS.active_sleeve + 1) MOD 2;
-                            #filter.STATUS.active_state := #PULSING;
+                            #filter.SLEEVE_STATUS.active_sleeve := (#filter.SLEEVE_STATUS.active_sleeve + 1) MOD 2;
+                            #filter.CORE.STATUS.active_state := #PULSING;
                         END_IF;
                 END_CASE;
             END_IF;
@@ -122,8 +122,8 @@ FUNCTION_BLOCK "Filter_2_sleeves"
             #filter.DEVICES.XYA.CMD.auto := FALSE;
             #filter.DEVICES.XYB.CMD.auto := FALSE;
             
-            IF #filter.STATUS.state = #ACTIVE AND #filter.STATUS.active_state = #PULSING THEN
-                CASE #filter.STATUS.active_sleeve OF
+            IF #filter.CORE.STATUS.state = #ACTIVE AND #filter.CORE.STATUS.active_state = #PULSING THEN
+                CASE #filter.SLEEVE_STATUS.active_sleeve OF
                     0:
                         #filter.DEVICES.XYA.CMD.auto := TRUE;
                     1:
@@ -133,12 +133,12 @@ FUNCTION_BLOCK "Filter_2_sleeves"
         END_REGION
         
         REGION State mapping
-            #filter.STATUS.is_idle := (#filter.STATUS.state = #IDLE);
-            #filter.STATUS.is_active := (#filter.STATUS.state = #ACTIVE);
-            #filter.STATUS.is_pulsing := (#filter.STATUS.state = #ACTIVE) AND (#filter.STATUS.active_state = #PULSING);
-            #filter.STATUS.is_waiting := (#filter.STATUS.state = #ACTIVE) AND (#filter.STATUS.active_state = #WAITING);
-            #filter.STATUS.is_sleeve_A := #filter.STATUS.is_pulsing AND (#filter.STATUS.active_sleeve = 0);
-            #filter.STATUS.is_sleeve_B := #filter.STATUS.is_pulsing AND (#filter.STATUS.active_sleeve = 1);
+            #filter.CORE.STATUS.is_idle := (#filter.CORE.STATUS.state = #IDLE);
+            #filter.CORE.STATUS.is_active := (#filter.CORE.STATUS.state = #ACTIVE);
+            #filter.CORE.STATUS.is_pulsing := (#filter.CORE.STATUS.state = #ACTIVE) AND (#filter.CORE.STATUS.active_state = #PULSING);
+            #filter.CORE.STATUS.is_waiting := (#filter.CORE.STATUS.state = #ACTIVE) AND (#filter.CORE.STATUS.active_state = #WAITING);
+            #filter.SLEEVE_STATUS.is_sleeve_A := #filter.CORE.STATUS.is_pulsing AND (#filter.SLEEVE_STATUS.active_sleeve = 0);
+            #filter.SLEEVE_STATUS.is_sleeve_B := #filter.CORE.STATUS.is_pulsing AND (#filter.SLEEVE_STATUS.active_sleeve = 1);
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

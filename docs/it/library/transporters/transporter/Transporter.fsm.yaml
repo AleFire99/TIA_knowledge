@@ -1,0 +1,125 @@
+# Transporter — pneumatic transporter with injected inlet-valve (Valve_Core) and filter (Filter_Core) slots (Livello 4 typical, most complex device in the library).
+# Source: raw/Types/99 - Library/Objects/Transporters/Transporter.s7dcl. Doc: docs/it/library/transporters/transporter/index.md.
+
+schema_version: "1.0"
+fb: Transporter
+udt: UDT_Transporter
+source: Types/99 - Library/Objects/Transporters/Transporter.s7dcl
+
+label: TRANSPORTER
+
+states:
+  - id: NORMAL
+    value: 1
+    children:
+      - id: IDLE
+        value: 1
+        outputs: { XV01: false, XV02: true, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", FI: false }
+        description: vessel empty, vent open, awaiting a start command
+      - id: FILLING
+        value: 2
+        outputs: { XV01: true, XV02: true, XV03: true, XV04: false, XV05: false, XY: false, WT01: loading, FI: false }
+        description: inlet/vent/orifice open, Loading FB fills the vessel to its setpoint
+      - id: CLEANING
+        value: 3
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", FI: true }
+        description: all valves closed, injected filter (FI) driven directly for a fixed duration
+      - id: SEALING
+        value: 4
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", FI: false }
+        description: vessel sealed, waiting for all loading-side valves to confirm closed before pressurizing
+      - id: PRESSURIZING
+        value: 5
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: false, XY: true, WT01: "-", FI: false }
+        description: pressurization solenoid and discharge valve open, building vessel pressure above line pressure
+      - id: CONVEYING
+        value: 6
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: true, XV05: true, XY: true, WT01: unloading, FI: false }
+        description: line valve open, material flows to the line under the pressure differential while Unloading FB tracks the batch
+      - id: DEPRESSURIZING
+        value: 7
+        outputs: { XV01: false, XV02: false, XV03: false, XV04: false, XV05: false, XY: false, WT01: "-", FI: false }
+        description: vent open, releasing residual vessel pressure before returning to IDLE
+  - id: FAULT
+    value: 0
+    outputs: { XV01: false, XV02: true, XV03: false, XV04: true, XV05: false, XY: false, WT01: "stop+reset", FI: false }
+    description: fault; vent and discharge held open as a passively-safe state, scale stopped and reset, awaiting ack
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: "CMD.ack & !internal_error"
+    note: recovery always resets normal_state to IDLE explicitly, not re-derived from live sensors (unlike SS_valve's FAULT recovery)
+  - { from: "[*]", to: NORMAL.IDLE }
+  - { from: NORMAL.IDLE, to: NORMAL.FILLING, guard: CMD.start_loading }
+  - { from: NORMAL.IDLE, to: NORMAL.SEALING, guard: CMD.start_convey }
+  - { from: NORMAL.FILLING, to: NORMAL.IDLE, guard: CMD.stop }
+  - { from: NORMAL.FILLING, to: NORMAL.CLEANING, guard: WT01.STATUS.LOADING.loading_finished }
+  - { from: NORMAL.CLEANING, to: NORMAL.IDLE, guard: CMD.stop }
+  - { from: NORMAL.CLEANING, to: NORMAL.SEALING, guard: filter_cleaning_timer.Q }
+  - { from: NORMAL.SEALING, to: NORMAL.PRESSURIZING, guard: all_loading_closed }
+  - { from: NORMAL.PRESSURIZING, to: NORMAL.DEPRESSURIZING, guard: CMD.stop }
+  - { from: NORMAL.PRESSURIZING, to: NORMAL.CONVEYING, guard: pressure_gate_met }
+  - { from: NORMAL.CONVEYING, to: NORMAL.DEPRESSURIZING, guard: "CMD.stop | WT01.STATUS.UNLOADING.unloading_finished | WT01.STATUS.UNLOADING.is_paused" }
+  - { from: NORMAL.DEPRESSURIZING, to: NORMAL.IDLE, guard: depressurized }
+
+guard_formulas:
+  - name: all_loading_closed
+    expression: XV01.STATUS.is_closed AND XV02.CORE.STATUS.is_closed AND XV03.CORE.STATUS.is_closed
+  - name: pressure_gate_met
+    expression: PT01.Scaled_value >= PT02.Scaled_value + SETTING.pressure_delta
+  - name: depressurized
+    expression: PT01.Scaled_value <= SETTING.vessel_empty_thresh AND PT02.Scaled_value <= SETTING.line_empty_thresh
+  - name: internal_error
+    expression: XV01.STATUS.is_fault OR XV02.CORE.STATUS.is_fault OR XV03.CORE.STATUS.is_fault OR XV04.CORE.STATUS.is_fault OR XV05.CORE.STATUS.is_fault OR WT01.ALARMS.loading_timeout OR WT01.ALARMS.unloading_timeout OR NOT PSL OR LSH OR ALARMS.pressurization_timeout OR ALARMS.depressurization_timeout
+
+timers:
+  - name: filter_cleaning_timer
+    active_states: [NORMAL.CLEANING]
+    param: SETTING.cleaning_timer
+    raises: gates the CLEANING -> SEALING transition directly via its own Q output, not an alarm — note SETTING.cleaning_timer is the real raw-source field name (not SETTING.cleaning_timeout like every other timer's PT setting), confirmed against source, not a doc typo
+  - name: pressurizing_timer
+    active_states: [NORMAL.PRESSURIZING]
+    param: SETTING.pressurizing_timeout
+    raises: ALARMS.pressurization_timeout when stuck in PRESSURIZING
+  - name: depressurizing_timer
+    active_states: [NORMAL.DEPRESSURIZING]
+    param: SETTING.depressurizing_timeout
+    raises: ALARMS.depressurization_timeout when stuck in DEPRESSURIZING
+
+entry_actions:
+  - state: NORMAL.IDLE
+    shadow_var: prev_normal_state
+    actions:
+      - "WT01.CMD.stop pulses TRUE (stops the Loading FB if a cycle was mid-flight)"
+      - "WT01.CMD.reset pulses TRUE (returns the Unloading FB from PAUSED to IDLE)"
+      - "OUT.conveying_done pulses 1 scan TRUE"
+  - state: NORMAL.FILLING
+    shadow_var: prev_normal_state
+    actions:
+      - "WT01.CMD.loading_start pulses TRUE"
+  - state: NORMAL.SEALING
+    shadow_var: prev_normal_state
+    actions:
+      - "OUT.loading_finished pulses 1 scan TRUE"
+  - state: NORMAL.CONVEYING
+    shadow_var: prev_normal_state
+    actions:
+      - "WT01.CMD.unloading_start pulses TRUE"
+  - state: NORMAL.DEPRESSURIZING
+    shadow_var: prev_normal_state
+    actions:
+      - "WT01.CMD.stop pulses TRUE"
+
+notes:
+  - internal_error aggregates faults from all five internal valves (XV01-XV05), WT01's own loading/unloading timeouts, loss of line air (NOT PSL), vessel over-level (LSH), and the transporter's own two timeout alarms — a single guard with many possible root causes, each documented at its own source (valves, load-cells) rather than duplicated here.
+  - The top-level NORMAL -> FAULT guard is internal_error alone in source; pressurization_timeout/depressurization_timeout are already OR'd into internal_error's own expression, not a second independent condition, even though the hand-written doc spells both out again on the transition label for readability.
+  - In FAULT, XV02 (vent) and XV04 (discharge) are both held open — a passively-safe state that needs no actuation air to maintain, which matters because a fault may itself be the loss of line air (NOT PSL).
+  - CMD.start_convey lets the cycle skip FILLING/CLEANING entirely (IDLE -> SEALING) when the vessel already holds material carried over from a previous cycle.
+  - pressure_gate_met (PT01 >= PT02 + pressure_delta) is what gates CONVEYING — the line valve XV05 never opens until the vessel is sufficiently overpressured relative to the line, preventing backflow of material from the line into the vessel.
+  - Material moves from vessel to line by the pressure differential built during PRESSURIZING, not by any mechanical conveying action — the whole point of the pressurize-then-open-line-valve sequence.
+  - WT01's Loading/Unloading sub-FBs (fb_loading/fb_unloading) run every scan regardless of the transporter's own state; only the loading_start/unloading_start pulses fired on entering FILLING/CONVEYING actually engage them.
+  - "XV01 (UDT_Valve_Core) and FI (UDT_Filter_Core) are injected VAR_IN_OUT parameters, not owned child FB instances or UDT_Transporter fields — the composition root instantiates whichever concrete valve/filter FB fills them and calls that FB before calling Transporter, so their STATUS is already fresh when this FB reads it. This is the genericization the FB rename (Sealed_inlet_Transporter -> Transporter) reflects."
+  - "The old OUT.filter_cleaner_command output (signaling an external filter-cleaning system) was removed; CLEANING now drives FI.CMD.auto directly instead, since the filter itself is injected and can be commanded directly."

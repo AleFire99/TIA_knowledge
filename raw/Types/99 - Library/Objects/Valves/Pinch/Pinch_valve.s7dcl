@@ -54,11 +54,11 @@ FUNCTION_BLOCK "Pinch_valve"
         REGION Initialization
             IF #first_scan THEN
                 #first_scan := FALSE;
-                #XV.STATUS.state := #NORMAL;
+                #XV.CORE.STATUS.state := #NORMAL;
                 IF #XV.DEVICES.PSL THEN
-                    #XV.STATUS.normal_state := #CLOSED;
+                    #XV.CORE.STATUS.normal_state := #CLOSED;
                 ELSE
-                    #XV.STATUS.normal_state := #OPEN;
+                    #XV.CORE.STATUS.normal_state := #OPEN;
                 END_IF;
             END_IF;
         END_REGION
@@ -68,37 +68,37 @@ FUNCTION_BLOCK "Pinch_valve"
         END_REGION
         
         REGION Determine desired target
-            IF #XV.CMD.manual_mode THEN
-                #desired_command := #XV.CMD.manual;
+            IF #XV.CORE.CMD.manual_mode THEN
+                #desired_command := #XV.CORE.CMD.manual;
             ELSE
-                #desired_command := #XV.CMD.auto;
+                #desired_command := #XV.CORE.CMD.auto;
             END_IF;
         END_REGION
         
         REGION Movement timer
             #movement_timer(
-                            IN := (#XV.STATUS.state = #NORMAL AND
-                            (#XV.STATUS.normal_state = #OPENING OR #XV.STATUS.normal_state = #CLOSING)),
-                            PT := #XV.SETTING.actuator_timeout);
+                            IN := (#XV.CORE.STATUS.state = #NORMAL AND
+                            (#XV.CORE.STATUS.normal_state = #OPENING OR #XV.CORE.STATUS.normal_state = #CLOSING)),
+                            PT := #XV.CORE.SETTING.actuator_timeout);
         END_REGION
         
         REGION Alarms
-            IF (#XV.STATUS.state = #NORMAL AND #XV.STATUS.normal_state = #CLOSED AND NOT #XV.DEVICES.PSL) OR
-                (#XV.STATUS.state = #NORMAL AND #XV.STATUS.normal_state = #OPEN AND #XV.DEVICES.PSL) THEN
+            IF (#XV.CORE.STATUS.state = #NORMAL AND #XV.CORE.STATUS.normal_state = #CLOSED AND NOT #XV.DEVICES.PSL) OR
+                (#XV.CORE.STATUS.state = #NORMAL AND #XV.CORE.STATUS.normal_state = #OPEN AND #XV.DEVICES.PSL) THEN
                 #XV.ALARMS.sensor_mismatch := TRUE;
             END_IF;
             
             IF #movement_timer.Q THEN
-                IF #XV.STATUS.normal_state = #CLOSING THEN
+                IF #XV.CORE.STATUS.normal_state = #CLOSING THEN
                     #XV.ALARMS.failed_to_close := TRUE;
-                ELSIF #XV.STATUS.normal_state = #OPENING THEN
+                ELSIF #XV.CORE.STATUS.normal_state = #OPENING THEN
                     #XV.ALARMS.failed_to_open := TRUE;
                 END_IF;
             END_IF;
         END_REGION
         
         REGION Acknowledgment
-            IF #XV.CMD.ack THEN
+            IF #XV.CORE.CMD.ack THEN
                 #XV.ALARMS.sensor_mismatch := FALSE;
                 #XV.ALARMS.failed_to_close := FALSE;
                 #XV.ALARMS.failed_to_open := FALSE;
@@ -112,45 +112,45 @@ FUNCTION_BLOCK "Pinch_valve"
         END_REGION
         
         REGION Top FSM
-            CASE #XV.STATUS.state OF
+            CASE #XV.CORE.STATUS.state OF
                 #NORMAL:
                     IF #internal_error THEN
-                        #XV.STATUS.state := #FAULT;
+                        #XV.CORE.STATUS.state := #FAULT;
                     END_IF;
                     
                 #FAULT:
-                    IF #XV.CMD.ack AND NOT #internal_error THEN
+                    IF #XV.CORE.CMD.ack AND NOT #internal_error THEN
                         IF #XV.DEVICES.PSL THEN
-                            #XV.STATUS.normal_state := #CLOSED;
+                            #XV.CORE.STATUS.normal_state := #CLOSED;
                         ELSE
-                            #XV.STATUS.normal_state := #OPEN;
+                            #XV.CORE.STATUS.normal_state := #OPEN;
                         END_IF;
-                        #XV.STATUS.state := #NORMAL;
+                        #XV.CORE.STATUS.state := #NORMAL;
                     END_IF;
             END_CASE;
         END_REGION
         
         REGION Normal FSM
-            IF #XV.STATUS.state = #NORMAL THEN
-                CASE #XV.STATUS.normal_state OF
+            IF #XV.CORE.STATUS.state = #NORMAL THEN
+                CASE #XV.CORE.STATUS.normal_state OF
                     #CLOSED:
                         IF #desired_command THEN
-                            #XV.STATUS.normal_state := #OPENING;
+                            #XV.CORE.STATUS.normal_state := #OPENING;
                         END_IF;
                         
                     #OPENING:
                         IF NOT #XV.DEVICES.PSL THEN
-                            #XV.STATUS.normal_state := #OPEN;
+                            #XV.CORE.STATUS.normal_state := #OPEN;
                         END_IF;
                         
                     #OPEN:
                         IF NOT #desired_command THEN
-                            #XV.STATUS.normal_state := #CLOSING;
+                            #XV.CORE.STATUS.normal_state := #CLOSING;
                         END_IF;
                         
                     #CLOSING:
                         IF #XV.DEVICES.PSL THEN
-                            #XV.STATUS.normal_state := #CLOSED;
+                            #XV.CORE.STATUS.normal_state := #CLOSED;
                         END_IF;
                 END_CASE;
             END_IF;
@@ -159,8 +159,8 @@ FUNCTION_BLOCK "Pinch_valve"
         REGION Output mapping
             #XV.DEVICES.XY.CMD.auto := FALSE;
             
-            IF #XV.STATUS.state = #NORMAL THEN
-                CASE #XV.STATUS.normal_state OF
+            IF #XV.CORE.STATUS.state = #NORMAL THEN
+                CASE #XV.CORE.STATUS.normal_state OF
                     #CLOSED:
                         #XV.DEVICES.XY.CMD.auto := TRUE;
                     #CLOSING:
@@ -170,11 +170,11 @@ FUNCTION_BLOCK "Pinch_valve"
         END_REGION
         
         REGION State mapping
-            #XV.STATUS.is_closed := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #CLOSED);
-            #XV.STATUS.is_opening := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #OPENING);
-            #XV.STATUS.is_open := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #OPEN);
-            #XV.STATUS.is_closing := (#XV.STATUS.state = #NORMAL) AND (#XV.STATUS.normal_state = #CLOSING);
-            #XV.STATUS.is_fault := (#XV.STATUS.state = #FAULT);
+            #XV.CORE.STATUS.is_closed := (#XV.CORE.STATUS.state = #NORMAL) AND (#XV.CORE.STATUS.normal_state = #CLOSED);
+            #XV.CORE.STATUS.is_opening := (#XV.CORE.STATUS.state = #NORMAL) AND (#XV.CORE.STATUS.normal_state = #OPENING);
+            #XV.CORE.STATUS.is_open := (#XV.CORE.STATUS.state = #NORMAL) AND (#XV.CORE.STATUS.normal_state = #OPEN);
+            #XV.CORE.STATUS.is_closing := (#XV.CORE.STATUS.state = #NORMAL) AND (#XV.CORE.STATUS.normal_state = #CLOSING);
+            #XV.CORE.STATUS.is_fault := (#XV.CORE.STATUS.state = #FAULT);
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK
