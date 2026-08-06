@@ -38,7 +38,7 @@ REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 import config as cfg
 
-MANIFEST_VERSION = "2.1.0"
+MANIFEST_VERSION = "2.2.0"
 
 # Matches _.TypeName or just TypeName (VCI uses _.prefix for cross-references)
 _TYPE_RE = re.compile(r'"([^"]+)"|(?:_\.)?(\w+)')
@@ -335,6 +335,13 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict],
         }
 
     fb_section: dict[str, dict] = {}
+    # Every VAR_IN_OUT param besides `chosen` used to be silently dropped — e.g.
+    # Sealed_valve's `XV : UDT_Valve_Core` (the wrapped inner valve, wired in at the FB
+    # call, never a struct field of UDT_Sealed_Valve itself) or Transporter's
+    # `XV01 : UDT_Valve_Core` / `FI : UDT_Filter_Core` (extra wired slots beyond its own
+    # embedded XV02-XV05 fields). Keyed by param name to dedupe across multiple FBs
+    # (ctrl + sim) mapping to the same UDT.
+    wired_slots_by_udt: dict[str, dict[str, str]] = {}
     for fb in fbs:
         params = fb["params"]
         # Prefer the VAR_IN_OUT param whose UDT has a real DEVICES surface — that's the
@@ -356,6 +363,17 @@ def build_manifest(udts: list[dict], fbs: list[dict], sim_overrides: list[dict],
             fb_section[udt_key]["sim"] = entry
         else:
             fb_section[udt_key]["ctrl"].append(entry)
+
+        for p in params:
+            if p is chosen:
+                continue
+            wired_slots_by_udt.setdefault(udt_key, {})[p["param_name"]] = p["udt_type"]
+
+    for udt_key, slots in wired_slots_by_udt.items():
+        if udt_key in udt_section:
+            udt_section[udt_key]["wired_slots"] = [
+                {"param": param, "type": udt_type} for param, udt_type in sorted(slots.items())
+            ]
 
     for override in sim_overrides:
         udt_key = override["udt"]
