@@ -1,0 +1,57 @@
+# CI validation for tia-knowledge. No test suite exists (docs/config repo) —
+# this instead validates the things that break silently: raw/ -> manifest
+# consistency, FSM yaml structure, and both locale site builds.
+#
+# NOTE: inert until a Gitea Actions runner is registered on the instance
+# (none exists yet as of this writing — see CLAUDE.md's Git Flow section).
+name: ci
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      # Mirrors Dockerfile's corporate-CA trust step — no-ops when certs/ is
+      # empty (e.g. runner not behind the same TLS-inspecting proxy).
+      - name: Trust corporate CA (if present)
+        run: |
+          if [ -n "$(ls -A certs/ 2>/dev/null)" ]; then
+            sudo cp certs/*.crt /usr/local/share/ca-certificates/
+            sudo update-ca-certificates
+          fi
+
+      - name: Install dependencies
+        run: uv sync --native-tls
+
+      - name: Ingest raw/ and check manifest is up to date
+        run: |
+          uv run --native-tls python scripts/ingest.py
+          git diff --exit-code dist/library_manifest.json || {
+            echo "::error::dist/library_manifest.json is stale — raw/ changed without re-running scripts/ingest.py and committing the result.";
+            exit 1;
+          }
+
+      - name: Validate FSM yaml against schema
+        run: uv run --native-tls python scripts/validate_fsm.py
+
+      - name: Build site (IT, strict)
+        run: uv run --native-tls zensical build --config-file zensical.it.toml --strict
+
+      - name: Build site (EN, strict)
+        run: uv run --native-tls zensical build --config-file zensical.en.toml --strict
+
+      - name: Docker build
+        run: docker build -t alefires-wiki:ci .

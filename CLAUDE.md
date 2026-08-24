@@ -858,7 +858,22 @@ two sub-pages side by side with no explanation of why they're separate.
 Commit convention: `type: short description`
 Types: `feat` `fix` `chore` `docs` `refactor`
 
-Never commit directly to `main`.
+Never commit directly to `main`. This is enforced, not just convention: Gitea branch
+protection blocks direct pushes to `main` and `develop` — every change lands through a
+pull request. `.gitea/PULL_REQUEST_TEMPLATE.md` covers the checks a PR should pass before
+merge (manifest re-ingested, both locales updated together, `.fsm.yaml` updated before
+re-rendering, strict Zensical build passing locally).
+
+`.gitea/workflows/ci.yml` runs on every PR into `develop`/`main` — ingest.py re-run +
+manifest-diff check, `scripts/validate_fsm.py` against `schema/fsm.schema.json`, strict
+Zensical builds for both locales, and a Docker build. **Not yet a required/merge-blocking
+check** — no Gitea Actions runner is registered on the instance yet (it's slated to move to
+a Docker-hosted Gitea within the near term; runner registration + making `ci` a required
+status check is a deliberate follow-up once that migration lands, not an oversight).
+
+Recurring work is tracked as Gitea issues using the three templates under
+`.gitea/issue_template/`: `doc-bug` (generated page wrong/stale), `new-device-type` (a
+UDT/FB needs a wiki page), `source-update` (raw/ needs a fresh TIA Portal re-export).
 
 ### Gitea Release Process
 
