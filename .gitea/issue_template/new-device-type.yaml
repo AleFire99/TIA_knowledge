@@ -1,0 +1,51 @@
+name: "New device type needs documentation"
+about: "A UDT/FB exists (or is planned) in the library and needs a wiki page"
+title: "[new-device]: "
+labels: ["new-device"]
+body:
+  - type: input
+    id: udt-name
+    attributes:
+      label: UDT name
+      placeholder: UDT_...
+    validations:
+      required: true
+
+  - type: input
+    id: fb-name
+    attributes:
+      label: Controlling FB name(s)
+      description: One name, or several if the UDT has more than one controlling FB (like UDT_Load_cells)
+    validations:
+      required: true
+
+  - type: input
+    id: category
+    attributes:
+      label: Category
+      description: Which docs/it/library/<category>/ this belongs under (existing or new)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: has-fsm
+    attributes:
+      label: State machine
+      options:
+        - label: This FB has its own FSM (needs a .fsm.yaml authored)
+        - label: This FB fully delegates its FSM to an embedded child instance
+        - label: Stateless (FC module, or no FSM of its own)
+
+  - type: checkboxes
+    id: raw-export
+    attributes:
+      label: raw/ export status
+      options:
+        - label: Already exported to raw/ (ready to document)
+        - label: Not yet exported — needs scripts/export.py or manual TIA Portal export first
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Anything unusual — Core UDT embedding, injected VAR_IN_OUT params, delegation targets, etc.

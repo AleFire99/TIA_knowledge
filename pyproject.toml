@@ -8,6 +8,11 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
+[dependency-groups]
+dev = [
+    "jsonschema>=4.23",
+]
+
 # siemens_tia_scripting must be installed manually from the local .whl file.
 # Python 3.12 ONLY (cp312 wheel):
 #

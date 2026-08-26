@@ -1,0 +1,95 @@
+# CI validation + registry publish for tia-knowledge. No test suite exists
+# (docs/config repo) — validate instead checks the things that break
+# silently: raw/ -> manifest consistency, FSM yaml structure, and both
+# locale site builds. publish pushes the built wiki image to this repo's own
+# Gitea container registry on every develop/main merge.
+#
+# NOTE: inert until a Gitea Actions runner is registered on the instance —
+# see CLAUDE.md's Git Flow section. The publish job additionally needs the
+# runner set up for Docker-outside-of-Docker (host /var/run/docker.sock
+# mounted in and allow-listed via the runner's container.valid_volumes) —
+# same doc.
+name: ci
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      # Mirrors Dockerfile's corporate-CA trust step — no-ops when certs/ is
+      # empty (e.g. runner not behind the same TLS-inspecting proxy).
+      - name: Trust corporate CA (if present)
+        run: |
+          if [ -n "$(ls -A certs/ 2>/dev/null)" ]; then
+            sudo cp certs/*.crt /usr/local/share/ca-certificates/
+            sudo update-ca-certificates
+          fi
+
+      - name: Install dependencies
+        run: uv sync --native-tls
+
+      - name: Ingest raw/ and check manifest is up to date
+        run: |
+          uv run --native-tls python scripts/ingest.py
+          git diff --exit-code dist/library_manifest.json || {
+            echo "::error::dist/library_manifest.json is stale — raw/ changed without re-running scripts/ingest.py and committing the result.";
+            exit 1;
+          }
+
+      - name: Validate FSM yaml against schema
+        run: uv run --native-tls python scripts/validate_fsm.py
+
+      - name: Build site (IT, strict)
+        run: uv run --native-tls zensical build --config-file zensical.it.toml --strict
+
+      - name: Build site (EN, strict)
+        run: uv run --native-tls zensical build --config-file zensical.en.toml --strict
+
+      - name: Docker build
+        run: docker build -t alefires-wiki:ci .
+
+  publish:
+    needs: validate
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine image tags
+        id: tags
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            VERSION=$(grep -m1 '^version' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+            echo "tags=latest v$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "tags=develop" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to the Gitea container registry
+        run: |
+          REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push
+        run: |
+          REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
+          IMAGE="$REGISTRY/alessandro_firetto/tia-knowledge/alefires-wiki"
+          docker build -t local-build .
+          for TAG in ${{ steps.tags.outputs.tags }}; do
+            docker tag local-build "$IMAGE:$TAG"
+            docker push "$IMAGE:$TAG"
+          done

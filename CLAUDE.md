@@ -858,7 +858,41 @@ two sub-pages side by side with no explanation of why they're separate.
 Commit convention: `type: short description`
 Types: `feat` `fix` `chore` `docs` `refactor`
 
-Never commit directly to `main`.
+Never commit directly to `main`. This is enforced, not just convention: Gitea branch
+protection blocks direct pushes to `main` and `develop` — every change lands through a
+pull request. `.gitea/PULL_REQUEST_TEMPLATE.md` covers the checks a PR should pass before
+merge (manifest re-ingested, both locales updated together, `.fsm.yaml` updated before
+re-rendering, strict Zensical build passing locally).
+
+Gitea instance: `http://192.168.0.10:3000`, user `alessandro_firetto` (migrated there from
+an earlier `192.168.0.41` node, org `AleFire`, on 2026-08-26 — the old node is still up but
+no longer used; everything below refers to the current `192.168.0.10` instance). Runs in
+Docker on that host; the Actions runner is `act_runner` registered as a sibling container on
+the same docker-compose network, configured for Docker-outside-of-Docker (host
+`/var/run/docker.sock` mounted in, allow-listed via the runner's own `container.valid_volumes`
+config) since the `publish` job below needs a real Docker daemon to build/push images.
+
+`.gitea/workflows/ci.yml` has two jobs:
+- `validate` — runs on every PR into `develop`/`main`: ingest.py re-run + manifest-diff
+  check, `scripts/validate_fsm.py` against `schema/fsm.schema.json`, strict Zensical builds
+  for both locales, and a Docker build (no push).
+- `publish` — runs only on a `push` to `develop` or `main` (not on PRs): builds the same
+  Docker image and pushes it to this repo's own Gitea container registry at
+  `192.168.0.10:3000/alessandro_firetto/tia-knowledge/alefires-wiki`, tagged `develop`
+  (rolling preview, every `develop` merge) or `latest` + `v<pyproject version>` (every
+  `main` merge/release). Authenticates with the `secrets.GITHUB_TOKEN` Gitea Actions
+  auto-injects per job — no separately managed registry credential. This is a distinct
+  artifact from the manual LAN-serving Docker workflow in Step 5 above — publishing to the
+  registry doesn't redeploy the running LAN container; that's still a manual operator step.
+
+Neither job is yet a required/merge-blocking status check — add `status_check_contexts` to
+the branch-protection rules once `validate` has reported at least one real result on a live
+PR (confirms the runner actually works, rather than locking merges behind a check that can
+never report).
+
+Recurring work is tracked as Gitea issues using the three templates under
+`.gitea/issue_template/`: `doc-bug` (generated page wrong/stale), `new-device-type` (a
+UDT/FB needs a wiki page), `source-update` (raw/ needs a fresh TIA Portal re-export).
 
 ### Gitea Release Process
 
