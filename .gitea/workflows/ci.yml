@@ -4,11 +4,12 @@
 # locale site builds. publish pushes the built wiki image to this repo's own
 # Gitea container registry on every develop/main merge.
 #
-# NOTE: inert until a Gitea Actions runner is registered on the instance —
-# see CLAUDE.md's Git Flow section. The publish job additionally needs the
-# runner set up for Docker-outside-of-Docker (host /var/run/docker.sock
-# mounted in and allow-listed via the runner's container.valid_volumes) —
-# same doc.
+# The runner is set up for Docker-outside-of-Docker (host /var/run/docker.sock
+# mounted into act_runner itself, allow-listed via its container.valid_volumes)
+# — see CLAUDE.md's Git Flow section. act_runner auto-forwards that socket into
+# every job container on its own; do NOT also declare it under a job's
+# container.volumes here, or container creation fails with "Duplicate mount
+# point: /var/run/docker.sock".
 name: ci
 
 on:
@@ -26,8 +27,6 @@ jobs:
     # declared here.
     container:
       image: docker.gitea.com/runner-images:ubuntu-latest
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,8 +74,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: docker.gitea.com/runner-images:ubuntu-latest
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
     steps:
       - name: Checkout
         uses: actions/checkout@v4
