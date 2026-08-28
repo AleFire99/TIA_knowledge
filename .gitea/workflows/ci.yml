@@ -36,11 +36,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Mirrors Dockerfile's corporate-CA trust step — no-ops when certs/ is
-      # empty (e.g. runner not behind the same TLS-inspecting proxy).
+      # Mirrors Dockerfile's corporate-CA trust step — no-ops when certs/ has
+      # no *.crt file (e.g. runner not behind the same TLS-inspecting proxy).
+      # certs/ itself is tracked (README.md + .gitignore) so it's never empty
+      # in CI even when the actual *.crt is gitignored/local-only — checking
+      # `ls -A certs/` for that reason gives a false positive and then `cp`
+      # fails on the unexpanded glob; check for the glob match directly.
       - name: Trust corporate CA (if present)
         run: |
-          if [ -n "$(ls -A certs/ 2>/dev/null)" ]; then
+          if ls certs/*.crt >/dev/null 2>&1; then
             sudo cp certs/*.crt /usr/local/share/ca-certificates/
             sudo update-ca-certificates
           fi
