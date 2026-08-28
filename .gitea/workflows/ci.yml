@@ -76,6 +76,11 @@ jobs:
     needs: validate
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
+    # secrets.GITHUB_TOKEN defaults to no package access — Gitea Actions denies
+    # registry pushes with it unless this job explicitly grants packages: write.
+    permissions:
+      contents: read
+      packages: write
     container:
       image: docker.gitea.com/runner-images:ubuntu-latest
     steps:
