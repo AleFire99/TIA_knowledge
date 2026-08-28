@@ -70,7 +70,7 @@ jobs:
         run: uv run --native-tls zensical build --config-file zensical.en.toml --strict
 
       - name: Docker build
-        run: docker build -t alefires-wiki:ci .
+        run: docker build -t nte-aut-wiki:ci .
 
   publish:
     needs: validate
@@ -111,7 +111,7 @@ jobs:
       - name: Build and push
         run: |
           REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
-          IMAGE="$REGISTRY/alessandro_firetto/tia-knowledge/alefires-wiki"
+          IMAGE="$REGISTRY/alessandro_firetto/tia-knowledge/nte-aut-wiki"
           docker build -t local-build .
           for TAG in ${{ steps.tags.outputs.tags }}; do
             docker tag local-build "$IMAGE:$TAG"
