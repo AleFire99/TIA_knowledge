@@ -143,8 +143,8 @@ server. Full dual-locale + language-switcher check happens via the Docker build
 ### Step 5 — Serve on LAN (Docker)
 
 ```bash
-docker build -t alefires-wiki .
-docker run -d -p 8080:80 -v "${PWD}/dist:/data:ro" alefires-wiki
+docker build -t nte-aut-wiki .
+docker run -d -p 8080:80 -v "${PWD}/dist:/data:ro" nte-aut-wiki
 # Italian (default): http://<host-ip>:8080/
 # English:           http://<host-ip>:8080/en/
 # Manifest API:      http://<host-ip>:8080/api/manifest
@@ -878,10 +878,15 @@ config) since the `publish` job below needs a real Docker daemon to build/push i
   for both locales, and a Docker build (no push).
 - `publish` — runs only on a `push` to `develop` or `main` (not on PRs): builds the same
   Docker image and pushes it to this repo's own Gitea container registry at
-  `192.168.0.10:3000/alessandro_firetto/tia-knowledge/alefires-wiki`, tagged `develop`
+  `192.168.0.10:3000/alessandro_firetto/tia-knowledge/nte-aut-wiki`, tagged `develop`
   (rolling preview, every `develop` merge) or `latest` + `v<pyproject version>` (every
-  `main` merge/release). Authenticates with the `secrets.GITHUB_TOKEN` Gitea Actions
-  auto-injects per job — no separately managed registry credential. This is a distinct
+  `main` merge/release). Authenticates with the `secrets.REGISTRY_TOKEN` repo secret — a
+  personal access token scoped to `read:package`/`write:package` — since Gitea Actions'
+  auto-injected `GITHUB_TOKEN` cannot authenticate to the container registry at all
+  (confirmed: always 401 unauthorized, unaffected by the job's `permissions:` block; a
+  known Gitea limitation, not something fixable from the workflow side). The pushed package
+  is linked to this repo (`packages/{owner}/container/{name}/-/link/{repo_name}`) so it
+  shows up under the repo's own Packages tab rather than only the user's. This is a distinct
   artifact from the manual LAN-serving Docker workflow in Step 5 above — publishing to the
   registry doesn't redeploy the running LAN container; that's still a manual operator step.
 
