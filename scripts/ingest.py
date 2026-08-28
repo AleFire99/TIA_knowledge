@@ -462,6 +462,22 @@ def main() -> None:
     ctrl_overrides = _load_ctrl_overrides()
     udt_labels     = _load_udt_labels()
     manifest = build_manifest(udts, fbs, sim_overrides, ctrl_overrides, udt_labels)
+
+    # Only bump generated_at when something besides the timestamp actually
+    # changed — otherwise every re-run (e.g. CI re-ingesting an unchanged
+    # raw/) touches the file and trips the "manifest is stale" check on
+    # nothing but its own timestamp.
+    if cfg.MANIFEST_PATH.exists():
+        try:
+            existing = json.loads(cfg.MANIFEST_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing = None
+        if existing is not None:
+            existing_without_ts = {k: v for k, v in existing.items() if k != "generated_at"}
+            new_without_ts = {k: v for k, v in manifest.items() if k != "generated_at"}
+            if existing_without_ts == new_without_ts:
+                manifest["generated_at"] = existing["generated_at"]
+
     write_manifest_atomic(manifest, cfg.MANIFEST_PATH)
     _write_delta(delta, cfg.INGEST_DELTA_PATH, total=len(current_hashes))
     _save_cache(current_hashes, cfg.INGEST_CACHE_PATH)
