@@ -1,4 +1,30 @@
 ﻿MultiLingualTexts:
+  - id: MLC_4wY
+    en-US: |2-
+       ============================================================
+        TRANSPORTER
+        Flat FSM â€” Moore machine
+
+        Top state : TR.STATUS.state   (NORMAL=1 / FAULT=0)
+        Flat step : TR.STATUS.step    (IDLE=10 / FILLING=20 / SEALING=30 /
+                                       PRESSURIZING=40 / CONVEYING=50 / DEPRESSURIZING=60)
+
+        Devices
+          XV01  Inlet (loading) valve        UDT_SS_Sealed_Valve
+          XV02  Vent valve                   UDT_DS_Valve
+          XV03  Orifice valve                UDT_SS_Valve
+          XV04  Outlet (discharge) valve     UDT_SS_Valve
+          XV05  Line valve                   UDT_SS_Valve
+          XY    Pressurization solenoid      UDT_Solenoid_valve
+          WT01  Load cells                   UDT_Load_cells
+          LSH   Vessel high-level switch     Bool
+          PSL   Supply air pressure switch   Bool
+          PT01  Vessel pressure              UDT_Analogic_signal
+          PT02  Line pressure                UDT_Analogic_signal
+       ============================================================
+       ============================================================
+        UDT_Transporter
+       ============================================================
   - id: MLC_ef
     en-US: 'DEVICE - Vent valve '
   - id: MLC_ce

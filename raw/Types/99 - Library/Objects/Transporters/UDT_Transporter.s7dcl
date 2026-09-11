@@ -1,4 +1,5 @@
 ﻿TYPE
+    { S7_BlockComment := "MLC_4wY" }
     UDT_Transporter : STRUCT
         { S7_Access := "ReadOnly := External" }
         DEVICES : STRUCT

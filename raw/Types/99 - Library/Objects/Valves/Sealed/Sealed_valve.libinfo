@@ -3,9 +3,8 @@
   Comment:
     en-US: Wrapper of SS_valve
 LibraryVersion:
-  VersionNumber: 3.0.0
+  VersionNumber: 3.2.0
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: |+
-      Moved injected XV as inout
+    en-US: Added full FSM for delaying sealing and deflating

@@ -9,5 +9,18 @@
             XY_seal : _.UDT_Solenoid_valve;
         END_STRUCT;
         CORE : _.UDT_Valve_Core;
+        SETTING : STRUCT
+            seal_deflate_time : Time := T#2s;
+            seal_inflate_time : Time := T#2s;
+        END_STRUCT;
+        { S7_Access := "ReadOnly := External" }
+        STATUS : STRUCT
+            { S7_Access := "ReadOnly := External" }
+            normal_state : Int := 1;
+            { S7_Access := "ReadOnly := External" }
+            is_deflating : Bool;
+            { S7_Access := "ReadOnly := External" }
+            is_sealing : Bool;
+        END_STRUCT;
     END_STRUCT;
 END_TYPE
