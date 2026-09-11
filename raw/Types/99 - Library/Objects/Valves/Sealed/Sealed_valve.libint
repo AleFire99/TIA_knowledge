@@ -1,9 +1,9 @@
 ﻿DocumentHash:
   - FileName: Sealed_valve.s7dcl
-    Hash: 17BtjMGz65Ac0OSc6bteUw5o2ZDHgu6OSm0FwMgs/Nc=
-LibraryMetaFileHash: SXOxffFBDqk0apjwyufwoBZk5KLCs144/OtVDnx7v3Q=
+    Hash: 8PG4foJ2d+gqCJjydXEkIJjc02wa7AgM+5bdGako6xw=
+LibraryMetaFileHash: aOv6472oFHexG4l4L9gHH+e1sO3jBDV0jR56gZeMeYQ=
 LibraryVersion:
-  Guid: 24fd016b-c55f-40a0-b833-8033ec09e346
+  Guid: b03d9cd0-0fa4-47cd-9fa7-32a44bf074dc
   DependsOn:
     - TypeName: UDT_Sealed_Valve
       VersionNumber: 3.2.1

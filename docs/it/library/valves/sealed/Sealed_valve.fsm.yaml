@@ -45,8 +45,8 @@ transitions:
   - { from: NORMAL, to: FAULT, guard: internal_error }
   - from: FAULT
     to: NORMAL
-    guard: "!internal_error"
-    note: "no CMD.ack term here, unlike every other valve/diverter FSM in this library (SS_valve/DS_valve/Pinch_diverter/Nolvac all gate FAULT recovery on CMD.ack & !internal_error) — this FB latches nothing of its own; CORE.CMD.ack is forwarded to XV every scan and the injected valve owns the actual fault latch, so recovery here only tracks XV.STATUS.is_fault clearing"
+    guard: "CORE.CMD.ack & !internal_error"
+    note: "recovery now requires an explicit operator acknowledge, matching every other valve/diverter FSM in this library (SS_valve/DS_valve/Pinch_diverter/Nolvac all gate FAULT recovery on CMD.ack & !internal_error) — this FB still latches nothing of its own: CORE.CMD.ack is forwarded to XV every scan and the injected valve owns the underlying is_fault latch, but Sealed_valve also gates its own FAULT exit on the same ack, since auto-clearing on a sealed/atmosphere-isolating, operator-attended installation is a safety regression (issue #16)"
   - from: "[*]"
     to: NORMAL.CLOSED_SEALED
     guard: "XV.STATUS.is_closed"

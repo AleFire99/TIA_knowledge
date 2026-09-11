@@ -99,7 +99,7 @@ Se il comando di apertura viene ritirato mentre si è ancora in `DEFLATING`, il 
 
 `sealed_XV.CORE.STATUS` non è una copia di `XV.STATUS`, ma una proiezione sul contratto a 4 fasi condiviso dalla famiglia valvole: `DEFLATING` confluisce in `CORE.STATUS.is_opening` e `SEALING` in `CORE.STATUS.is_closing`, quindi `CORE.STATUS.is_closed` risulta TRUE solo quando il disco è chiuso **e** il sigillo ha finito di gonfiarsi. `UDT_Sealed_Valve.CORE` è a sua volta iniettabile (es. un futuro slot di Propulsore): una copia diretta lascerebbe che un consumatore a valle veda `is_closed` mentre il sigillo è ancora a metà del proprio ciclo di inflate, un falso positivo che la proiezione evita per costruzione.
 
-In `FAULT`, `XY_seal.CMD.auto` segue direttamente `XV.STATUS.is_closed` invece di essere forzato incondizionatamente a TRUE — gonfiare il sigillo contro un disco parzialmente aperto di una valvola iniettata di tipo sconosciuto potrebbe estruderlo o danneggiarlo. `XV.CMD.auto` resta FALSE per tutta la durata di `FAULT`, quindi una valvola recuperabile deriva verso la chiusura da sola e si risigilla non appena la raggiunge. Il recupero da `FAULT` non richiede `CMD.ack`, a differenza di ogni altra macchina a stati valvola/deviatore di questa libreria — questo blocco non ha un proprio latch: `CORE.CMD.ack` viene inoltrato a `XV` ad ogni scan e la valvola iniettata possiede il latch effettivo, quindi qui il recupero segue esclusivamente l'azzeramento di `XV.STATUS.is_fault`.
+In `FAULT`, `XY_seal.CMD.auto` segue direttamente `XV.STATUS.is_closed` invece di essere forzato incondizionatamente a TRUE — gonfiare il sigillo contro un disco parzialmente aperto di una valvola iniettata di tipo sconosciuto potrebbe estruderlo o danneggiarlo. `XV.CMD.auto` resta FALSE per tutta la durata di `FAULT`, quindi una valvola recuperabile deriva verso la chiusura da sola e si risigilla non appena la raggiunge. Il recupero da `FAULT` richiede `CORE.CMD.ack`, come ogni altra macchina a stati valvola/deviatore di questa libreria: un operatore deve confermare consapevolmente prima che il recupero automatico riprenda, requisito necessario per una valvola sigillata/isolante l'atmosfera installata in un pannello presidiato, di classe antideflagrante. Questo blocco continua a non possedere un proprio latch — `CORE.CMD.ack` viene comunque inoltrato a `XV` ad ogni scan e la valvola iniettata possiede il latch effettivo dell'errore — ma ora vincola anche la propria uscita da `FAULT` allo stesso ack, invece di limitarsi a tracciare l'azzeramento di `XV.STATUS.is_fault`.
 
 Non esiste una guardia "ambigua al primo scan" come nelle altre macchine a stati valvola di questa libreria: la valvola iniettata viene chiamata dal composition root prima di `Sealed_valve`, quindi `XV.STATUS.is_closed`/`is_open` sono già risolti in modo affidabile quando questo blocco li legge, anche al primo scan.
 
@@ -114,7 +114,7 @@ stateDiagram-v2
 state SEALED_VALVE{
     [*] --> NORMAL
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : !internal_error
+    FAULT --> NORMAL : CORE.CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> CLOSED_SEALED : XV.STATUS.is_closed

@@ -99,7 +99,7 @@ If the open command is withdrawn while still in `DEFLATING`, the block returns s
 
 `sealed_XV.CORE.STATUS` is not a copy of `XV.STATUS`, but a projection onto the shared 4-phase valve contract: `DEFLATING` folds into `CORE.STATUS.is_opening` and `SEALING` into `CORE.STATUS.is_closing`, so `CORE.STATUS.is_closed` reads TRUE only once the disc is closed **and** the seal has finished inflating. `UDT_Sealed_Valve.CORE` is itself injectable (e.g. a future Transporter slot): a direct copy would let a downstream consumer see `is_closed` while the seal is still mid-inflate — a false positive the projection rules out by construction.
 
-In `FAULT`, `XY_seal.CMD.auto` follows `XV.STATUS.is_closed` directly rather than being forced unconditionally TRUE — inflating the seal against a partly-open disc of an unknown injected valve type could extrude or damage it. `XV.CMD.auto` stays FALSE throughout `FAULT`, so a recoverable valve drifts closed on its own and re-seals once it gets there. Recovery from `FAULT` requires no `CMD.ack`, unlike every other valve/diverter state machine in this library — this block has no latch of its own: `CORE.CMD.ack` is forwarded to `XV` every scan and the injected valve owns the actual latch, so recovery here follows only `XV.STATUS.is_fault` clearing.
+In `FAULT`, `XY_seal.CMD.auto` follows `XV.STATUS.is_closed` directly rather than being forced unconditionally TRUE — inflating the seal against a partly-open disc of an unknown injected valve type could extrude or damage it. `XV.CMD.auto` stays FALSE throughout `FAULT`, so a recoverable valve drifts closed on its own and re-seals once it gets there. Recovery from `FAULT` requires `CORE.CMD.ack`, matching every other valve/diverter state machine in this library: an operator must consciously acknowledge before automatic recovery resumes, a requirement for a sealed/atmosphere-isolating valve on an operator-attended, explosion-proof-panel-class installation. This block still has no latch of its own — `CORE.CMD.ack` is still forwarded to `XV` every scan and the injected valve owns the actual fault latch — but it now also gates its own exit from `FAULT` on that same ack, instead of only tracking `XV.STATUS.is_fault` clearing.
 
 There's no "ambiguous on first scan" guard like the other valve state machines in this library: the injected valve is called by the composition root before `Sealed_valve`, so `XV.STATUS.is_closed`/`is_open` are already reliably resolved by the time this block reads them, even on the first scan.
 
@@ -114,7 +114,7 @@ stateDiagram-v2
 state SEALED_VALVE{
     [*] --> NORMAL
     NORMAL --> FAULT : internal_error
-    FAULT --> NORMAL : !internal_error
+    FAULT --> NORMAL : CORE.CMD.ack & !internal_error
 
     state NORMAL {
         [*] --> CLOSED_SEALED : XV.STATUS.is_closed
