@@ -2,7 +2,7 @@
 
 Pneumatically controlled valves for isolation, actuation, and process control.
 
-The `SETTING.actuator_timeout` parameter (default `T#2s`, the maximum time allowed to complete an opening or closing move) is the same, with the same meaning, on every valve that has its own `movement_timer` — Pinch, Butterfly SS, Butterfly DS. Modules that embed one of these (Sealed, Pinch Diverter, Transporter) don't have their own `actuator_timeout`: they forward the value they receive to the internal instance on every scan.
+The `SETTING.actuator_timeout` parameter (default `T#2s`, the maximum time allowed to complete an opening or closing move) is the same, with the same meaning, on every valve that has its own `movement_timer` — Pinch, Butterfly SS, Butterfly DS. Modules that embed one of these (Sealed, Pinch Diverter, Transporter) don't have their own `actuator_timeout`: they forward the value they receive to the internal instance on every scan. Sealed still has two timers of its own (`seal_deflate_time`/`seal_inflate_time`) for its own deflate/seal interlock — see [Sealed Valve](sealed/index.md#timer).
 
 ## Core
 
@@ -65,4 +65,4 @@ All four contribute to `internal_error`, a variable internal to the block (not e
 | [Pinch Valve](pinch/index.md) | 2 | Compresses a flexible hose; a pressure switch confirms the closed position |
 | [Butterfly Valve — Single Solenoid (SS)](butterfly/single_solenoid/index.md) | 2 | Spring return to close; position feedback via ZSL/ZSH |
 | [Butterfly Valve — Double Solenoid (DS)](butterfly/double_solenoid/index.md) | 2 | Bistable, double-acting; position feedback via ZSL/ZSH |
-| [Sealed Valve](sealed/index.md) | 3 | Wraps any valve-family member (`CORE`) with a dedicated sealing solenoid valve |
+| [Sealed Valve](sealed/index.md) | 3 | Composes any valve-family member (`CORE`) with a dedicated sealing solenoid valve under its own deflate/seal state machine |
