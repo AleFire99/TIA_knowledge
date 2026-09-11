@@ -880,19 +880,34 @@ config) since the `publish` job below needs a real Docker daemon to build/push i
 - `validate` — runs on every PR into `develop`/`main`: ingest.py re-run + manifest-diff
   check, `scripts/validate_fsm.py` against `schema/fsm.schema.json`, strict Zensical builds
   for both locales, and a Docker build (no push).
-- `publish` — runs only on a `push` to `develop` or `main` (not on PRs): builds the same
-  Docker image and pushes it to this repo's own Gitea container registry at
+- `publish` — runs on a `push` to `develop`, or on a `v*` **tag** push (not on PRs, and
+  **not** on a plain push to `main`): builds the same Docker image and pushes it to this
+  repo's own Gitea container registry at
   `192.168.0.10:3000/alessandro_firetto/tia-knowledge/nte-aut-wiki`, tagged `develop`
-  (rolling preview, every `develop` merge) or `latest` + `v<pyproject version>` (every
-  `main` merge/release). Authenticates with the `secrets.REGISTRY_TOKEN` repo secret — a
-  personal access token scoped to `read:package`/`write:package` — since Gitea Actions'
-  auto-injected `GITHUB_TOKEN` cannot authenticate to the container registry at all
-  (confirmed: always 401 unauthorized, unaffected by the job's `permissions:` block; a
-  known Gitea limitation, not something fixable from the workflow side). The pushed package
+  (rolling preview, every `develop` merge) or `latest` + the pushed tag name itself (every
+  release — see Gitea Release Process below). Authenticates with the `secrets.REGISTRY_TOKEN`
+  repo secret — a personal access token scoped to `read:package`/`write:package` — since
+  Gitea Actions' auto-injected `GITHUB_TOKEN` cannot authenticate to the container registry
+  at all (confirmed: always 401 unauthorized, unaffected by the job's `permissions:` block;
+  a known Gitea limitation, not something fixable from the workflow side). The pushed package
   is linked to this repo (`packages/{owner}/container/{name}/-/link/{repo_name}`) so it
   shows up under the repo's own Packages tab rather than only the user's. This is a distinct
   artifact from the manual LAN-serving Docker workflow in Step 5 above — publishing to the
   registry doesn't redeploy the running LAN container; that's still a manual operator step.
+  Gating on the tag push (rather than the `main`-merge push) is deliberate, for two reasons:
+  it keeps every published version image tied to an actual, deliberate release action instead
+  of any merge that happens to land on `main`; and it ties the version tag's value directly
+  to the git tag name itself, with no room to drift from a separately-tracked version string.
+  It used to read the version from `pyproject.toml` at build time on every `main` push
+  instead — decoupled from the actual `git tag` created in the Gitea Release Process below,
+  so a `release/*` merge that forgot to bump `pyproject.toml` first would recompute the same
+  tag string as a previous release and silently repoint it, evicting the old image to an
+  untagged, orphaned digest. This actually happened: `v0.1.0`–`v0.4.0` were all clobbered
+  this way before it was caught (fixed 2026-09-11, release 0.5.0) — none of those images are
+  recoverable. The `publish` job also keeps a "Guard against overwriting an existing version
+  tag" step (tag-push-only) as defense-in-depth: it `docker pull`s the about-to-be-pushed
+  version tag first and fails the job if it already exists in the registry (e.g. a
+  deleted-and-re-pushed tag), instead of silently overwriting it.
 
 Neither job is yet a required/merge-blocking status check — add `status_check_contexts` to
 the branch-protection rules once `validate` has reported at least one real result on a live
