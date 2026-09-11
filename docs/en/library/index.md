@@ -20,7 +20,7 @@ Pneumatically controlled valves for isolation, actuation, and process control.
 | [Pinch Valve](valves/pinch/index.md) | Pinches a flexible tube shut; a pressure switch confirms position |
 | [Butterfly Valve — Single Solenoid](valves/butterfly/single_solenoid/index.md) | Spring return; position feedback via ZSL/ZSH |
 | [Butterfly Valve — Double Solenoid](valves/butterfly/double_solenoid/index.md) | Bistable, double-acting; position feedback via ZSL/ZSH |
-| [Sealed Valve](valves/sealed/index.md) | Wraps any valve-family member (`CORE`) with a dedicated sealing solenoid valve |
+| [Sealed Valve](valves/sealed/index.md) | Composes any valve-family member (`CORE`) with a dedicated sealing solenoid valve under its own deflate/seal state machine |
 
 ---
 

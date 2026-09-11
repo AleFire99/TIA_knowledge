@@ -2,7 +2,7 @@
 
 Valvole controllate pneumaticamente per isolamento, attuazione e controllo di processo.
 
-Il parametro `SETTING.actuator_timeout` (default `T#2s`, tempo massimo consentito per completare una manovra di apertura o chiusura) è lo stesso, con lo stesso significato, su ogni valvola dotata di un proprio `movement_timer` — Manicotto, Farfalla SS, Farfalla DS. I moduli che ne incorporano una (Sigillata, Deviatore a Manicotto, Propulsore) non possiedono un `actuator_timeout` proprio: inoltrano il valore ricevuto all'istanza interna ad ogni scan.
+Il parametro `SETTING.actuator_timeout` (default `T#2s`, tempo massimo consentito per completare una manovra di apertura o chiusura) è lo stesso, con lo stesso significato, su ogni valvola dotata di un proprio `movement_timer` — Manicotto, Farfalla SS, Farfalla DS. I moduli che ne incorporano una (Sigillata, Deviatore a Manicotto, Propulsore) non possiedono un `actuator_timeout` proprio: inoltrano il valore ricevuto all'istanza interna ad ogni scan. La Sigillata possiede comunque due timer propri (`seal_deflate_time`/`seal_inflate_time`) per il proprio interlock deflate/seal — vedere [Valvola Sigillata](sealed/index.md#timer).
 
 ## Core
 
@@ -66,4 +66,4 @@ Tutti e quattro concorrono a `internal_error`, variabile interna al blocco (non 
 | [Valvola a Manicotto](pinch/index.md) | 2 | Comprime un tubo flessibile; un pressostato conferma la posizione chiusa |
 | [Valvola a Farfalla — Singolo Solenoide (SS)](butterfly/single_solenoid/index.md) | 2 | Ritorno a molla in chiusura; retroazione di posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Doppio Solenoide (DS)](butterfly/double_solenoid/index.md) | 2 | Bistabile, doppio effetto; retroazione di posizione via ZSL/ZSH |
-| [Valvola Sigillata](sealed/index.md) | 3 | Avvolge una valvola qualsiasi della famiglia (`CORE`) con un'elettrovalvola di tenuta dedicata |
+| [Valvola Sigillata](sealed/index.md) | 3 | Compone una valvola qualsiasi della famiglia (`CORE`) con un'elettrovalvola di tenuta dedicata sotto una propria macchina a stati deflate/seal |

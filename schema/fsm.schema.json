@@ -19,7 +19,7 @@
   "then": {},
   "else": {
     "required": ["label", "states", "transitions"],
-    "$comment": "label/states/transitions are only required when this FB doesn't delegate its whole FSM to a child instance (delegates.fsm) — a fully-delegated FB (e.g. Sigillata SS -> XV) has nothing of its own to render."
+    "$comment": "label/states/transitions are only required when this FB doesn't delegate its whole FSM to a child instance (delegates.fsm) — a fully-delegated FB has nothing of its own to render. No live example of delegates.fsm currently exists in this library (Sealed_valve/Sigillata SS gained its own interlock FSM and no longer delegates); delegates.timer still does (Pinch_diverter -> XVA/XVB)."
   },
   "properties": {
     "schema_version": {
@@ -41,7 +41,7 @@
     },
     "delegates": {
       "type": "object",
-      "description": "Present only when this FB hands its whole FSM or just its timer off to an embedded child instance (e.g. Sigillata SS delegates its FSM to XV; Deviatore delegates actuator_timeout to XVA/XVB). Omit entirely when the FB owns both.",
+      "description": "Present only when this FB hands its whole FSM or just its timer off to an embedded child instance (e.g. Deviatore delegates actuator_timeout to XVA/XVB — the fsm case has no live example in this library right now). Omit entirely when the FB owns both.",
       "additionalProperties": false,
       "properties": {
         "fsm": {

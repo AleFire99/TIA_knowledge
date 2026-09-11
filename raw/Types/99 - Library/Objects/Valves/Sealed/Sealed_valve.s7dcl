@@ -109,10 +109,13 @@ FUNCTION_BLOCK "Sealed_valve"
                         #sealed_XV.CORE.STATUS.state := #FAULT;
                     END_IF;
                 #FAULT:
-                    // No CMD.ack term, unlike every other FB in this library: this FB latches
-                    // nothing of its own. CMD.ack is forwarded to XV and the injected valve owns
-                    // the latch, so this state just tracks its is_fault level.
-                    IF NOT #internal_error THEN
+                    // CMD.ack is forwarded to XV every scan regardless (see "Command
+                    // internal devices" region above), but this FB also gates its own
+                    // FAULT exit on it directly: an operator must consciously acknowledge
+                    // before automatic recovery resumes, matching every other FSM in this
+                    // library. Required for a sealed/atmosphere-isolating valve on an
+                    // operator-attended, explosion-proof-panel-class installation.
+                    IF #sealed_XV.CORE.CMD.ack AND NOT #internal_error THEN
                         #sealed_XV.CORE.STATUS.state := #NORMAL;
                         IF #XV.STATUS.is_closed THEN
                             #sealed_XV.STATUS.normal_state := #CLOSED_SEALED;

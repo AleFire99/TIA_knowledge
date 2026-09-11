@@ -1,4 +1,4 @@
-# Sealed_valve — decorator that wraps any Valve_Core-typed injected valve with a dedicated sealing solenoid; fully delegates its FSM to the injected XV core.
+# Sealed_valve — decorator that wraps any Valve_Core-typed injected valve with a dedicated deflate/seal interlock FSM of its own.
 # Source: raw/Types/99 - Library/Objects/Valves/Sealed/Sealed_valve.s7dcl. Doc: docs/it/library/valves/sealed/index.md.
 
 schema_version: "1.0"
@@ -6,13 +6,84 @@ fb: Sealed_valve
 udt: UDT_Sealed_Valve
 source: Types/99 - Library/Objects/Valves/Sealed/Sealed_valve.s7dcl
 
-delegates:
-  fsm: XV
+label: SEALED_VALVE
+
+states:
+  - id: NORMAL
+    value: 1
+    children:
+      - id: CLOSED_SEALED
+        value: 1
+        outputs: { XV: closed, XY_seal: true }
+        description: valve closed and seal energized — steady, fully sealed rest state
+      - id: DEFLATING
+        value: 2
+        outputs: { XV: closed, XY_seal: false }
+        description: seal de-energized, dwelling for seal_deflate_time before the valve is commanded open
+      - id: OPENING
+        value: 3
+        outputs: { XV: open, XY_seal: false }
+        description: valve commanded open
+      - id: OPEN
+        value: 4
+        outputs: { XV: open, XY_seal: false }
+        description: valve open, no seal needed
+      - id: CLOSING
+        value: 5
+        outputs: { XV: closed, XY_seal: false }
+        description: valve commanded closed, seal not yet energized
+      - id: SEALING
+        value: 6
+        outputs: { XV: closed, XY_seal: true }
+        description: valve confirmed closed, seal energized and dwelling for seal_inflate_time before the assembly is considered fully sealed
+  - id: FAULT
+    value: 0
+    description: fault; XY_seal follows XV.STATUS.is_closed directly instead of a fixed value — see notes
+
+transitions:
+  - { from: "[*]", to: NORMAL }
+  - { from: NORMAL, to: FAULT, guard: internal_error }
+  - from: FAULT
+    to: NORMAL
+    guard: "CORE.CMD.ack & !internal_error"
+    note: "recovery now requires an explicit operator acknowledge, matching every other valve/diverter FSM in this library (SS_valve/DS_valve/Pinch_diverter/Nolvac all gate FAULT recovery on CMD.ack & !internal_error) — this FB still latches nothing of its own: CORE.CMD.ack is forwarded to XV every scan and the injected valve owns the underlying is_fault latch, but Sealed_valve also gates its own FAULT exit on the same ack, since auto-clearing on a sealed/atmosphere-isolating, operator-attended installation is a safety regression (issue #16)"
+  - from: "[*]"
+    to: NORMAL.CLOSED_SEALED
+    guard: "XV.STATUS.is_closed"
+  - from: "[*]"
+    to: NORMAL.OPEN
+    guard: "XV.STATUS.is_open"
+  - from: "[*]"
+    to: NORMAL.CLOSING
+    guard: "!XV.STATUS.is_closed & !XV.STATUS.is_open"
+    note: "injected valve mid-travel and the seal's physical state is unknown on a cold start (or on FAULT recovery, since this same set of nested edges serves both) — converge through a full close+seal cycle rather than guessing"
+  - { from: NORMAL.CLOSED_SEALED, to: NORMAL.DEFLATING, guard: desired_open_command }
+  - from: NORMAL.DEFLATING
+    to: NORMAL.SEALING
+    guard: "!desired_open_command"
+    note: "command withdrawn before the disc ever moved — re-inflate directly instead of completing a pointless open/close cycle"
+  - { from: NORMAL.DEFLATING, to: NORMAL.OPENING, guard: deflate_timer.Q }
+  - { from: NORMAL.OPENING, to: NORMAL.OPEN, guard: "XV.STATUS.is_open" }
+  - { from: NORMAL.OPEN, to: NORMAL.CLOSING, guard: "!desired_open_command" }
+  - { from: NORMAL.CLOSING, to: NORMAL.SEALING, guard: "XV.STATUS.is_closed" }
+  - { from: NORMAL.SEALING, to: NORMAL.CLOSED_SEALED, guard: seal_timer.Q }
+
+guard_formulas:
+  - name: internal_error
+    expression: XV.STATUS.is_fault
+
+timers:
+  - name: deflate_timer
+    active_states: [NORMAL.DEFLATING]
+    param: SETTING.seal_deflate_time
+  - name: seal_timer
+    active_states: [NORMAL.SEALING]
+    param: SETTING.seal_inflate_time
 
 notes:
-  - "XV is an injected UDT_Valve_Core parameter, not an owned child FB instance — the composition root instantiates whichever concrete valve-family member fills it and calls that FB before calling Sealed_valve, so XV.STATUS is already fresh when this FB reads it."
-  - sealed_XV.CORE.STATUS is a direct, full mirror of XV.STATUS every scan (state, normal_state, is_fault, is_closed, is_opening, is_open, is_closing) — this FB defines no state machine of its own.
-  - The seal solenoid (sealed_XV.DEVICES.XY_seal) is driven by one stateless combinational rule, not a state machine — it is excited automatically as soon as XV.STATUS.is_closed is confirmed TRUE, and de-excited immediately once XV leaves CLOSED (OPENING/OPEN/CLOSING/FAULT all read as FALSE).
-  - sealed_XV.CORE.SETTING.actuator_timeout is forwarded to XV.SETTING.actuator_timeout every scan; this FB has no TON_TIME of its own, so its own actuator timing is delegated to whichever valve fills XV, as a direct consequence of delegating the whole FSM to it — not a separate, timer-only delegation case.
-  - sealed_XV.CORE.CMD.ack is forwarded to XV.CMD.ack. This FB has no own ALARMS struct — alarms remain visible only through whichever valve fills XV.
-  - "delegates.fsm (not delegates.timer) is correct here: the FB has no own STATUS.state/normal_state computation and no state logic beyond the one stateless seal-solenoid rule above — there is no own diagram to render at all, matching schema/fsm.schema.json's own canonical example of full FSM delegation."
+  - "XV is an injected UDT_Valve_Core parameter, not an owned child FB instance — the composition root instantiates whichever concrete valve-family member fills it and calls that FB before calling Sealed_valve, so XV.STATUS is already fresh when this FB reads it. This is also why there's no first-scan ambiguous-sensor guard here, unlike every other valve/diverter FSM in this library — this FB trusts the injected valve's own already-resolved is_closed/is_open."
+  - "CORE.STATUS is a projection onto the shared 4-phase valve contract, not a mirror of XV.STATUS: DEFLATING folds into CORE.STATUS.is_opening and SEALING into CORE.STATUS.is_closing, so CORE.STATUS.is_closed reads TRUE only once the disc is closed AND the seal has finished inflating. UDT_Sealed_Valve.CORE is itself injectable (e.g. a future Transporter slot), so a plain mirror would let a downstream consumer see is_closed while the seal is still mid-inflate."
+  - "In FAULT, XY_seal.CMD.auto follows XV.STATUS.is_closed directly rather than being forced TRUE unconditionally — inflating the seal against a partly-open disc of an unknown injected valve type could extrude or damage it. XV.CMD.auto stays FALSE throughout FAULT, so a recoverable valve drifts closed on its own and re-seals once it gets there."
+  - "Withdrawing the open command mid-DEFLATING routes straight to SEALING rather than back through CLOSED_SEALED — the seal was never actually released long enough to need re-deflating first."
+  - "This FB has no own ALARMS struct: UDT_Valve_Core carries no ALARMS on purpose, so internal_error can only ever be XV.STATUS.is_fault — whatever alarm the injected valve itself raised."
+  - "field-namespacing deviation: CORE.CMD.*/CORE.STATUS.*/CORE.SETTING.* keep an explicit CORE. prefix throughout this file's guard/expression text, rather than collapsing per the usual tier-2 rule — UDT_Sealed_Valve is the first device in the library with two CMD/STATUS/SETTING homes (own + CORE), and collapsing would make STATUS.normal_state (this FB's own) indistinguishable from CORE.STATUS.normal_state (the projection)."

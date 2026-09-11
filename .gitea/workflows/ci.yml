@@ -2,7 +2,20 @@
 # (docs/config repo) — validate instead checks the things that break
 # silently: raw/ -> manifest consistency, FSM yaml structure, and both
 # locale site builds. publish pushes the built wiki image to this repo's own
-# Gitea container registry on every develop/main merge.
+# Gitea container registry on every develop merge (rolling `develop` preview
+# tag) and on every actual release tag push (`v*` — see CLAUDE.md's Gitea
+# Release Process). A plain merge into main does NOT publish by itself —
+# only the follow-up `git tag vX.Y.Z && git push origin vX.Y.Z` step does.
+# This is deliberate: main only ever receives release/hotfix merges, but
+# publishing straight off that merge push (rather than the tag) meant every
+# such merge always produced a `latest`/`vX.Y.Z` image even before the
+# version was actually tagged — and if the tag and the merge ever drifted
+# (a version bump forgotten before merge), the resulting tag string could
+# collide with a previous release and silently overwrite it in the registry
+# (this happened for real: v0.1.0-v0.4.0 all got clobbered this way before
+# it was caught — see the publish job's own comments below). Gating on the
+# tag push instead ties the published version tag directly to the git tag
+# that names it, with no room for the two to drift apart.
 #
 # The runner is set up for Docker-outside-of-Docker (host /var/run/docker.sock
 # mounted into act_runner itself, allow-listed via its container.valid_volumes)
@@ -17,6 +30,7 @@ on:
     branches: [develop, main]
   push:
     branches: [develop, main]
+    tags: ["v*"]
 
 jobs:
   validate:
@@ -74,7 +88,7 @@ jobs:
 
   publish:
     needs: validate
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     # secrets.GITHUB_TOKEN defaults to no package access — Gitea Actions denies
     # registry pushes with it unless this job explicitly grants packages: write.
@@ -87,12 +101,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # VERSION comes straight from the pushed tag name (e.g. refs/tags/v0.5.0
+      # -> v0.5.0), never from pyproject.toml — this is what ties the
+      # published tag directly to the git tag with no room for drift. See
+      # this workflow's header comment for the incident that motivated this.
       - name: Determine image tags
         id: tags
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            VERSION=$(grep -m1 '^version' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
-            echo "tags=latest v$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "tags=latest $VERSION" >> "$GITHUB_OUTPUT"
           else
             echo "tags=develop" >> "$GITHUB_OUTPUT"
           fi
@@ -107,6 +125,24 @@ jobs:
         run: |
           REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
           echo "${{ secrets.REGISTRY_TOKEN }}" | docker login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+
+      # A versioned tag (vX.Y.Z) must never move once published — unlike
+      # `latest`/`develop`, which are expected to keep repointing. Deriving
+      # VERSION from the git tag itself (above) already closes off the
+      # original drift bug, but this stays as defense-in-depth against a
+      # deleted-and-re-pushed tag: if the pull succeeds, that version was
+      # already published and this would silently overwrite it. Fail loudly
+      # instead.
+      - name: Guard against overwriting an existing version tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
+          IMAGE="$REGISTRY/alessandro_firetto/tia-knowledge/nte-aut-wiki"
+          VERSION="${GITHUB_REF#refs/tags/}"
+          if docker pull "$IMAGE:$VERSION" >/dev/null 2>&1; then
+            echo "::error::$IMAGE:$VERSION already exists in the registry. This tag was already published — delete/re-push a tag only if you know what you're doing, versioned tags must never be overwritten.";
+            exit 1;
+          fi
 
       - name: Build and push
         run: |

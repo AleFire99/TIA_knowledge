@@ -1,6 +1,6 @@
 {
   "delta_version": "1.0.0",
-  "generated_at": "2026-09-11T10:05:13Z",
+  "generated_at": "2026-09-11T14:20:06Z",
   "total_types": 48,
   "counts": {
     "new": 0,
@@ -8,11 +8,11 @@
     "removed": 0
   },
   "needs_doc_update": [
-    "Piston_no_sensors"
+    "Sealed_valve"
   ],
   "new": [],
   "changed": [
-    "Piston_no_sensors"
+    "Sealed_valve"
   ],
   "removed": []
 }
