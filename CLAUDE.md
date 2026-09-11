@@ -22,9 +22,13 @@ Two outputs on every update cycle:
 tia-knowledge/
 │
 │  ── MANUAL ─────────────────────────────────────────────────────────────────
-├── library/                     [H] TIA Portal global library binary
+├── library/                     [H] TIA Portal global library binary — NOT git-tracked
 │   └── AleFire-Library_V21/
-│       └── AleFire-Library_V21.al21 ← tracked in git; released as Gitea asset
+│       └── AleFire-Library_V21.al21 ← gitignored; distributed only as a Gitea release asset
+│                                       (see "Gitea Release Process" below) — a binary this
+│                                       size doesn't belong in git history, and this repo's
+│                                       core.autocrlf + no .gitattributes combination risks
+│                                       silently corrupting it on commit/checkout anyway
 ├── Library_export/              [H] staging project — clean after each export run
 │   └── Library_export.ap20
 ├── config.toml                  [H] TIA paths + sim_overrides
@@ -676,15 +680,15 @@ shows up in the manifest).
    when called on a GlobalLibrary proxy. Use `--skip-instantiate` and instantiate manually
    in TIA Portal UI, then re-run.
 3. Staging project must be committed in **empty state** between export runs.
-4. `Piston_no_sensors.s7dcl`'s `VAR_IN_OUT` declared its param as `_.UDT_Piston` (nonexistent
-   type) instead of `_.UDT_Piston_no_sensors` — an export typo, not a naming choice; the FB's
-   actual `VAR_IN_OUT` declaration in TIA Portal is correct, so there's nothing to backport —
-   this is purely an `export.py`/`siemens_tia_scripting` v1.2.1 export-time artifact, root
-   cause unidentified. **Recurred on the full-library re-export that introduced the Core-UDT
-   DI pattern** (2026-08), confirming it isn't a one-off. Patched directly in `raw/` each time
-   (same treatment as the Nolvac/Gate_door `ReadOnly` gaps) since there's no TIA-side fix to
-   make — workaround is "patch `raw/` after every re-export" until the export tool's own bug
-   is found.
+4. ~~`Piston_no_sensors.s7dcl`'s `VAR_IN_OUT` export typo~~ — **resolved 2026-09-11**. This was
+   misdiagnosed for a while as an export-time artifact (`export.py`/`siemens_tia_scripting`
+   corrupting the type name on the way out). It wasn't: the FB's own `VAR_IN_OUT` declaration
+   in TIA Portal genuinely had the wrong type (`UDT_Piston` instead of `UDT_Piston_no_sensors`)
+   — a real, if narrow, error at the source, confirmed by fixing it directly in TIA Portal and
+   seeing the exported `raw/` text come out correct afterward with no further patching needed.
+   No workaround remains and no export-side patch is needed going forward — if this ever
+   reappears in `raw/`, re-check the FB's actual declaration in TIA Portal first before
+   assuming it's tooling.
 
 ---
 
@@ -900,6 +904,11 @@ Recurring work is tracked as Gitea issues using the three templates under
 UDT/FB needs a wiki page), `source-update` (raw/ needs a fresh TIA Portal re-export).
 
 ### Gitea Release Process
+
+`library/AleFire-Library_V21/AleFire-Library_V21.al21` is **not git-tracked** — this release
+attachment is its only distribution path. A fresh clone of this repo does not include it;
+pull the latest release's asset to populate `library/AleFire-Library_V21/` locally before
+opening the staging project in TIA Portal.
 
 On every `release/<version>` merge to `main`:
 

@@ -15,7 +15,40 @@ FUNCTION_BLOCK "Sealed_valve"
             S7_Access := "ReadOnly := External";
             S7_Visibility := "Hidden := External"
         }
+        first_scan : Bool := True;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        deflate_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
+        seal_timer : TON_TIME;
+        {
+            S7_Access := "ReadOnly := External";
+            S7_Visibility := "Hidden := External"
+        }
         fb_XY : _.Solenoid_valve;
+    END_VAR
+    VAR_TEMP
+        desired_open_command : Bool;
+        internal_error : Bool;
+    END_VAR
+    VAR CONSTANT
+        FAULT : Int := 0;
+        NORMAL : Int := 1;
+        CLOSED_SEALED : Int := 1;
+        DEFLATING : Int := 2;
+        OPENING : Int := 3;
+        OPEN : Int := 4;
+        CLOSING : Int := 5;
+        SEALING : Int := 6;
+        CORE_CLOSED : Int := 1;
+        CORE_OPENING : Int := 2;
+        CORE_OPEN : Int := 3;
+        CORE_CLOSING : Int := 4;
     END_VAR
 
     { S7_Language := "SCL" }
@@ -25,7 +58,6 @@ FUNCTION_BLOCK "Sealed_valve"
                 #XV.CMD.ack := #sealed_XV.CORE.CMD.ack;
                 #XV.SETTING.actuator_timeout := #sealed_XV.CORE.SETTING.actuator_timeout;
             END_REGION
-            
             REGION Seal
                 #fb_XY(#sealed_XV.DEVICES.XY_seal);
             END_REGION
@@ -33,18 +65,165 @@ FUNCTION_BLOCK "Sealed_valve"
         
         REGION Determine target
             IF #sealed_XV.CORE.CMD.manual_mode THEN
-                #XV.CMD.auto := #sealed_XV.CORE.CMD.manual;
+                #desired_open_command := #sealed_XV.CORE.CMD.manual;
             ELSE
-                #XV.CMD.auto := #sealed_XV.CORE.CMD.auto;
+                #desired_open_command := #sealed_XV.CORE.CMD.auto;
+            END_IF;
+        END_REGION
+        
+        REGION Initialization
+            IF #first_scan THEN
+                #first_scan := FALSE;
+                #sealed_XV.CORE.STATUS.state := #NORMAL;
+                IF #XV.STATUS.is_closed THEN
+                    #sealed_XV.STATUS.normal_state := #CLOSED_SEALED;
+                ELSIF #XV.STATUS.is_open THEN
+                    #sealed_XV.STATUS.normal_state := #OPEN;
+                ELSE
+                    // Injected valve mid-travel and the seal's physical state is unknown on a
+                    // cold start: converge through a full close+seal cycle rather than guessing.
+                    #sealed_XV.STATUS.normal_state := #CLOSING;
+                END_IF;
+            END_IF;
+        END_REGION
+        
+        REGION Internal error
+            // UDT_Valve_Core carries no ALARMS on purpose - the injected valve's own alarm bits
+            // are not visible through XV. is_fault is the only fault channel Core exposes.
+            #internal_error := #XV.STATUS.is_fault;
+        END_REGION
+        
+        REGION Timers
+            #deflate_timer(IN := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                           (#sealed_XV.STATUS.normal_state = #DEFLATING),
+                           PT := #sealed_XV.SETTING.seal_deflate_time);
+            #seal_timer(IN := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                        (#sealed_XV.STATUS.normal_state = #SEALING),
+                        PT := #sealed_XV.SETTING.seal_inflate_time);
+        END_REGION
+        
+        REGION Top FSM
+            CASE #sealed_XV.CORE.STATUS.state OF
+                #NORMAL:
+                    IF #internal_error THEN
+                        #sealed_XV.CORE.STATUS.state := #FAULT;
+                    END_IF;
+                #FAULT:
+                    // No CMD.ack term, unlike every other FB in this library: this FB latches
+                    // nothing of its own. CMD.ack is forwarded to XV and the injected valve owns
+                    // the latch, so this state just tracks its is_fault level.
+                    IF NOT #internal_error THEN
+                        #sealed_XV.CORE.STATUS.state := #NORMAL;
+                        IF #XV.STATUS.is_closed THEN
+                            #sealed_XV.STATUS.normal_state := #CLOSED_SEALED;
+                        ELSIF #XV.STATUS.is_open THEN
+                            #sealed_XV.STATUS.normal_state := #OPEN;
+                        ELSE
+                            #sealed_XV.STATUS.normal_state := #CLOSING;
+                        END_IF;
+                    END_IF;
+            END_CASE;
+        END_REGION
+        
+        REGION Normal FSM
+            IF #sealed_XV.CORE.STATUS.state = #NORMAL THEN
+                CASE #sealed_XV.STATUS.normal_state OF
+                    #CLOSED_SEALED:
+                        IF #desired_open_command THEN
+                            #sealed_XV.STATUS.normal_state := #DEFLATING;
+                        END_IF;
+                    #DEFLATING:
+                        IF NOT #desired_open_command THEN
+                            // Command withdrawn before the disc ever moved - re-inflate directly
+                            // instead of completing a pointless open/close cycle.
+                            #sealed_XV.STATUS.normal_state := #SEALING;
+                        ELSIF #deflate_timer.Q THEN
+                            #sealed_XV.STATUS.normal_state := #OPENING;
+                        END_IF;
+                    #OPENING:
+                        IF #XV.STATUS.is_open THEN
+                            #sealed_XV.STATUS.normal_state := #OPEN;
+                        END_IF;
+                    #OPEN:
+                        IF NOT #desired_open_command THEN
+                            #sealed_XV.STATUS.normal_state := #CLOSING;
+                        END_IF;
+                    #CLOSING:
+                        IF #XV.STATUS.is_closed THEN
+                            #sealed_XV.STATUS.normal_state := #SEALING;
+                        END_IF;
+                    #SEALING:
+                        IF #seal_timer.Q THEN
+                            #sealed_XV.STATUS.normal_state := #CLOSED_SEALED;
+                        END_IF;
+                END_CASE;
             END_IF;
         END_REGION
         
         REGION Output mapping
-            #sealed_XV.DEVICES.XY_seal.CMD.auto := #XV.STATUS.is_closed;
+            #XV.CMD.auto := FALSE;
+            #sealed_XV.DEVICES.XY_seal.CMD.auto := FALSE;
+            CASE #sealed_XV.CORE.STATUS.state OF
+                #FAULT:
+                    // Fail-safe: hold containment only where it is mechanically valid. The seal
+                    // is inflated only while XV still confirms CLOSED - inflating it against a
+                    // partly-open disc of an unknown valve type could extrude/damage the seal.
+                    // XV.CMD.auto stays FALSE, so a recoverable valve drifts closed and re-seals
+                    // on its own.
+                    #sealed_XV.DEVICES.XY_seal.CMD.auto := #XV.STATUS.is_closed;
+                #NORMAL:
+                    CASE #sealed_XV.STATUS.normal_state OF
+                        #CLOSED_SEALED:
+                            #sealed_XV.DEVICES.XY_seal.CMD.auto := TRUE;
+                        #OPENING:
+                            // The interlock: XV is only ever commanded open once the deflate
+                            // dwell has elapsed.
+                            #XV.CMD.auto := TRUE;
+                        #OPEN:
+                            #XV.CMD.auto := TRUE;
+                        #SEALING:
+                            #sealed_XV.DEVICES.XY_seal.CMD.auto := TRUE;
+                    END_CASE;
+            END_CASE;
         END_REGION
         
         REGION State mapping
-            #sealed_XV.CORE.STATUS := #XV.STATUS;
+            REGION Own status
+                // Only the two phases the shared Core contract cannot express.
+                #sealed_XV.STATUS.is_deflating := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                (#sealed_XV.STATUS.normal_state = #DEFLATING);
+                #sealed_XV.STATUS.is_sealing := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                (#sealed_XV.STATUS.normal_state = #SEALING);
+            END_REGION
+            
+            REGION Core status projection
+                // The sealed assembly projected onto the shared 4-phase valve contract, NOT a
+                // mirror of XV.STATUS: DEFLATING folds into is_opening and SEALING into
+                // is_closing, so is_closed is TRUE only once the disc is closed AND the seal has
+                // finished inflating. UDT_Sealed_Valve.CORE is itself injectable (e.g. a future
+                // Transporter slot), so a mirror would let a downstream consumer see is_closed
+                // while the seal is still mid-inflate.
+                #sealed_XV.CORE.STATUS.is_closed := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                (#sealed_XV.STATUS.normal_state = #CLOSED_SEALED);
+                #sealed_XV.CORE.STATUS.is_opening := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                ((#sealed_XV.STATUS.normal_state = #DEFLATING) OR
+                (#sealed_XV.STATUS.normal_state = #OPENING));
+                #sealed_XV.CORE.STATUS.is_open := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                (#sealed_XV.STATUS.normal_state = #OPEN);
+                #sealed_XV.CORE.STATUS.is_closing := (#sealed_XV.CORE.STATUS.state = #NORMAL) AND
+                ((#sealed_XV.STATUS.normal_state = #CLOSING) OR
+                (#sealed_XV.STATUS.normal_state = #SEALING));
+                #sealed_XV.CORE.STATUS.is_fault := (#sealed_XV.CORE.STATUS.state = #FAULT);
+                IF #sealed_XV.CORE.STATUS.is_closed THEN
+                    #sealed_XV.CORE.STATUS.normal_state := #CORE_CLOSED;
+                ELSIF #sealed_XV.CORE.STATUS.is_opening THEN
+                    #sealed_XV.CORE.STATUS.normal_state := #CORE_OPENING;
+                ELSIF #sealed_XV.CORE.STATUS.is_open THEN
+                    #sealed_XV.CORE.STATUS.normal_state := #CORE_OPEN;
+                ELSIF #sealed_XV.CORE.STATUS.is_closing THEN
+                    #sealed_XV.CORE.STATUS.normal_state := #CORE_CLOSING;
+                END_IF;
+            END_REGION
         END_REGION
     END_NETWORK
 END_FUNCTION_BLOCK

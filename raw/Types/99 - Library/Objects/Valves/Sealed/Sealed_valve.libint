@@ -1,12 +1,12 @@
 ﻿DocumentHash:
   - FileName: Sealed_valve.s7dcl
-    Hash: B9drKUHDVFQjyQYWL+1A+zJWN+5wwAkZm347LulrefY=
-LibraryMetaFileHash: Xkx7O6lB9xODIvUtXKYqt3ULob/VDquB3tvJciUCED4=
+    Hash: 17BtjMGz65Ac0OSc6bteUw5o2ZDHgu6OSm0FwMgs/Nc=
+LibraryMetaFileHash: SXOxffFBDqk0apjwyufwoBZk5KLCs144/OtVDnx7v3Q=
 LibraryVersion:
-  Guid: b0dd6d42-4758-4ba0-860f-fb285c8990a8
+  Guid: 24fd016b-c55f-40a0-b833-8033ec09e346
   DependsOn:
     - TypeName: UDT_Sealed_Valve
-      VersionNumber: 3.1.1
+      VersionNumber: 3.2.1
     - TypeName: UDT_Valve_Core
       VersionNumber: 0.1.0
     - TypeName: Solenoid_valve

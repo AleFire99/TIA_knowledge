@@ -30,7 +30,12 @@ library/AleFire-Library/XRef/
 library/AleFire-Library/src/
 library/AleFire-Library/*.backup/
 
-# TIA Portal internal dirs — AleFire-Library_V21 binary (track only .al21)
+# TIA Portal internal dirs — AleFire-Library_V21 binary. Not git-tracked at all now: the
+# .al21 itself is a Gitea release asset only (see CLAUDE.md "Gitea Release Process") — a
+# binary this size doesn't belong in git history, and this repo's core.autocrlf + no
+# .gitattributes combination risked silently corrupting it on commit/checkout anyway.
+library/AleFire-Library_V21/AleFire-Library_V21.al21
+library/AleFire-Library_V21/AleFire-Library_V21.info
 library/AleFire-Library_V21/AdditionalFiles/
 library/AleFire-Library_V21/IM/
 library/AleFire-Library_V21/Logs/
