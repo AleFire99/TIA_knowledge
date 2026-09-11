@@ -20,7 +20,7 @@ Valvole controllate pneumaticamente per isolamento, attuazione e controllo di pr
 | [Valvola a Manicotto](valves/pinch/index.md) | Comprime un tubo flessibile per chiudersi; pressostato conferma la posizione |
 | [Valvola a Farfalla — Singolo Solenoide](valves/butterfly/single_solenoid/index.md) | Ritorno a molla; retroazione di posizione via ZSL/ZSH |
 | [Valvola a Farfalla — Doppio Solenoide](valves/butterfly/double_solenoid/index.md) | Bistabile, doppio effetto; retroazione di posizione via ZSL/ZSH |
-| [Valvola Sigillata](valves/sealed/index.md) | Avvolge una valvola qualsiasi della famiglia (`CORE`) con un'elettrovalvola di tenuta dedicata |
+| [Valvola Sigillata](valves/sealed/index.md) | Compone una valvola qualsiasi della famiglia (`CORE`) con un'elettrovalvola di tenuta dedicata sotto una propria macchina a stati deflate/seal |
 
 ---
 

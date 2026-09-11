@@ -282,8 +282,9 @@ column** — every timer in this library follows the same universal pattern (doc
 as a global paragraph in `docs/it/library/index.md`, Libreria — Panoramica): `IN` is always
 exactly "currently in state X", so it resets automatically on leaving that state, nothing
 per-module to restate. Omit the whole section — heading included, not even a placeholder
-sentence — for modules with no FSM of their own (Sigillata SS delegates to `XV`, Deviatore
-delegates `actuator_timeout` to `XVA`/`XVB`) or whose FSM has no timer at all (Elettrovalvola
+sentence — for modules with no FSM of their own (no live example currently — Sigillata SS
+gained its own interlock FSM and no longer delegates it; Deviatore still delegates
+`actuator_timeout` to `XVA`/`XVB`, timer-only) or whose FSM has no timer at all (Elettrovalvola
 — transition is immediate, no TON anywhere).
 
 **Panoramica vs. Funzionamento** — these used to overlap (Panoramica often restated the
@@ -468,11 +469,13 @@ Key modeling decisions (rationale for extending the schema correctly later):
   `prev_state`/`prev_normal_state` shadow variable name, for traceability back to source.
 - **`delegates` exists so a generator omits sections instead of misreading "no data" as
   "nothing to show"** — set `delegates.fsm` when the whole FSM is owned by an embedded child
-  instance (Sigillata SS → `XV`; then this file would have no states/transitions/timers of
-  its own), or `delegates.timer` when only the timer is delegated (Deviatore →
-  `XVA`/`XVB` for `actuator_timeout`). `label`/`states`/`transitions` are only required by
-  the schema when `delegates.fsm` is absent — a fully-delegated FB has no diagram of its own
-  to supply, so it doesn't need a placeholder one just to satisfy the schema.
+  instance (no live example currently in this library — Sigillata SS was the canonical case
+  until it gained its own deflate/seal interlock FSM; a fully-delegated FB would have no
+  states/transitions/timers of its own), or `delegates.timer` when only the timer is
+  delegated (Deviatore → `XVA`/`XVB` for `actuator_timeout`, still live today).
+  `label`/`states`/`transitions` are only required by the schema when `delegates.fsm` is
+  absent — a fully-delegated FB has no diagram of its own to supply, so it doesn't need a
+  placeholder one just to satisfy the schema.
 
 **Guard text and field-namespacing convention** — applies to `transitions[].guard` and
 `guard_formulas[].expression` everywhere. Established after an audit of all 13 files found
