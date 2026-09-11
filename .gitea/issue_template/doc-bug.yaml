@@ -1,0 +1,41 @@
+name: "Doc bug: generated page is wrong or stale"
+about: "A page under docs/it/ or docs/en/ has incorrect or outdated content"
+title: "[doc-bug]: "
+labels: ["doc-bug"]
+body:
+  - type: input
+    id: page-path
+    attributes:
+      label: Page path
+      description: e.g. docs/it/library/valves/butterfly/single_solenoid/index.md
+      placeholder: docs/it/library/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: whats-wrong
+    attributes:
+      label: What's wrong
+      description: What the page currently says, and why it's incorrect or stale
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected content
+      description: What the page should say instead, ideally with the source detail (raw/ file, .s7dcl field) backing it up
+    validations:
+      required: true
+
+  - type: dropdown
+    id: root-cause
+    attributes:
+      label: Root cause (if known)
+      options:
+        - "Not sure yet"
+        - "raw/ source changed, docs not regenerated"
+        - "raw/ source is correct, docs-generation mistake"
+        - "Both locales out of sync with each other"
+    validations:
+      required: false

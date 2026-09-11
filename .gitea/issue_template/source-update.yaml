@@ -1,0 +1,40 @@
+name: "Library source re-export needed"
+about: "One or more devices changed in TIA Portal and raw/ needs a fresh export + re-ingest"
+title: "[source-update]: "
+labels: ["source-update"]
+body:
+  - type: textarea
+    id: devices
+    attributes:
+      label: Device(s) changed
+      description: UDT/FB name(s) that changed in the AleFire-Library TIA Portal project
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reason
+    attributes:
+      label: Reason for the change
+      options:
+        - "Bug fix"
+        - "New feature / behavior change"
+        - "Refactor (e.g. Core-UDT-style dependency injection)"
+        - "Other (explain below)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What changed and why — enough for whoever re-exports and re-docs this to understand the intent
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: known-gotchas
+    attributes:
+      label: Known export gotchas to check for afterward
+      options:
+        - label: "Piston_no_sensors.s7dcl-style VAR_IN_OUT export typo (see CLAUDE.md Known Gotchas #4) — check if this export is affected"
+        - label: "ReadOnly := External attribute correctly present on new/changed struct fields (see CLAUDE.md's Struttura dati read-only audit note)"

@@ -3,8 +3,8 @@
   Comment:
     en-US: First version
 LibraryVersion:
-  VersionNumber: 0.0.1
+  VersionNumber: 0.0.2
   Author: Alessandro Firetto
   IsDefault: true
   Comment:
-    en-US: First version
+    en-US: Updated UDT name

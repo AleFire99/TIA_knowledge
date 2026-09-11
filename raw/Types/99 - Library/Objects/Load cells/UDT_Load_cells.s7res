@@ -1,4 +1,11 @@
 ﻿MultiLingualTexts:
+  - id: MLC_3sW
+    it-IT: |2-
+       ============================================================
+        UDT_DS_Batch
+        Data structure for FB_BatchController
+        Mirror pattern of UDT_DS_Valve
+       ============================================================
   - id: MLC_4en
     it-IT: HMI - Ackowneldge errors
   - id: MLC_ff
