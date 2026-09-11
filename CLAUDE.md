@@ -928,7 +928,16 @@ opening the staging project in TIA Portal.
 On every `release/<version>` merge to `main`:
 
 1. Tag `main`: `git tag v<version> && git push origin v<version>`
-2. Create release on Gitea from the tag
+2. Create release on Gitea from the tag, with a **fully descriptive Markdown body** — not a
+   one-line summary. Cover, in order: what changed and why (pull the design rationale from
+   the closed issue(s) it resolves, not just the commit subject), any new FSM/state-machine
+   behavior with its state list, any breaking/behavioral compatibility concerns for already
+   -deployed projects (call these out with their own heading, e.g. `## ⚠️ Compatibility`,
+   never buried in a bullet), a type-version table (`| Type | Before | After |`) for every
+   UDT/FB touched, and closing links (`Closes #N`, related PR numbers). Treat the release
+   body as the durable record of *why* a version exists — CLAUDE.md explains repo
+   conventions, but only the release itself explains what a specific shipped version
+   actually contains and why it's safe (or isn't) to deploy over the previous one.
 3. Attach `library/AleFire-Library_V21/AleFire-Library_V21.al21` as downloadable binary asset
 4. Back-merge `main` → `develop`
 
