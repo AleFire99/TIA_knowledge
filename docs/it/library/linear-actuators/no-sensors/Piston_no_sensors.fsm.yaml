@@ -25,3 +25,4 @@ transitions:
 
 notes:
   - "no position feedback exists on this variant, so the state reflects only the last command issued to the embedded solenoid valve (XY), never a confirmed physical position — the transition is immediate, same as Solenoid_valve's own FSM."
+  - "the Piston_no_sensors FB was bumped 0.0.1 -> 0.0.2 in commit 59ade85 (comment: 'Updated UDT name'), which flagged this device in dist/ingest_delta.json's needs_doc_update. Investigated (issue #13): the version bump was metadata/comment-only — git diff 59ade85^ 59ade85 on Piston_no_sensors.s7dcl and UDT_Piston_no_sensors.s7dcl is empty, and the VAR_IN_OUT declaration has read UDT_Piston_no_sensors at every point in tracked git history, including the original ingest commit 0ec40e3. No SCL/state content actually changed, so this file is unchanged."
