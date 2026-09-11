@@ -108,6 +108,24 @@ jobs:
           REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
           echo "${{ secrets.REGISTRY_TOKEN }}" | docker login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
 
+      # A versioned tag (vX.Y.Z) must never move once published — unlike
+      # `latest`/`develop`, which are expected to keep repointing. If this
+      # pull succeeds, pyproject.toml's version wasn't bumped for this
+      # release and would silently overwrite an existing tagged image in the
+      # registry (this happened for real: v0.1.0-v0.4.0 all got clobbered
+      # this way, leaving only orphaned untagged digests behind — see
+      # CLAUDE.md Git Flow section). Fail loudly instead.
+      - name: Guard against overwriting an existing version tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"
+          IMAGE="$REGISTRY/alessandro_firetto/tia-knowledge/nte-aut-wiki"
+          VERSION=$(grep -m1 '^version' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          if docker pull "$IMAGE:v$VERSION" >/dev/null 2>&1; then
+            echo "::error::$IMAGE:v$VERSION already exists in the registry. Bump pyproject.toml's version before merging this release — versioned tags must never be overwritten.";
+            exit 1;
+          fi
+
       - name: Build and push
         run: |
           REGISTRY="$(echo '${{ github.server_url }}' | sed -E 's#https?://##')"

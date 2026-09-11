@@ -893,6 +893,18 @@ config) since the `publish` job below needs a real Docker daemon to build/push i
   shows up under the repo's own Packages tab rather than only the user's. This is a distinct
   artifact from the manual LAN-serving Docker workflow in Step 5 above — publishing to the
   registry doesn't redeploy the running LAN container; that's still a manual operator step.
+  The `v<pyproject version>` tag is derived purely from `pyproject.toml` at build time, with
+  no link to the `git tag` created in the Gitea Release Process below — if a `release/*`
+  branch merges to `main` without bumping `pyproject.toml`'s version first, the job
+  recomputes the same tag string as a previous release and silently repoints it, evicting
+  the old image to an untagged, orphaned digest. This actually happened: `v0.1.0`–`v0.4.0`
+  were all clobbered this way before it was caught (fixed 2026-09-11, release 0.5.0) —
+  none of those images are recoverable. The `publish` job now has a "Guard against
+  overwriting an existing version tag" step (`main`-only) that `docker pull`s the
+  about-to-be-pushed `v$VERSION` first and fails the job if it already exists in the
+  registry, instead of silently overwriting it — always bump `pyproject.toml`'s version on
+  the `release/<version>` branch before merging to `main`, or the publish job now fails
+  instead of clobbering.
 
 Neither job is yet a required/merge-blocking status check — add `status_check_contexts` to
 the branch-protection rules once `validate` has reported at least one real result on a live
